@@ -1,0 +1,27 @@
+{% extends "core/base.html" %}
+{% block title %}Categoría — Logistic{% endblock %}
+{% block content %}
+
+<h1 class="h1">Categoría — {{ category_name|default:"Deportes" }}</h1>
+
+<div class="toolbar">
+  <button class="btn ghost">⛛ Filtrar</button>
+  <a href="{% url 'product_add' %}" class="btn">+ Agregar producto</a>
+</div>
+
+<div class="table">
+  <div class="tr th">
+    <div>Nombre del producto</div>
+    <div>Estado</div>
+    <div>Stock</div>
+    <div>Categoría</div>
+    <div>Ubicación</div>
+  </div>
+
+  <div class="tr"><div>Zapatillas Nike</div><div><span class="badge ok">Activo</span></div><div>20 en stock</div><div>Deportes</div><div>3 sucursales</div></div>
+  <div class="tr"><div>Zapatillas Puma</div><div><span class="badge warn">Stock bajo</span></div><div>5 en stock</div><div>Deportes</div><div>2 sucursales</div></div>
+  <div class="tr"><div>Botines fútbol</div><div><span class="badge ok">Activo</span></div><div>30 en stock</div><div>Deportes</div><div>4 sucursales</div></div>
+  <div class="tr"><div>Balón basket</div><div><span class="badge ok">Activo</span></div><div>18 en stock</div><div>Deportes</div><div>1 sucursal</div></div>
+</div>
+
+{% endblock %}

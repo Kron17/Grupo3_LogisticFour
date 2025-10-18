@@ -1,0 +1,49 @@
+{% extends "core/base.html" %}
+{% block title %}Tablero — Logistic{% endblock %}
+{% block content %}
+
+<h1 class="h1">Tablero</h1>
+
+<div class="kpis">
+  <div class="kpi"><div class="num">12</div><div class="lbl">Obras activas</div></div>
+  <div class="kpi"><div class="num">340</div><div class="lbl">Equipos/Ítems</div></div>
+  <div class="kpi"><div class="num">58</div><div class="lbl">Bajo stock</div></div>
+  <div class="kpi"><div class="num">21</div><div class="lbl">Tickets abiertos</div></div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Ventas / Movimientos</div>
+    <div class="bars">
+      <div class="bar"><span style="height: 140px"></span><label>Confirmados</label></div>
+      <div class="bar"><span style="height: 20px"></span><label>Empaquetados</label></div>
+      <div class="bar"><span style="height: 60px"></span><label>Devueltos</label></div>
+      <div class="bar"><span style="height: 35px"></span><label>Despachados</label></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Stock</div>
+    <ul class="list">
+      <li>Ítems con bajo stock <b>58</b></li>
+      <li>Categorías <b>10</b></li>
+      <li>Ítems devueltos <b>5</b></li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Sucursales / Bodegas</div>
+  <div class="table">
+    <div class="tr th">
+      <div>Sucursal / Bodega</div><div>Colaboradores</div><div>Ítems</div><div>Órdenes</div>
+    </div>
+    <div class="tr"><div>Casa Matriz</div><div>34 colaboradores</div><div>140 ítems</div><div>15 órdenes</div></div>
+    <div class="tr"><div>Bodega Norte</div><div>20 colaboradores</div><div>280 ítems</div><div>20 órdenes</div></div>
+    <div class="tr"><div>Bodega Sur</div><div>18 colaboradores</div><div>400 ítems</div><div>13 órdenes</div></div>
+    <div class="tr"><div>Obra Alto Maipo</div><div>42 colaboradores</div><div>300 ítems</div><div>16 órdenes</div></div>
+    <div class="tr"><div>Obra Ñuñoa</div><div>15 colaboradores</div><div>150 ítems</div><div>10 órdenes</div></div>
+  </div>
+</div>
+
+{% endblock %}

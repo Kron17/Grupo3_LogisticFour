@@ -1,0 +1,20 @@
+<h6 class="mb-3">Perfil</h6>
+<div class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label" for="{{ perfil_form.telefono.id_for_label }}">Teléfono</label>
+    {{ perfil_form.telefono|add_class:"form-control" }}
+    <div class="form-text">Ej: +56 9 1234 5678</div>
+    {% for e in perfil_form.telefono.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="col-md-6">
+    <label class="form-label" for="{{ perfil_form.rol.id_for_label }}">Rol</label>
+    {{ perfil_form.rol|add_class:"form-select" }}
+    {% for e in perfil_form.rol.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+  </div>
+</div>
+
+<div class="d-flex gap-2 mt-4">
+  <button type="submit" class="btn btn-primary" style="background:#E30613;border-color:#E30613;">Guardar</button>
+  <a href="{% url 'usuario-list' %}" class="btn btn-outline-secondary">Cancelar</a>
+</div>

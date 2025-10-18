@@ -1,0 +1,32 @@
+{% extends "core/base.html" %}
+{% block title %}Usuarios{% endblock %}
+{% block content %}
+<div class="card" style="padding:16px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Usuarios</h3>
+    <a href="{% url 'usuario-create' %}" class="btn btn-primary">+ Crear usuario</a>
+  </div>
+  <div class="table">
+    <div class="tr th">
+      <div>Usuario</div><div>Nombre</div><div>Email</div><div>Rol</div><div>Acciones</div>
+    </div>
+    {% for u in users %}
+      <div class="tr">
+        <div>{{ u.username }}</div>
+        <div>{{ u.get_full_name|default:"—" }}</div>
+        <div>{{ u.email|default:"—" }}</div>
+        <div>
+          {% if u.perfil %}<span class="badge">{{ u.perfil.rol }}</span>
+          {% else %}<span class="badge warn">Sin perfil</span>{% endif %}
+        </div>
+        <div>
+          <!-- futuros botones editar / desactivar -->
+          <span class="text-muted">Pronto…</span>
+        </div>
+      </div>
+    {% empty %}
+      <div class="tr"><div class="col-span-2">Sin usuarios.</div></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

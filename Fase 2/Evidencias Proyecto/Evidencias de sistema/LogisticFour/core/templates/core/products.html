@@ -1,0 +1,40 @@
+{% extends "core/base.html" %}
+{% block title %}Productos — Logistic{% endblock %}
+{% block content %}
+
+<h1 class="h1">Productos</h1>
+
+<div class="toolbar">
+  <button class="btn ghost" onclick="alert('Demo: filtro visual')">⛛ Filtrar</button>
+  <a href="{% url 'product_add' %}" class="btn">+ Agregar producto</a>
+</div>
+
+<div class="table scroll">
+  <div class="tr th">
+    <div>Nombre del producto</div>
+    <div>Estado</div>
+    <div>Stock</div>
+    <div>Categoría</div>
+    <div>Ubicación</div>
+  </div>
+
+  {% for i in "123456"|make_list %}
+  <div class="tr">
+    <div>Camiseta unisex {{ forloop.counter }}</div>
+    <div><span class="badge ok">Activo</span></div>
+    <div>20 en stock</div>
+    <div>Poleras</div>
+    <div>{{ forloop.counter }} sucursales</div>
+  </div>
+  {% endfor %}
+
+  <div class="tr">
+    <div>Polerón básico</div>
+    <div><span class="badge warn">Sin stock</span></div>
+    <div>0 en stock</div>
+    <div>Poleras</div>
+    <div>2 sucursales</div>
+  </div>
+</div>
+
+{% endblock %}

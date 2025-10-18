@@ -1,0 +1,129 @@
+{% extends "core/base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Productos — Logistic{% endblock %}
+
+{% block content %}
+<h1 class="h1 d-flex justify-content-between align-items-center">
+  <span>Productos</span>
+  <a href="{% url 'producto-create' %}" class="btn btn-primary">+ Agregar producto</a>
+</h1>
+
+<form class="row g-2 mb-3" method="get">
+  <div class="col-sm-6">
+    <input type="search" class="form-control" name="q" value="{{ q }}" placeholder="Buscar por SKU, nombre, marca, categoría…">
+  </div>
+  <div class="col-sm-2 d-grid">
+    <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>SKU</th>
+        <th>Nombre</th>
+        <th>Marca</th>
+        <th>Categoría</th>
+        <th>Activo</th>
+        <th class="text-end">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in productos %}
+      <tr>
+        <td><code>{{ p.sku }}</code></td>
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.marca|default:"—" }}</td>
+        <td>{{ p.categoria|default:"—" }}</td>
+        <td>
+          {% if p.activo %}
+            <span class="badge bg-success">Sí</span>
+          {% else %}
+            <span class="badge bg-secondary">No</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <!-- Botón EDITAR: abre modal -->
+          <button class="btn btn-sm btn-outline-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#modalEditar{{ p.id }}">
+            Editar
+          </button>
+
+          <!-- Botón ELIMINAR: alerta de confirmación y submit -->
+          <form method="post" action="{% url 'producto-delete' p.id %}" class="d-inline" onsubmit="return confirmarDelete(event)">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+
+      <!-- MODAL EDITAR -->
+      <div class="modal fade" id="modalEditar{{ p.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Editar producto — {{ p.sku }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form method="post" action="{% url 'producto-update' p.id %}">
+              <div class="modal-body">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'producto-list' %}">
+                {# Render del form específico de este producto #}
+                {% with f=forms_por_producto.p.id %}
+                  {% if f %}
+                    {{ f|crispy }}
+                  {% else %}
+                    <div class="alert alert-warning">No se pudo cargar el formulario.</div>
+                  {% endif %}
+                {% endwith %}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <!-- /MODAL EDITAR -->
+
+      {% empty %}
+      <tr><td colspan="6" class="text-center text-muted">No hay productos</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+<nav>
+  <ul class="pagination">
+    {% if page_obj.has_previous %}
+      <li class="page-item"><a class="page-link" href="?q={{ q }}&page={{ page_obj.previous_page_number }}">«</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">«</span></li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?q={{ q }}&page={{ page_obj.next_page_number }}">»</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">»</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+<script>
+function confirmarDelete(e) {
+  if (!confirm("¿Eliminar este producto?")) {
+    e.preventDefault();
+    return false;
+  }
+  return true;
+}
+</script>
+{% endblock %}
