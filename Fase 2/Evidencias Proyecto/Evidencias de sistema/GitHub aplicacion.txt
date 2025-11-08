@@ -1,0 +1,2 @@
+Para más detalles del avance, revisar el siguiente link de GitHub:
+https://github.com/BigDarkness3232/LogisticFour.git
