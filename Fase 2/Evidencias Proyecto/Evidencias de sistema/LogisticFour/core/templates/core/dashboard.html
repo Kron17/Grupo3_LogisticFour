@@ -1,0 +1,153 @@
+{% extends "core/base.html" %}
+{% block title %}Tablero — Logistic{% endblock %}
+{% block content %}
+
+<h1 class="h1">Tablero</h1>
+
+<style>
+/* ==== SOLO LAYOUT (sin cambiar colores) ==== */
+
+/* KPIs: rejilla fluida */
+.kpis{
+  display:grid;
+  gap:12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+.kpi{ display:grid; gap:6px; }
+
+/* Grid de 2 columnas → 1 en móvil */
+.grid-2{
+  display:grid;
+  gap:16px;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+}
+@media (max-width: 920px){
+  .grid-2{ grid-template-columns: 1fr; }
+}
+
+/* Barras “gráfico” */
+.bars{
+  display:flex;
+  gap:10px;
+  align-items:flex-end;
+  min-height:160px;
+}
+.bar{
+  flex:1 1 0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+.bar > span{
+  width:100%;
+  min-height:6px;
+  border-radius:8px 8px 0 0;
+  /* Usa el color actual del texto (no introduce nuevos colores) */
+  background: currentColor;
+}
+.bar label{ font-size:12px; text-align:center; }
+
+/* Tabla responsive (div-table → tarjetas en móvil) */
+.table{ width:100%; }
+.tr{
+  display:grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+}
+.tr > div{ padding:12px; }
+.tr.th{ font-weight:700; }
+
+/* En pantallas pequeñas se convierte en tarjetas */
+@media (max-width: 760px){
+  .tr.th{ display:none; }
+  .tr{
+    grid-template-columns: 1fr;
+  }
+  .tr + .tr{
+    margin-top:10px;      /* separación entre tarjetas */
+  }
+  .tr > div{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+  }
+  .tr > div::before{
+    content: attr(data-label);
+    font-weight:600;
+    opacity:.8;           /* sin definir color nuevo */
+  }
+}
+</style>
+
+<div class="kpis">
+  <div class="kpi"><div class="num">12</div><div class="lbl">Obras activas</div></div>
+  <div class="kpi"><div class="num">340</div><div class="lbl">Equipos/Ítems</div></div>
+  <div class="kpi"><div class="num">58</div><div class="lbl">Bajo stock</div></div>
+  <div class="kpi"><div class="num">21</div><div class="lbl">Tickets abiertos</div></div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Ventas / Movimientos</div>
+    <div class="bars">
+      <div class="bar"><span style="height:140px"></span><label>Confirmados</label></div>
+      <div class="bar"><span style="height:20px"></span><label>Empaquetados</label></div>
+      <div class="bar"><span style="height:60px"></span><label>Devueltos</label></div>
+      <div class="bar"><span style="height:35px"></span><label>Despachados</label></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Stock</div>
+    <ul class="list" style="margin:0;padding-left:18px;">
+      <li>Ítems con bajo stock <b>58</b></li>
+      <li>Categorías <b>10</b></li>
+      <li>Ítems devueltos <b>5</b></li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Sucursales / Bodegas</div>
+  <div class="table">
+    <div class="tr th">
+      <div>Sucursal / Bodega</div><div>Colaboradores</div><div>Ítems</div><div>Órdenes</div>
+    </div>
+
+    <!-- En móvil, cada celda muestra su etiqueta con data-label -->
+    <div class="tr">
+      <div data-label="Sucursal / Bodega">Casa Matriz</div>
+      <div data-label="Colaboradores">34 colaboradores</div>
+      <div data-label="Ítems">140 ítems</div>
+      <div data-label="Órdenes">15 órdenes</div>
+    </div>
+    <div class="tr">
+      <div data-label="Sucursal / Bodega">Bodega Norte</div>
+      <div data-label="Colaboradores">20 colaboradores</div>
+      <div data-label="Ítems">280 ítems</div>
+      <div data-label="Órdenes">20 órdenes</div>
+    </div>
+    <div class="tr">
+      <div data-label="Sucursal / Bodega">Bodega Sur</div>
+      <div data-label="Colaboradores">18 colaboradores</div>
+      <div data-label="Ítems">400 ítems</div>
+      <div data-label="Órdenes">13 órdenes</div>
+    </div>
+    <div class="tr">
+      <div data-label="Sucursal / Bodega">Obra Alto Maipo</div>
+      <div data-label="Colaboradores">42 colaboradores</div>
+      <div data-label="Ítems">300 ítems</div>
+      <div data-label="Órdenes">16 órdenes</div>
+    </div>
+    <div class="tr">
+      <div data-label="Sucursal / Bodega">Obra Ñuñoa</div>
+      <div data-label="Colaboradores">15 colaboradores</div>
+      <div data-label="Ítems">150 ítems</div>
+      <div data-label="Órdenes">10 órdenes</div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

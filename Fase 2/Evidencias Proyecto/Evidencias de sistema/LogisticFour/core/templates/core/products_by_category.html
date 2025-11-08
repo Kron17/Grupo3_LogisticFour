@@ -1,0 +1,67 @@
+{% extends "core/base.html" %}
+
+{% block title %}Productos — {{ categoria_nombre }}{% endblock %}
+
+{% block content %}
+<h1 class="h1">Productos — {{ categoria_nombre }}</h1>
+
+<div class="toolbar">
+  <a class="btn ghost" href="{% url 'categoria-list' %}">Volver a categorías</a>
+  <a class="btn" href="{% url 'product_add' %}">+ Agregar producto</a>
+  <div style="margin-left:12px">
+    <form method="get" style="display:inline">
+      <label for="stock_filter">Filtrar stock:</label>
+      <select name="stock_filter" id="stock_filter" onchange="this.form.submit()">
+        <option value="">Todos</option>
+        <option value="available" {% if request.GET.stock_filter == 'available' %}selected{% endif %}>Disponibles</option>
+        <option value="low" {% if request.GET.stock_filter == 'low' %}selected{% endif %}>Bajo (≤10)</option>
+        <option value="out" {% if request.GET.stock_filter == 'out' %}selected{% endif %}>Sin stock</option>
+      </select>
+    </form>
+  </div>
+</div>
+
+<div class="table">
+  <div class="tr th">
+    <div>Nombre</div>
+    <div>SKU</div>
+    <div>Categoría</div>
+    <div>Stock</div>
+    <div>Acciones</div>
+  </div>
+  {% for p in productos %}
+    {% with s=p.stock_total %}
+    <div class="tr {% if s <= 0 %}out{% elif s <= 10 %}low{% else %}ok{% endif %}">
+      <div>{{ p.nombre }}</div>
+      <div>{{ p.sku }}</div>
+      <div>{% if p.categoria %}{{ p.categoria.nombre }}{% else %}&mdash;{% endif %}</div>
+      <div>
+        {% if s|floatformat:2 != "0.00" %}
+          {% if s <= 10 %}
+            <span class="badge warn" title="{{ p.stock_breakdown }}">{{ s|floatformat:2 }}</span>
+          {% else %}
+            <span class="badge ok" title="{{ p.stock_breakdown }}">{{ s|floatformat:2 }}</span>
+          {% endif %}
+        {% else %}
+          <span class="badge" title="{{ p.stock_breakdown }}">0.00</span>
+        {% endif %}
+      </div>
+      <div><a class="btn ghost" href="{% url 'producto-detail' p.pk %}">Ver</a></div>
+    </div>
+    {% endwith %}
+  {% empty %}
+  <div class="tr"><div colspan="5">No hay productos en esta categoría.</div></div>
+  {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block pagination %}
+  {% if productos.has_other_pages %}
+    <div class="toolbar">
+      {% if productos.has_previous %}<a class="btn ghost" href="?page={{ productos.previous_page_number }}">Anterior</a>{% endif %}
+      <span>Página {{ productos.number }} de {{ productos.paginator.num_pages }}</span>
+      {% if productos.has_next %}<a class="btn ghost" href="?page={{ productos.next_page_number }}">Siguiente</a>{% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}{{ producto.sku }} — Detalle{% endblock %}
+
+{% block content %}
+<style>
+  .wrap { max-width: 1200px; margin-inline:auto }
+  .card-soft { border:1px solid var(--bs-border-color); border-radius:16px; box-shadow:0 1px 0 rgba(0,0,0,.02); background:var(--bs-body-bg) }
+  .metric { border:1px solid var(--bs-border-color); border-radius:14px; padding:1rem 1.25rem; background:var(--bs-body-bg) }
+  .metric .label{ font-size:.825rem; color:var(--bs-secondary-color) }
+  .metric .value{ font-weight:700; font-size: clamp(1.2rem, 1.1rem + .6vw, 1.8rem) }
+  .sku-chip{ background:var(--bs-tertiary-bg); border:1px solid var(--bs-border-color); border-radius:999px; padding:.25rem .6rem; font-size:.85rem }
+  .pill{ display:inline-flex; align-items:center; gap:.35rem; padding:.2rem .55rem; border-radius:999px; background:var(--bs-tertiary-bg); border:1px solid var(--bs-border-color); font-size:.8rem }
+  .table thead th{ position:sticky; top:0; background:var(--bs-body-bg); z-index:1 }
+  .td-num{ text-align:right; white-space:nowrap }
+</style>
+
+<div class="container-fluid py-4">
+  <div class="wrap">
+
+    <!-- Encabezado -->
+    <div class="card-soft mb-3">
+      <div class="p-3 d-flex flex-wrap gap-3 align-items-start justify-content-between">
+        <div>
+          <h3 class="mb-1">{{ producto.nombre }}</h3>
+          <div class="d-flex flex-wrap gap-2 small">
+            <span class="sku-chip">SKU: <strong>{{ producto.sku }}</strong></span>
+            <span class="sku-chip">Marca: <strong>{{ producto.marca|default:"—" }}</strong></span>
+            <span class="sku-chip">Categoría: <strong>{{ producto.categoria|default:"—" }}</strong></span>
+            <span class="sku-chip">Unidad: <strong>{{ producto.unidad_base|default:"—" }}</strong></span>
+            <span class="sku-chip">Impuesto: <strong>{{ producto.tasa_impuesto|default:"—" }}</strong></span>
+            <span class="sku-chip">Estado: <strong>{% if producto.activo %}Activo{% else %}Inactivo{% endif %}</strong></span>
+            <span class="sku-chip">Serializado: <strong>{% if producto.es_serializado %}Sí{% else %}No{% endif %}</strong></span>
+            <span class="sku-chip">Vencimiento: <strong>{% if producto.tiene_vencimiento %}Sí{% else %}No{% endif %}</strong></span>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary" href="{% url 'stock-por-producto' %}?sku={{ producto.sku }}">Ver stock por producto</a>
+          <a class="btn btn-outline-secondary" href="{% url 'products' %}">Volver</a>
+          <a class="btn btn-primary" href="{% url 'product_add' %}">Agregar otro</a>
+          {# Ajusta esta ruta a tu vista de edición si existe #}
+          <a class="btn btn-warning" href="{% url 'producto-update' producto.id %}">Editar</a>
+          <a class="btn btn-xs btn-outline-primary"
+          href="{% url 'etiqueta_producto' pk=producto.pk %}">
+          Etiqueta
+        </a>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Métricas -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-4">
+        <div class="metric h-100">
+          <div class="label">Disponible total</div>
+          <div class="value text-success">{{ totales.total_disponible|default_if_none:0|floatformat:0 }}</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="metric h-100">
+          <div class="label">Neto total</div>
+          <div class="value {% if totales.total_neto|default:0 > 0 %}text-primary{% else %}text-body{% endif %}">
+            {{ totales.total_neto|default_if_none:0|floatformat:0 }}
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="metric h-100">
+          <div class="label">Precio</div>
+          <div class="value">${{ producto.precio|default:0|floatformat:0 }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desglose por ubicación -->
+    <div class="card-soft mb-4">
+      <div class="p-3 border-bottom">
+        <div class="d-flex align-items-center justify-content-between">
+          <strong>Stock por ubicación</strong>
+          <span class="text-secondary small">
+            {% if resumen_sucursales %}{{ resumen_sucursales|length }} registro(s){% else %}Sin registros{% endif %}
+          </span>
+        </div>
+      </div>
+      <div class="p-0">
+        {% if resumen_sucursales %}
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="border-bottom">
+                <tr>
+                  <th style="min-width: 200px;">Sucursal</th>
+                  <th style="min-width: 200px;">Bodega</th>
+                  <th style="min-width: 220px;">Ubicación</th>
+                  <th class="td-num" style="width: 15%;">Disponible</th>
+                  <th class="td-num" style="width: 15%;">Neto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in resumen_sucursales %}
+                <tr>
+                  <td>
+                    {% if r.sucursal_codigo %}
+                      <span class="fw-semibold">{{ r.sucursal_codigo }}</span>
+                      <span class="text-secondary">— {{ r.sucursal_nombre }}</span>
+                    {% else %}<span class="text-secondary">—</span>{% endif %}
+                  </td>
+                  <td>
+                    {% if r.bodega_codigo %}
+                      <span class="fw-semibold">{{ r.bodega_codigo }}</span>
+                      <span class="text-secondary">— {{ r.bodega_nombre }}</span>
+                    {% else %}<span class="text-secondary">—</span>{% endif %}
+                  </td>
+                  <td>
+                    {% if r.sucursal_ubi_codigo or r.sucursal_ubi_nombre or r.bodega_ubi_codigo or r.bodega_ubi_nombre %}
+                      <span class="pill">
+                        {% if r.sucursal_ubi_codigo or r.sucursal_ubi_nombre %}
+                          <span class="fw-semibold">{{ r.sucursal_ubi_codigo|default:r.sucursal_ubi_nombre }}</span>
+                          {% if r.sucursal_ubi_codigo and r.sucursal_ubi_nombre %}
+                            <span class="text-secondary">· {{ r.sucursal_ubi_nombre }}</span>
+                          {% endif %}
+                        {% else %}
+                          <span class="fw-semibold">{{ r.bodega_ubi_codigo|default:r.bodega_ubi_nombre }}</span>
+                          {% if r.bodega_ubi_codigo and r.bodega_ubi_nombre %}
+                            <span class="text-secondary">· {{ r.bodega_ubi_nombre }}</span>
+                          {% endif %}
+                        {% endif %}
+                      </span>
+                    {% else %}<span class="text-secondary">—</span>{% endif %}
+                  </td>
+                  <td class="td-num">{{ r.total_disponible|default:0|floatformat:0 }}</td>
+                  <td class="td-num fw-semibold">{{ r.total_neto|default:0|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="p-4 text-secondary">No hay stock cargado aún.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Datos del producto -->
+    <div class="card-soft">
+      <div class="p-3 border-bottom"><strong>Datos del producto</strong></div>
+      <div class="p-3">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="text-secondary small">SKU</div>
+            <div class="fw-semibold">{{ producto.sku }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-secondary small">Nombre</div>
+            <div class="fw-semibold">{{ producto.nombre }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-secondary small">Precio</div>
+            <div class="fw-semibold">${{ producto.precio|floatformat:0 }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-secondary small">Marca</div>
+            <div class="fw-semibold">{{ producto.marca|default:"—" }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-secondary small">Categoría</div>
+            <div class="fw-semibold">{{ producto.categoria|default:"—" }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-secondary small">Unidad base</div>
+            <div class="fw-semibold">{{ producto.unidad_base|default:"—" }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-secondary small">Impuesto</div>
+            <div class="fw-semibold">{{ producto.tasa_impuesto|default:"—" }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-secondary small">Estado</div>
+            <div class="fw-semibold">{% if producto.activo %}Activo{% else %}Inactivo{% endif %}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-secondary small">Serializado / Vencimiento</div>
+            <div class="fw-semibold">
+              {% if producto.es_serializado %}Serializado{% else %}No serializado{% endif %} /
+              {% if producto.tiene_vencimiento %}Con vencimiento{% else %}Sin vencimiento{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{# quita estas líneas si Bootstrap ya está en base.html #}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

@@ -1,0 +1,15 @@
+<!-- templates/core/partials/_modal_shell.html -->
+<dialog id="{{ id|default:'modal' }}" style="padding:0;border:none;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2)">
+  <form method="dialog" style="position:absolute;right:8px;top:8px">
+    <button class="btn ghost" aria-label="Cerrar">✕</button>
+  </form>
+  <div style="padding:16px;min-width:320px;max-width:560px">
+    {% block modal_body %}{% endblock %}
+  </div>
+</dialog>
+<script>
+(function(){
+  const d = document.getElementById('{{ id|default:"modal" }}');
+  if(d && !d.open) d.showModal();
+})();
+</script>

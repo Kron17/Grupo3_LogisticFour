@@ -1,0 +1,14 @@
+<!-- templates/core/partials/confirm_modal.html -->
+{% extends "core/partials/_modal_shell.html" %}
+{% block modal_body %}
+  <h3 class="h1" style="margin:0 0 10px">Confirmar eliminación</h3>
+  <form method="post" class="form" style="display:grid;gap:10px">
+    {% csrf_token %}
+    <p>¿Seguro que quieres eliminar <strong>{{ object }}</strong>?</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn ghost" formmethod="dialog">Cancelar</button>
+      <button type="submit" class="btn">Eliminar</button>
+    </div>
+  </form>
+{% endblock %}
+{% with id="modal-confirm" %}{% endwith %}

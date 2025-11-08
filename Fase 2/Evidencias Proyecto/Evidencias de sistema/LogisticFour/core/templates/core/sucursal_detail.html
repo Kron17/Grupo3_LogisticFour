@@ -1,0 +1,30 @@
+{% extends "core/base.html" %}
+
+{% block title %}Sucursal — Detalle{% endblock %}
+
+{% block content %}
+  <h1>Detalle Sucursal</h1>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:start">
+      <div style="font-weight:700;color:var(--muted)">Código</div>
+      <div>{{ object.codigo }}</div>
+      <div style="font-weight:700;color:var(--muted)">Nombre</div>
+      <div>{{ object.nombre }}</div>
+      <div style="font-weight:700;color:var(--muted)">Ciudad</div>
+      <div>{{ object.ciudad }}</div>
+      <div style="font-weight:700;color:var(--muted)">Dirección</div>
+      <div>{{ object.direccion }}</div>
+      <div style="font-weight:700;color:var(--muted)">Activo</div>
+      <div>{% if object.activo %}<span class="badge ok">Sí</span>{% else %}<span class="badge warn">No</span>{% endif %}</div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;justify-content:flex-end">
+  {% url 'sucursal-edit' object.pk as edit_url %}
+  {% url 'sucursal-delete' object.pk as delete_url %}
+  {% with edit_url=edit_url delete_url=delete_url %}
+        <a class="btn btn-secondary" href="{% url 'sucursal-list' %}">Volver</a>
+        {% include 'core/_actions.html' with can_edit=(user.is_superuser or (user.perfil and user.perfil.rol == 'ADMIN')) can_delete=(user.is_superuser or (user.perfil and user.perfil.rol == 'ADMIN')) %}
+      {% endwith %}
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "core/base.html" %}
+{% block title %}Etiqueta {{ producto.sku }}{% endblock %}
+
+{% block content %}
+<style>
+  .label-wrap{
+    max-width: 360px; margin:auto; background:#fff; border:1px solid #e5e7eb;
+    border-radius:12px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,.06);
+  }
+  .sku { font:600 18px/1.1 ui-sans-serif,system-ui; color:#0f172a; letter-spacing:.5px }
+  .name{ color:#475569; margin:.25rem 0 .75rem }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:center }
+  .qr, .bar{ background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:8px; text-align:center }
+  .meta{ font-size:12px; color:#64748b; margin-top:.5rem }
+  @media print{
+    body{ background:#fff }
+    .label-wrap{ box-shadow:none; border:0; margin:0; max-width:none; width:62mm; }
+  }
+</style>
+
+<div class="label-wrap">
+  <div class="sku">SKU: {{ producto.sku }}</div>
+  <div class="name">{{ producto.nombre }}</div>
+
+  <div class="grid">
+    <div class="qr">
+      <img src="{{ qr }}" alt="QR {{ producto.sku }}" width="220" height="220" loading="eager">
+      <div class="meta">Escanéame para abrir</div>
+    </div>
+
+    <div class="bar">
+      <img src="{{ barcode }}" alt="Code128 {{ producto.sku }}" loading="eager">
+      <div class="meta">CODE128 / {{ producto.sku }}</div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px; display:flex; gap:8px">
+    <a class="btn btn-sm btn-primary" href="{{ qr }}" download="QR_{{ producto.sku }}.png">Descargar QR</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ barcode }}" download="BAR_{{ producto.sku }}.png">Descargar Barra</a>
+    <button class="btn btn-sm btn-dark" onclick="window.print()">Imprimir</button>
+  </div>
+</div>
+{% endblock %}

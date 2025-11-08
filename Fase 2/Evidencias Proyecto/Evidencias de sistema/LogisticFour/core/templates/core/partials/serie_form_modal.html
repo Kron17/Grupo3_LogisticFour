@@ -1,0 +1,61 @@
+{% extends "core/partials/_modal_shell.html" %}
+{# Modal para Crear/Editar SerieProducto #}
+{% block modal_body %}
+<div class="modal-header">
+  <h5 class="modal-title">
+    {% if object and object.pk %}Editar serie{% else %}Nueva serie{% endif %}
+  </h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+</div>
+
+<form method="post" action="">
+  {% csrf_token %}
+
+  <div class="modal-body">
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger small mb-3">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Producto <span class="text-danger">*</span></label>
+        {{ form.producto }}
+        {% if form.producto.errors %}
+          <div class="invalid-feedback d-block">{{ form.producto.errors|join:", " }}</div>
+        {% endif %}
+        <div class="form-text">
+          Selecciona primero el producto; el listado de <b>lotes</b> se limitará a ese producto.
+        </div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Número de serie <span class="text-danger">*</span></label>
+        {{ form.numero_serie }}
+        {% if form.numero_serie.errors %}
+          <div class="invalid-feedback d-block">{{ form.numero_serie.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Lote (opcional)</label>
+        {{ form.lote }}
+        {% if form.lote.errors %}
+          <div class="invalid-feedback d-block">{{ form.lote.errors|join:", " }}</div>
+        {% endif %}
+        <div class="form-text">
+          Si el lote no aparece, verifica que pertenezca al mismo producto.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+    <button type="submit" class="btn btn-primary">
+      {% if object and object.pk %}Guardar cambios{% else %}Crear serie{% endif %}
+    </button>
+  </div>
+</form>
+{% endblock %}

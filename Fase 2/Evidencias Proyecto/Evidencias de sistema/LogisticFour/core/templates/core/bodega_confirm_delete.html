@@ -1,0 +1,15 @@
+{% extends "core/base.html" %}
+
+{% block title %}Eliminar Bodega{% endblock %}
+
+{% block content %}
+<h1>Eliminar Bodega</h1>
+<p>¿Estás seguro que deseas eliminar la bodega "{{ object }}"?</p>
+
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-danger" type="submit">Eliminar</button>
+  <a class="btn btn-secondary" href="{% url 'bodega-list' %}">Cancelar</a>
+</form>
+
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "core/partials/_modal_shell.html" %}
+{% block modal_body %}
+  <h3 class="h1" style="margin:0 0 10px">Nueva Marca</h3>
+  <form method="post" class="form" style="display:grid;gap:10px">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="field">
+      <label>Nombre</label>
+      {{ form.nombre }}
+      {% for e in form.nombre.errors %}<small style="color:#c2410c">{{ e }}</small>{% endfor %}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button type="submit" class="btn">Guardar</button>
+    </div>
+  </form>
+{% endblock %}

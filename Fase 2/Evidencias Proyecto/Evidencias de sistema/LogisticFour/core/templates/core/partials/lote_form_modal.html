@@ -1,0 +1,64 @@
+{% extends "core/partials/_modal_shell.html" %}
+{% block modal_body %}
+{# Modal para Crear/Editar LoteProducto #}
+<div class="modal-header">
+  <h5 class="modal-title">
+    {% if object and object.pk %}Editar lote{% else %}Nuevo lote{% endif %}
+  </h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+</div>
+
+<form method="post" action="">
+  {% csrf_token %}
+
+
+  <div class="modal-body">
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger small mb-3">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Producto <span class="text-danger">*</span></label>
+        {{ form.producto }}
+        {% if form.producto.errors %}
+          <div class="invalid-feedback d-block">{{ form.producto.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Código de lote <span class="text-danger">*</span></label>
+        {{ form.codigo_lote }}
+        {% if form.codigo_lote.errors %}
+          <div class="invalid-feedback d-block">{{ form.codigo_lote.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Fecha de fabricación</label>
+        {{ form.fecha_fabricacion }}
+        {% if form.fecha_fabricacion.errors %}
+          <div class="invalid-feedback d-block">{{ form.fecha_fabricacion.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Fecha de vencimiento</label>
+        {{ form.fecha_vencimiento }}
+        {% if form.fecha_vencimiento.errors %}
+          <div class="invalid-feedback d-block">{{ form.fecha_vencimiento.errors|join:", " }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+    <button type="submit" class="btn btn-primary">
+      {% if object and object.pk %}Guardar cambios{% else %}Crear lote{% endif %}
+    </button>
+  </div>
+</form>
+{% endblock %}

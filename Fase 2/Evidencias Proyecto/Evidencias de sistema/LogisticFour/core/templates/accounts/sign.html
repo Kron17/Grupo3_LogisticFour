@@ -1,0 +1,217 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Crear usuario{% endblock %}
+
+{% block content %}
+<style>
+  /* ===== Animaciones ===== */
+  @keyframes fadeInUp { 0%{opacity:0;transform:translateY(40px)} 100%{opacity:1;transform:translateY(0)} }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+  /* ===== Layout ===== */
+  .user-wrapper{min-height:85vh;display:flex;justify-content:center;align-items:flex-start;padding:2rem 1rem;animation:fadeInUp .7s ease-out}
+  .user-card{background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:2rem;max-width:980px;width:100%}
+  .user-header{display:flex;gap:.75rem;align-items:center;margin-bottom:1.25rem}
+  .user-icon{font-size:1.9rem;color:#0d6efd;animation:pulse 2s infinite}
+  .user-title{margin:0;font-weight:700;color:#0d6efd}
+  .user-sub{color:#6c757d;margin-top:-.25rem}
+
+  /* ===== Secciones ===== */
+  .section-title{font-weight:600;color:#212529;margin:1.25rem 0 .75rem}
+  .section-divider{height:1px;background:linear-gradient(90deg,#e9ecef,#dee2e6,#e9ecef);margin:1rem 0}
+
+  /* ===== Form ===== */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media (max-width: 768px){ .grid-2{grid-template-columns:1fr} }
+
+  .field label{font-weight:600;margin-bottom:.35rem;display:block}
+  .form-control, .field input, .field select{
+    width:100%;border:1px solid #ced4da;border-radius:.65rem;padding:.65rem .9rem;transition:.2s;background:#fff
+  }
+  .form-control:focus, .field input:focus, .field select:focus{
+    outline:none;border-color:#0d6efd;box-shadow:0 0 0 .2rem rgba(13,110,253,.15)
+  }
+  .is-invalid{border-color:#dc3545!important;box-shadow:0 0 0 .2rem rgba(220,53,69,.15)!important}
+
+  .help-text{color:#6c757d;font-size:.9rem}
+  .text-danger.small{margin-top:.35rem}
+
+  /* Contraseña – addons */
+  .password-group{position:relative}
+  .toggle-pass{
+    position:absolute;right:.5rem;top:50%;transform:translateY(-50%);
+    border:none;background:transparent;cursor:pointer;padding:.3rem .45rem;color:#6c757d
+  }
+  .toggle-pass:hover{color:#0d6efd}
+
+  .strength{
+    height:8px;border-radius:999px;background:#e9ecef;overflow:hidden;margin-top:.5rem
+  }
+  .strength-bar{
+    height:100%;width:0%;background:#dc3545;transition:width .3s ease, background .3s ease;border-radius:999px
+  }
+
+  /* ===== Toolbar ===== */
+  .toolbar{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.25rem}
+  .btn-primary{
+    background:#0d6efd;border:none;border-radius:.65rem;padding:.65rem 1.1rem;font-weight:600;
+    transition:.25s;box-shadow:0 6px 16px rgba(13,110,253,.25)
+  }
+  .btn-primary:hover{background:#0b5ed7;transform:translateY(-1px);box-shadow:0 10px 22px rgba(13,110,253,.35)}
+  .btn-ghost{
+    background:transparent;border:1px solid #ced4da;border-radius:.65rem;padding:.65rem 1.1rem;font-weight:600;color:#495057;transition:.2s
+  }
+  .btn-ghost:hover{border-color:#adb5bd;background:#f8f9fa}
+
+  /* Mensajes */
+  .alert{border-radius:.65rem}
+</style>
+
+<div class="user-wrapper">
+  <div class="user-card">
+    <div class="user-header">
+      <div class="user-icon"><i class="bi bi-person-plus-fill"></i></div>
+      <div>
+        <h3 class="user-title m-0">Crear usuario</h3>
+        <div class="user-sub">Completa los datos de acceso y el perfil</div>
+      </div>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-3">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- DATOS DE ACCESO -->
+      <h6 class="section-title"><i class="bi bi-shield-lock me-1"></i> Datos de acceso</h6>
+      <div class="grid-2">
+        <div class="field">
+          <label for="{{ user_form.username.id_for_label }}">Usuario</label>
+          {{ user_form.username|add_class:"form-control"|attr:"placeholder:usuario" }}
+          {% for e in user_form.username.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label for="{{ user_form.email.id_for_label }}">Email</label>
+          {{ user_form.email|add_class:"form-control"|attr:"placeholder:correo@dominio.cl" }}
+          {% for e in user_form.email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label for="{{ user_form.first_name.id_for_label }}">Nombre</label>
+          {{ user_form.first_name|add_class:"form-control"|attr:"placeholder:Nombre" }}
+          {% for e in user_form.first_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label for="{{ user_form.last_name.id_for_label }}">Apellido</label>
+          {{ user_form.last_name|add_class:"form-control"|attr:"placeholder:Apellido" }}
+          {% for e in user_form.last_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field password-group">
+          <label for="{{ user_form.password1.id_for_label }}">Contraseña</label>
+          {{ user_form.password1|add_class:"form-control"|attr:"placeholder:Nueva contraseña"|attr:"autocomplete:new-password" }}
+          <button class="toggle-pass" type="button" data-target-id="{{ user_form.password1.id_for_label }}" aria-label="Mostrar/Ocultar">
+            <i class="bi bi-eye"></i>
+          </button>
+          {% if user_form.password1.help_text %}
+            <div class="help-text">{{ user_form.password1.help_text|safe }}</div>
+          {% endif %}
+          <div class="strength"><div id="strengthBar" class="strength-bar"></div></div>
+          {% for e in user_form.password1.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field password-group">
+          <label for="{{ user_form.password2.id_for_label }}">Confirmar contraseña</label>
+          {{ user_form.password2|add_class:"form-control"|attr:"placeholder:Repite la contraseña"|attr:"autocomplete:new-password" }}
+          <button class="toggle-pass" type="button" data-target-id="{{ user_form.password2.id_for_label }}" aria-label="Mostrar/Ocultar">
+            <i class="bi bi-eye"></i>
+          </button>
+          {% for e in user_form.password2.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- PERFIL -->
+      <h6 class="section-title"><i class="bi bi-person-gear me-1"></i> Perfil</h6>
+      <div class="grid-2">
+        <div class="field">
+          <label for="{{ perfil_form.telefono.id_for_label }}">Teléfono</label>
+          {{ perfil_form.telefono|add_class:"form-control"|attr:"placeholder:+56 9 1234 5678" }}
+          {% for e in perfil_form.telefono.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label for="{{ perfil_form.rol.id_for_label }}">Rol</label>
+          {{ perfil_form.rol|add_class:"form-control" }}
+          {% for e in perfil_form.rol.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check2-circle me-1"></i> Guardar
+        </button>
+        <a href="{% url 'usuario-list' %}" class="btn btn-ghost">
+          <i class="bi bi-x-circle me-1"></i> Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Utilidades para añadir clases/attrs si no usas django-widget-tweaks
+  // Si ya usas 'widget_tweaks', ignora esto.
+
+  // Toggler de contraseña
+  document.querySelectorAll('.toggle-pass').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.getAttribute('data-target-id');
+      const input = document.getElementById(id);
+      if(!input) return;
+      const icon = btn.querySelector('i');
+      if(input.type === 'password'){ input.type='text'; icon.className='bi bi-eye-slash'; }
+      else { input.type='password'; icon.className='bi bi-eye'; }
+    })
+  });
+
+  // Indicador simple de fuerza (longitud + variedad)
+  const pass1 = document.getElementById('{{ user_form.password1.id_for_label }}');
+  const bar = document.getElementById('strengthBar');
+  if(pass1 && bar){
+    pass1.addEventListener('input', ()=>{
+      const v = pass1.value || '';
+      let score = 0;
+      if(v.length >= 8) score++;
+      if(/[A-Z]/.test(v)) score++;
+      if(/[a-z]/.test(v)) score++;
+      if(/[0-9]/.test(v)) score++;
+      if(/[^A-Za-z0-9]/.test(v)) score++;
+      const pct = Math.min(100, score*20);
+      bar.style.width = pct + '%';
+      bar.style.background = pct < 40 ? '#dc3545' : (pct < 70 ? '#fd7e14' : '#198754');
+    });
+  }
+
+  // Marcar inputs con errores como invalid (si hay errores del servidor)
+  {% if user_form.errors or perfil_form.errors %}
+    const invalidNames = [
+      {% for field in user_form %}{% if field.errors %}"{{ field.id_for_label }}",{% endif %}{% endfor %}
+      {% for field in perfil_form %}{% if field.errors %}"{{ field.id_for_label }}",{% endif %}{% endfor %}
+    ];
+    invalidNames.forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.classList.add('is-invalid');
+    });
+  {% endif %}
+</script>
+{% endblock %}

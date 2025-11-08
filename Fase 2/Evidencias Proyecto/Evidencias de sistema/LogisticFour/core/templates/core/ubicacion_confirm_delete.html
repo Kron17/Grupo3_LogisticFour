@@ -1,0 +1,14 @@
+{# templates/core/ubicacion_confirm_delete.html #}
+{% extends "core/base.html" %}
+{% block title %}Confirmar eliminación{% endblock %}
+{% block content %}
+<h1 class="h1">Eliminar</h1>
+<form method="post" class="form">
+  {% csrf_token %}
+  <p>¿Seguro que quieres eliminar <strong>{{ object }}</strong>?</p>
+  <div style="display:flex; gap:8px">
+    <button class="btn">Eliminar</button>
+    <a class="btn ghost" href="{{ request.META.HTTP_REFERER|default_if_none:'/' }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

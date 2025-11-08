@@ -1,0 +1,284 @@
+{# core/templates/core/product_add_combined.html #}
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Agregar producto + Stock — Logistic{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f9fafb; --card:#fff;
+    --shadow:0 8px 24px rgba(2,6,23,.05); --ring:#3b82f6; --radius:12px;
+  }
+
+  .page-wrap { max-width:1080px; margin-inline:auto; padding:16px }
+  .cardx { background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); overflow:hidden }
+
+  .hdr { position:sticky; top:0; z-index:3; background:#fff; padding:16px 20px; border-bottom:1px solid var(--line);
+         display:flex; align-items:center; justify-content:space-between; gap:12px }
+  .hdr h3 { margin:0; font-weight:800; letter-spacing:.2px }
+  .badge-subtle { color:var(--muted); font-size:.9rem }
+
+  .body { padding:18px 20px; display:grid; grid-template-columns:1fr 1fr; gap:18px }
+  @media (max-width:992px){ .body{ grid-template-columns:1fr } }
+
+  .field { display:grid; gap:8px; animation:fadeIn .35s ease both }
+  .field label { font-size:.9rem; color:var(--muted) }
+
+  .form-control, .form-select { height:44px; padding:.6rem .9rem; font-size:1rem; border-radius:var(--radius);
+    border:1px solid var(--line); background:#fff; transition:border-color .2s, box-shadow .2s }
+  .form-control:focus, .form-select:focus { outline:none; border-color:var(--ring); box-shadow:0 0 0 3px rgba(59,130,246,.15) }
+
+  /* select uniforme */
+  .form-select {
+    appearance:none; -moz-appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg fill='none' stroke='%2364758b' stroke-width='2' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat; background-position:right .8rem center; background-size:1rem;
+  }
+  select.form-select::-ms-expand{ display:none; }
+
+  .input-group { display:flex }
+  .input-group > .form-control { border-top-right-radius:0; border-bottom-right-radius:0 }
+  .input-group .btn { height:44px; border-left:0; border-top-left-radius:0; border-bottom-left-radius:0; background:#f8fafc; border:1px solid var(--line) }
+  .input-group .btn:hover{ background:#eef2ff }
+  .help{ display:block; min-height:20px; color:var(--muted); font-size:.8rem }
+
+  .opts { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:18px; align-items:center }
+  .form-check-input{ width:18px; height:18px; accent-color:var(--ring) }
+  .form-check-label{ margin-left:.3rem; color:var(--ink) }
+
+  .section-title{ grid-column:1/-1; display:flex; align-items:center; gap:8px; font-weight:700; color:var(--ink); margin-top:6px }
+  .section-title::before{ content:""; width:10px; height:10px; border-radius:3px; background:var(--ring) }
+  .section-card{ grid-column:1/-1; border:1px dashed var(--line); border-radius:14px; padding:14px; background:linear-gradient(180deg,#fff,#fafafa) }
+
+  .errorlist{ margin:.25rem 0 0; padding-left:18px; color:#b91c1c; font-size:.86rem }
+  .is-invalid{ border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,.12) !important }
+
+  .slide{ overflow:hidden; transition:max-height .25s ease, opacity .2s ease }
+  .slide.hide{ max-height:0; opacity:0 }
+  .slide.show{ max-height:120px; opacity:1 }
+
+  .foot{ position:sticky; bottom:0; background:#ffffffcc; backdrop-filter:blur(6px); padding:12px 20px;
+         border-top:1px solid var(--line); display:flex; gap:10px; justify-content:flex-end }
+  .btn{ border-radius:12px; padding:.65rem 1rem; transition:transform .06s ease, box-shadow .2s ease }
+  .btn:active{ transform:translateY(1px) }
+  .btn-primary{ background:#2563eb; border-color:#2563eb; color:#fff; box-shadow:0 8px 20px rgba(37,99,235,.25) }
+  .btn-outline-secondary{ background:#fff; color:#374151; border:1px solid var(--line) }
+
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none} }
+</style>
+
+<div class="page-wrap">
+  <form method="post" class="cardx" novalidate>
+    {% csrf_token %}
+
+    <div class="hdr">
+      <h3>Agregar producto y stock inicial</h3>
+      <span class="badge-subtle">Un solo paso • Sin sucursal ni ubicación</span>
+    </div>
+
+    <div class="body">
+      {# Errores globales #}
+      {% if pform.errors or sform.errors %}
+        <div class="errors-global alert alert-danger mb-0" style="grid-column:1/-1">
+          <strong>Revisa los campos marcados:</strong>
+          <ul class="mb-0">
+            {% for name, errs in pform.errors.items %}{% for e in errs %}
+              <li><b>{{ name|capfirst }}:</b> {{ e }}</li>
+            {% endfor %}{% endfor %}
+            {% for name, errs in sform.errors.items %}{% for e in errs %}
+              <li><b>{{ name|capfirst }}:</b> {{ e }}</li>
+            {% endfor %}{% endfor %}
+            {% for e in pform.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+            {% for e in sform.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <!-- Nombre -->
+      <div class="field">
+        <label for="{{ pform.nombre.id_for_label }}">Nombre</label>
+        {{ pform.nombre }}
+        <small class="help">&nbsp;</small>  {# espacio para alinear con ayuda de SKU #}
+        {{ pform.nombre.errors }}
+      </div>
+
+      <!-- SKU + scanner -->
+      <div class="field">
+        <label for="{{ pform.sku.id_for_label }}">Código / SKU</label>
+        <div class="input-group">
+          {{ pform.sku }}
+          <button type="button" id="btnScanSku" class="btn btn-outline-secondary" title="Escanear SKU" aria-label="Escanear SKU">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </button>
+        </div>
+        <small class="help">Usa el ícono para abrir el lector.</small>
+        {{ pform.sku.errors }}
+      </div>
+
+      <!-- Precio -->
+      <div class="field">
+        <label for="{{ pform.precio.id_for_label }}">Precio</label>
+        {{ pform.precio }}
+        <small class="help">&nbsp;</small>
+        {{ pform.precio.errors }}
+      </div>
+
+      <!-- Marca -->
+      <div class="field">
+        <label for="{{ pform.marca.id_for_label }}">Marca</label>
+        {{ pform.marca }}
+        <small class="help">&nbsp;</small>
+        {{ pform.marca.errors }}
+      </div>
+
+      <!-- Categoría -->
+      <div class="field">
+        <label for="{{ pform.categoria.id_for_label }}">Categoría</label>
+        {{ pform.categoria }}
+        <small class="help">&nbsp;</small>
+        {{ pform.categoria.errors }}
+      </div>
+
+      <!-- Unidad base -->
+      <div class="field">
+        <label for="{{ pform.unidad_base.id_for_label }}">Unidad base</label>
+        {{ pform.unidad_base }}
+        <small class="help">&nbsp;</small>
+        {{ pform.unidad_base.errors }}
+      </div>
+
+      <!-- Tasa de impuesto -->
+      <div class="field">
+        <label for="{{ pform.tasa_impuesto.id_for_label }}">Tasa de impuesto</label>
+        {{ pform.tasa_impuesto }}
+        <small class="help">&nbsp;</small>
+        {{ pform.tasa_impuesto.errors }}
+      </div>
+
+      <!-- Opciones -->
+      <div class="opts">
+        <label class="form-check">
+          {{ pform.activo }} <span class="form-check-label">Activo</span>
+        </label>
+        <label class="form-check">
+          {{ pform.es_serializado }} <span class="form-check-label">Serializado</span>
+        </label>
+        <label class="form-check">
+          {{ pform.tiene_vencimiento }} <span class="form-check-label">Con vencimiento</span>
+        </label>
+      </div>
+
+      <!-- Asignación en bodega -->
+      <div class="section-title">Asignación inicial en bodega</div>
+      <div class="section-card">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <div class="field">
+              <label for="{{ sform.bodega.id_for_label }}">Bodega destino</label>
+              {{ sform.bodega }}
+              {{ sform.bodega.errors }}
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="field">
+              <label for="{{ sform.cantidad_inicial.id_for_label }}">Cantidad inicial</label>
+              {{ sform.cantidad_inicial }}
+              {{ sform.cantidad_inicial.errors }}
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="field">
+              <label for="{{ sform.costo_unitario.id_for_label }}">Costo unitario (opcional)</label>
+              {{ sform.costo_unitario }}
+              {{ sform.costo_unitario.errors }}
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="field">
+              <label for="{{ sform.lote.id_for_label }}">Lote (opcional)</label>
+              {{ sform.lote }}
+              {{ sform.lote.errors }}
+            </div>
+          </div>
+          <div class="col-12">
+            <div id="row_fecha_vto" class="field slide hide">
+              <label for="{{ sform.fecha_vencimiento.id_for_label }}">Fecha de vencimiento</label>
+              {{ sform.fecha_vencimiento }}
+              {{ sform.fecha_vencimiento.errors }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <a class="btn btn-outline-secondary" href="{% url 'products' %}">Cancelar</a>
+      <button class="btn btn-primary" id="btnSubmit" type="submit">Guardar producto + stock</button>
+    </div>
+  </form>
+</div>
+
+<script src="{% static 'core/js/barcode_scanner.js' %}"></script>
+<script>
+  // Escáner SKU
+  (function () {
+    const btn = document.getElementById('btnScanSku');
+    const skuInput = document.getElementById('{{ pform.sku.id_for_label }}') || document.getElementById('id_sku');
+    if (!btn || !skuInput) return;
+    btn.addEventListener('click', () => {
+      if (!window.BarcodeScanner) { alert('No se pudo cargar el lector.'); return; }
+      BarcodeScanner.open({
+        title: 'Escanear SKU', continuous: false, preferFacing: 'environment',
+        onScan: (code) => {
+          skuInput.value = code;
+          skuInput.dispatchEvent(new Event('input', { bubbles: true }));
+          skuInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    });
+  })();
+
+  // Slide vencimiento
+  (function(){
+    const chk = document.getElementById('{{ pform.tiene_vencimiento.id_for_label }}') || document.getElementById('id_tiene_vencimiento');
+    const row = document.getElementById('row_fecha_vto');
+    const input = row ? row.querySelector('input') : null;
+    function sync(){
+      const on = !!(chk && chk.checked);
+      if(!row) return;
+      row.classList.toggle('show', on);
+      row.classList.toggle('hide', !on);
+      if(input){ input.disabled = !on; if(!on) input.value = ""; }
+    }
+    if(chk){ chk.addEventListener('change', sync); sync(); }
+  })();
+
+  // Marcar inputs con error
+  (function(){
+    document.querySelectorAll('ul.errorlist').forEach(function(ul){
+      const control = ul.previousElementSibling; // normalmente input/select
+      if(control && (control.classList.contains('form-control') || control.classList.contains('form-select'))){
+        control.classList.add('is-invalid');
+      }else{
+        const fromGroup = ul.parentElement.querySelector('.form-control, .form-select');
+        if(fromGroup){ fromGroup.classList.add('is-invalid'); }
+      }
+    });
+  })();
+
+  // Feedback de envío (opcional)
+  (function(){
+    const btn = document.getElementById('btnSubmit');
+    const form = btn?.closest('form');
+    if(!btn || !form) return;
+    form.addEventListener('submit', () => {
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.dataset.old = old;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando…';
+      setTimeout(()=>{ btn.disabled=false; btn.textContent=old; }, 6000);
+    });
+  })();
+</script>
+{% endblock %}

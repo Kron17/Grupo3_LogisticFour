@@ -1,0 +1,217 @@
+{% extends "core/base.html" %}
+{% block title %}Formulario Sucursal{% endblock %}
+
+{% block content %}
+<style>
+/* ===== Estilos específicos del formulario de Sucursal ===== */
+.form-shell{
+  background:#fff; border:1px solid var(--line, #e5e7eb);
+  border-radius:14px; overflow:hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,.04);
+}
+.form-head{
+  position:sticky; top:0; z-index:10;
+  background:linear-gradient(180deg,#fff 0%, #fafafa 100%);
+  border-bottom:1px solid var(--line, #e5e7eb);
+  padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.form-head h1{ margin:0; font-weight:800; letter-spacing:.2px; font-size:20px }
+
+.form-body{ padding:16px; display:grid; gap:14px }
+.form-grid{
+  display:grid; gap:12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 760px){
+  .form-grid{ grid-template-columns: 1fr; }
+}
+
+.field{
+  display:grid; gap:6px; animation:fadeIn .35s ease both;
+}
+.field label{ font-size:12px; color:#6b7280 }
+.field .help{ font-size:12px; color:#9aa3af }
+.field .err{ font-size:12px; color:#b91c1c }
+.field input[type="text"]{
+  padding:10px 12px; border:1px solid var(--line, #e5e7eb);
+  border-radius:10px; background:#fafafa; outline:none;
+  transition:border-color .2s ease, background .2s ease, transform .1s ease;
+}
+.field input[type="text"]:focus{
+  border-color:#111; background:#fff; transform:translateY(-1px);
+}
+.field.invalid input[type="text"]{
+  border-color:#ef4444; background:#fffafa;
+}
+
+/* Switch Activo */
+.switch{
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
+  border:1px dashed var(--line, #e5e7eb); border-radius:12px; background:#fcfcfc;
+}
+.switch label{ margin:0; font-weight:600 }
+.switch .hint{ font-size:12px; color:#6b7280 }
+
+/* Barra acciones inferior */
+.form-actions{
+  position:sticky; bottom:0; z-index:10;
+  padding:10px; background:rgba(255,255,255,.9);
+  border-top:1px solid var(--line, #e5e7eb);
+  display:flex; gap:8px; justify-content:flex-end; backdrop-filter:saturate(1.2) blur(4px);
+}
+
+/* Botones */
+.btnx{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; text-decoration:none; border:1px solid transparent; cursor:pointer }
+.btnx.primary{ background:#111; color:#fff }
+.btnx.ghost{ background:#fff; color:#111; border-color:var(--line, #e5e7eb) }
+.btnx:disabled{ opacity:.6; cursor:not-allowed }
+
+/* Animación general */
+@keyframes fadeIn{
+  from{ opacity:0; transform:translateY(4px) }
+  to{ opacity:1; transform:none }
+}
+
+/* Contador de caracteres */
+.counter{ font-size:12px; color:#6b7280; justify-self:end }
+.counter.too-long{ color:#b91c1c; font-weight:600 }
+
+.breadcrumb{
+  margin-bottom:10px; font-size:13px; color:#6b7280;
+}
+.breadcrumb a{ color:inherit; text-decoration:none }
+.breadcrumb a:hover{ text-decoration:underline }
+</style>
+
+<!-- Migas de pan (opcional) -->
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <a href="{% url 'dashboard' %}">Inicio</a> / <a href="{% url 'sucursal-list' %}">Sucursales</a> / 
+  {% if object %}Editar{% else %}Crear{% endif %}
+</nav>
+
+<div class="form-shell">
+  <div class="form-head">
+    <h1>{% if object %}Editar Sucursal{% else %}Crear Sucursal{% endif %}</h1>
+    <!-- Estado rápido -->
+    {% if object %}
+      {% if object.activo %}
+        <span class="badge ok">Activa</span>
+      {% else %}
+        <span class="badge no">Inactiva</span>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Errores generales -->
+    {% if form.non_field_errors %}
+      <div class="form-body">
+        <div class="field invalid">
+          <div class="err">{{ form.non_field_errors }}</div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="form-body">
+      <div class="form-grid">
+        <!-- Código -->
+        <div class="field {% if form.codigo.errors %}invalid{% endif %}">
+          <label for="{{ form.codigo.id_for_label }}">Código</label>
+          {{ form.codigo }}
+          <div class="help">
+            {{ form.codigo.help_text }}
+          </div>
+          <div class="counter" id="codigoCounter">0/20</div>
+          {% for e in form.codigo.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Nombre -->
+        <div class="field {% if form.nombre.errors %}invalid{% endif %}">
+          <label for="{{ form.nombre.id_for_label }}">Nombre</label>
+          {{ form.nombre }}
+          {% for e in form.nombre.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Dirección -->
+        <div class="field {% if form.direccion.errors %}invalid{% endif %}">
+          <label for="{{ form.direccion.id_for_label }}">Dirección</label>
+          {{ form.direccion }}
+          {% for e in form.direccion.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Ciudad -->
+        <div class="field {% if form.ciudad.errors %}invalid{% endif %}">
+          <label for="{{ form.ciudad.id_for_label }}">Ciudad</label>
+          {{ form.ciudad }}
+          {% for e in form.ciudad.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Región -->
+        <div class="field {% if form.region.errors %}invalid{% endif %}">
+          <label for="{{ form.region.id_for_label }}">Región / Estado</label>
+          {{ form.region }}
+          {% for e in form.region.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- País -->
+        <div class="field {% if form.pais.errors %}invalid{% endif %}">
+          <label for="{{ form.pais.id_for_label }}">País</label>
+          {{ form.pais }}
+          {% for e in form.pais.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <!-- Activo (switch) -->
+      <div class="switch">
+        {{ form.activo }}
+        <label for="{{ form.activo.id_for_label }}">Activa</label>
+        <span class="hint">Habilita/inhabilita la sucursal para operaciones.</span>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a class="btnx ghost" href="{% url 'sucursal-list' %}">Cancelar</a>
+      <button class="btnx primary" type="submit">Guardar</button>
+    </div>
+  </form>
+</div>
+
+<script>
+/* Mayúsculas y contador para Código */
+(function(){
+  const input = document.getElementById('{{ form.codigo.id_for_label }}');
+  const counter = document.getElementById('codigoCounter');
+  if (!input) return;
+
+  const max = parseInt(input.getAttribute('maxlength') || '20', 10);
+
+  const update = () => {
+    // forzar mayúsculas y sin espacios extremos
+    const caret = input.selectionStart;
+    const val = input.value.toUpperCase();
+    if (val !== input.value){
+      input.value = val;
+      try{ input.setSelectionRange(caret, caret); }catch(e){}
+    }
+    const len = input.value.length;
+    counter.textContent = `${len}/${max}`;
+    counter.classList.toggle('too-long', len > max);
+  };
+
+  input.addEventListener('input', update);
+  update();
+})();
+</script>
+
+<style>
+/* Badges rápidas (reutilizamos estilos de la lista) */
+.badge{
+  display:inline-block; padding:4px 8px; font-size:12px; border-radius:999px; border:1px solid var(--line, #e5e7eb);
+  background:#f8fafc; color:#374151;
+}
+.badge.ok{ background:#e8f7ee; color:#065f46; border-color:#bfe7cb }
+.badge.no{ background:#fff1f0; color:#7a1d1d; border-color:#f3c3bf }
+</style>
+{% endblock %}

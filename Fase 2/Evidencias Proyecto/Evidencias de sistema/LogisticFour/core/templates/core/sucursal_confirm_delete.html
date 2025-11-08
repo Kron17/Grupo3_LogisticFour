@@ -1,0 +1,15 @@
+{% extends "core/base.html" %}
+
+{% block title %}Eliminar Sucursal{% endblock %}
+
+{% block content %}
+<h1>Eliminar Sucursal</h1>
+<p>¿Estás seguro que deseas eliminar la sucursal "{{ object }}"?</p>
+
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-danger" type="submit">Eliminar</button>
+  <a class="btn btn-secondary" href="{% url 'sucursal-list' %}">Cancelar</a>
+</form>
+
+{% endblock %}

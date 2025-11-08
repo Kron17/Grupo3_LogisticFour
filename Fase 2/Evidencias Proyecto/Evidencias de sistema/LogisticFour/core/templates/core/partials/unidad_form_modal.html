@@ -1,0 +1,21 @@
+{% extends "core/partials/_modal_shell.html" %}
+{% block modal_body %}
+  <h3 class="h1" style="margin:0 0 10px">Unidad de medida</h3>
+  <form method="post" class="form" style="display:grid;gap:10px">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="field">
+      <label>Código</label>
+      {{ form.codigo }}
+      {% for e in form.codigo.errors %}<small style="color:#c2410c">{{ e }}</small>{% endfor %}
+    </div>
+    <div class="field">
+      <label>Descripción</label>
+      {{ form.descripcion }}
+      {% for e in form.descripcion.errors %}<small style="color:#c2410c">{{ e }}</small>{% endfor %}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button type="submit" class="btn">Guardar</button>
+    </div>
+  </form>
+{% endblock %}

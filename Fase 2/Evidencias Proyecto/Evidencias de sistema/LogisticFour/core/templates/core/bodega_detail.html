@@ -1,0 +1,30 @@
+{% extends "core/base.html" %}
+
+{% block title %}Bodega — Detalle{% endblock %}
+
+{% block content %}
+  <h1>Detalle Bodega</h1>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:start">
+      <div style="font-weight:700;color:var(--muted)">Sucursal</div>
+      <div>{{ object.sucursal }}</div>
+      <div style="font-weight:700;color:var(--muted)">Código</div>
+      <div>{{ object.codigo }}</div>
+      <div style="font-weight:700;color:var(--muted)">Nombre</div>
+      <div>{{ object.nombre }}</div>
+      <div style="font-weight:700;color:var(--muted)">Descripción</div>
+      <div>{{ object.descripcion }}</div>
+      <div style="font-weight:700;color:var(--muted)">Activo</div>
+      <div>{% if object.activo %}<span class="badge ok">Sí</span>{% else %}<span class="badge warn">No</span>{% endif %}</div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;justify-content:flex-end">
+  {% url 'bodega-edit' object.pk as edit_url %}
+  {% url 'bodega-delete' object.pk as delete_url %}
+  {% with edit_url=edit_url delete_url=delete_url %}
+        <a class="btn btn-secondary" href="{% url 'bodega-list' %}">Volver</a>
+        {% include 'core/_actions.html' with can_edit=(user.is_superuser or (user.perfil and user.perfil.rol == 'ADMIN')) can_delete=(user.is_superuser or (user.perfil and user.perfil.rol == 'ADMIN')) %}
+      {% endwith %}
+    </div>
+  </div>
+{% endblock %}

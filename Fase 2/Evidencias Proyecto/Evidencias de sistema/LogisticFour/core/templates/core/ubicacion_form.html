@@ -1,0 +1,38 @@
+{# templates/core/ubicacion_form.html #}
+{% extends "core/base.html" %}
+{% block title %}{{ view.object|default_if_none:"Crear" }} Ubicación{% endblock %}
+{% block content %}
+<h1 class="h1">{% if object %}Editar{% else %}Crear{% endif %} ubicación</h1>
+
+<form method="post" class="form grid-2">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+
+  <div class="field">
+    <label>Bodega</label>{{ form.bodega }}
+  </div>
+  <div class="field">
+    <label>Área</label>{{ form.area }}
+    <small class="muted">Primero selecciona bodega para ver las áreas disponibles.</small>
+  </div>
+  <div class="field">
+    <label>Tipo</label>{{ form.tipo }}
+  </div>
+  <div class="field">
+    <label>Código</label>{{ form.codigo }}
+  </div>
+  <div class="field">
+    <label>Nombre</label>{{ form.nombre }}
+  </div>
+
+  <div class="field" style="grid-column:1 / -1; display:flex; gap:12px; align-items:center">
+    <label style="display:flex; gap:8px; align-items:center">{{ form.pickeable }} <span>Pickeable</span></label>
+    <label style="display:flex; gap:8px; align-items:center">{{ form.almacenable }} <span>Almacenable</span></label>
+  </div>
+
+  <div class="col-span-2" style="display:flex; gap:8px">
+    <button class="btn">Guardar</button>
+    <a class="btn ghost" href="{% url 'ubicacion-list' %}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

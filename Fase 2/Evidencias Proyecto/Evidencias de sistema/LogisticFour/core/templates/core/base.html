@@ -1,0 +1,519 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>{% block title %}Logistic — Demo{% endblock %}</title>
+
+  <!-- Bootstrap (por si usas componentes de allí) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+  :root{
+    --bg: #eef1f5;
+    --panel: #ffffff;
+    --ink: #111827;
+    --muted: #6b7280;
+    --line: rgba(15,23,42,.06);
+    --ok: #16a34a;
+    --warn: #ea580c;
+    --sidebar-w: 244px;
+    --brand: #E30613;
+    --radius-lg: 14px;
+    --radius-md: 10px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background: radial-gradient(circle at 0 0, #f8fafc 0%, #e2e8f0 48%, #eef1f5 100%);
+    color:var(--ink);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  /* ===== Animaciones ===== */
+  @keyframes fadein-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fadein-up { animation: fadein-up .25s ease; }
+  .fadein-slow { animation: fadein-up .4s ease; }
+
+  @media (prefers-reduced-motion: reduce){
+    .fadein-up, .fadein-slow { animation:none !important; }
+    .caret { transition: none !important; }
+  }
+
+  /* ===== Layout base ===== */
+  .sidenav{
+    position:fixed;
+    inset:0 auto 0 0;
+    width:var(--sidebar-w);
+    background: radial-gradient(circle at 10% 20%, rgba(34,34,34,1) 0%, rgba(15,15,15,1) 75%);
+    color:#f1f5f9;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:14px 12px 10px;
+    border-right:1px solid rgba(255,255,255,.035);
+    backdrop-filter: blur(12px);
+    transition:transform .25s ease;
+    z-index:1200;
+  }
+  .brand{
+    font-weight:800;
+    letter-spacing:.08em;
+    margin:0 6px 10px;
+    font-size:1.05rem;
+    display:flex;
+    gap:.45rem;
+    align-items:center;
+  }
+  .brand::before{
+    content:"";
+    width:26px;height:26px;
+    border-radius:10px;
+    background:linear-gradient(135deg,var(--brand),#f97316);
+    display:inline-block;
+  }
+
+  .sidenav nav{display:flex;flex-direction:column;gap:6px;}
+
+  .sidenav .item,
+  .sidenav .subitem{
+    color:inherit;
+    text-decoration:none;
+    padding:9.5px 11px;
+    border-radius:10px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    font-size:.88rem;
+    transition:background .12s ease, transform .12s ease;
+  }
+  .sidenav .item:hover,
+  .sidenav .subitem:hover{
+    background:rgba(255,255,255,.05);
+    transform:translateX(1px);
+  }
+
+  /* Grupo con título + subnav */
+  .nav-group{display:flex;flex-direction:column;gap:6px;}
+  .group-head{
+    display:flex;align-items:center;gap:8px;justify-content:space-between;
+    padding:9.5px 11px;border-radius:10px;cursor:pointer;background:transparent;border:0;color:inherit;width:100%;
+    transition:background .12s ease;
+  }
+  .group-head .label{display:flex;gap:8px;align-items:center;font-weight:600}
+  .group-head:hover{background:rgba(255,255,255,.03);}
+  .caret{transition:transform .2s ease; font-size:12px; opacity:.85}
+  .nav-group.expanded .caret{transform:rotate(90deg)}
+  .subnav{display:none;flex-direction:column;padding-left:8px;margin-top:3px;gap:3px}
+  .nav-group.expanded .subnav{display:flex}
+
+  .subitem.active{
+    background:rgba(227,6,19,.18);
+    color:#fff;
+    border:1px solid rgba(227,6,19,.35)
+  }
+
+  .sidenav-footer{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid rgba(148,163,184,.12)}
+
+  /* ===== Main ===== */
+  .main{
+    margin-left:var(--sidebar-w);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .topbar{
+    display:flex;align-items:center;gap:10px;justify-content:space-between;
+    padding:10px 16px;
+    background:rgba(255,255,255,.9);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(148,163,184,.22);
+    position:sticky;top:0;z-index:1000;
+  }
+
+  .menu-toggle{
+    display:none;
+    border:1px solid rgba(148,163,184,.45);
+    background:#fff;
+    border-radius:12px;
+    padding:7px 10px;
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+  }
+
+  .search{
+    flex:1;
+    max-width:460px;
+    padding:9px 12px 9.5px;
+    border:1px solid rgba(148,163,184,.25);
+    border-radius:999px;
+    background:#f8fafc;
+    font-size:.88rem;
+    transition:border .12s ease, box-shadow .12s ease;
+  }
+  .search:focus{
+    border:1px solid rgba(227,6,19,.6);
+    box-shadow:0 0 0 3px rgba(227,6,19,.08);
+    outline:none;
+    background:#fff;
+  }
+
+  .icons{display:flex;align-items:center;gap:10px}
+  .icons .dot{
+    width:30px;height:30px;border-radius:999px;
+    background:radial-gradient(circle at 35% 35%, #ffffff 0%, #cbd5f5 100%);
+    border:1px solid rgba(148,163,184,.4);
+    position:relative;
+  }
+  .icons .dot::after{
+    content:"";
+    position:absolute;top:5px;right:5px;
+    width:7px;height:7px;border-radius:50%;
+    background:#ef4444;
+    border:1px solid #fff;
+  }
+  .icons .avatar{
+    display:inline-grid;place-items:center;
+    width:32px;height:32px;
+    border:1px solid rgba(148,163,184,.4);
+    border-radius:50%;
+    background:#fff;
+    font-size:1rem;
+  }
+
+  /* ===== Contenido ===== */
+  .content{
+    padding:18px 18px 26px;
+    display:grid;
+    gap:16px;
+  }
+
+  /* ===== Tarjetas KPI ===== */
+  .kpis{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px;
+  }
+  .kpi{
+    background:var(--panel);
+    border:1px solid rgba(148,163,184,.21);
+    border-radius:14px;
+    padding:14px 14px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    position:relative;
+    overflow:hidden;
+  }
+  .kpi::after{
+    content:"";
+    position:absolute;
+    inset:-20% -5%;
+    background:radial-gradient(circle, rgba(227,6,19,.1) 0%, rgba(227,6,19,0) 55%);
+    pointer-events:none;
+  }
+  .kpi small{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em}
+  .kpi .num{font-size:1.8rem;font-weight:800}
+  .kpi .trend{font-size:.7rem;font-weight:600}
+  .kpi .trend.ok{color:#15803d}
+  .kpi .trend.bad{color:#b91c1c}
+
+  /* ===== Cards genéricas ===== */
+  .card-app{
+    background:var(--panel);
+    border:1px solid rgba(148,163,184,.16);
+    border-radius:14px;
+    padding:14px;
+  }
+  .card-head{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;
+  }
+  .card-title{font-weight:700;margin:0}
+
+  /* ===== Tabla simple ===== */
+  .table-app{
+    display:grid;
+    border:1px solid rgba(148,163,184,.16);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .tr-app{
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr 1fr 1.2fr;
+    gap:0;
+    background:#fff;
+    border-bottom:1px solid rgba(148,163,184,.12);
+  }
+  .tr-app.head{
+    background:#f1f5f9;
+    font-weight:600;
+  }
+  .tr-app > div{
+    padding:10px 12px;
+    font-size:.83rem;
+  }
+  .badge-app{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:3px 8px;
+    border-radius:999px;
+    background:#ecfdf3;
+    color:#166534;
+    font-size:.7rem;
+  }
+  .badge-app.warn{background:#fff1f2;color:#b91c1c}
+
+  /* ===== Botones propios ===== */
+  .toolbar{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+  .app-btn{
+    background:var(--ink);
+    color:#fff;
+    border:0;
+    border-radius:10px;
+    padding:9px 13px;
+    text-decoration:none;
+    display:inline-flex;align-items:center;gap:6px;
+    font-weight:500;
+    transition:transform .1s ease, box-shadow .1s ease;
+  }
+  .app-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(15,23,42,.16)}
+  .app-btn.ghost{background:#fff;color:var(--ink);border:1px solid rgba(15,23,42,.08)}
+  .app-btn.danger{background:#dc2626}
+
+  /* ===== Backdrop para móvil ===== */
+  .backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.35); backdrop-filter:saturate(0.9);
+    opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:1100;
+  }
+  .backdrop.show{opacity:1; pointer-events:auto;}
+
+  /* ===== Responsive ===== */
+  @media (max-width: 1024px){
+    .menu-toggle{display:inline-flex;align-items:center;justify-content:center}
+    .main{margin-left:0}
+    .sidenav{transform:translateX(-100%)}
+    .sidenav.open{transform:translateX(0)}
+    .content{padding:14px 14px 20px}
+    .tr-app{min-width:720px}
+  }
+  @media (max-width: 640px){
+    .topbar{gap:8px}
+    .search{max-width:100%}
+    .icons .dot{display:none}
+  }
+  @media (max-width: 480px){
+    .content{padding:12px}
+    .kpi{padding:12px}
+    .topbar{padding:10px 12px}
+  }
+  </style>
+</head>
+<body>
+  <!-- Iconos (sprite) -->
+  <svg width="0" height="0" style="position:absolute;visibility:hidden">
+    <defs>
+      <symbol id="icon-warehouse" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M3 10V8l9-5 9 5v2h-2v9a1 1 0 0 1-1 1h-4v-7H10v7H6a1 1 0 0 1-1-1v-9H3zM11 20v-5h2v5h-2zM5 10v8h3v-8H5zm11 0v8h3v-8h-3z"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- Backdrop -->
+  <div class="backdrop" id="backdrop"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidenav" id="sidenav" aria-label="Navegación lateral">
+    <div class="brand">LogisticFour</div>
+    <nav>
+        <!-- Accesos comunes para todos -->
+        <a href="{% url 'dashboard' %}" class="item">🏠 Inicio</a>
+        <a href="{% url 'stock-por-producto' %}" class="item">📊 Consultar producto</a>
+
+        <!-- Accesos para el Bodeguero -->
+        {% if user.is_authenticated and user.perfil and user.perfil.rol == 'BODEGUERO' %}
+        <a href="{% url 'products' %}" class="item">📦 Productos</a>
+        <a href="{% url 'movimientos_index' %}" class="item">🔁 Movimientos de Inventario</a>
+
+        <!-- Grupo colapsable para Bodeguero: Sucursales / Bodegas / Ubicaciones -->
+        <div class="nav-group">
+            <button class="group-head" type="button" aria-expanded="false">
+                <span class="label">
+                    <svg width="16" height="16" aria-hidden="true"><use xlink:href="#icon-warehouse"></use></svg>
+                    Sucursales / Bodegas / Ubicaciones
+                </span>
+                <span class="caret">▶</span>
+            </button>
+            <div class="subnav" role="group">
+                <a href="{% url 'sucursal-list' %}" class="subitem">Sucursales</a>
+                <a href="{% url 'bodega-list' %}" class="subitem">Bodegas</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Accesos para el Auditor -->
+        {% if user.is_authenticated and user.perfil and user.perfil.rol == 'AUDITOR' %}
+        <a href="{% url 'auditoria_inventario' %}" class="item">💻 Auditoria</a>
+        <a href="{% url 'finanzas_reporte' %}" class="item">💳 Finanzas</a>
+        {% endif %}
+
+        <!-- Accesos para el Administrador (Admin ve todo) -->
+        {% if user.is_authenticated and user.perfil and user.perfil.rol == 'ADMIN' %}
+        <a href="{% url 'usuario-list' %}" class="item">👥 Usuarios</a>
+        <a href="{% url 'products' %}" class="item">📦 Productos</a>
+        <a href="{% url 'movimientos_index' %}" class="item">🔁 Movimientos de Inventario</a>
+        <a href="{% url 'auditoria_inventario' %}" class="item">💻 Auditoria</a>
+        <a href="{% url 'finanzas_reporte' %}" class="item">💳 Finanzas</a>
+
+        <!-- Grupo colapsable para Admin: Sucursales / Bodegas / Ubicaciones -->
+       <div class="nav-group {% if request.resolver_match and request.resolver_match.url_name in 'sucursal-list bodega-list ubicacion-list' %}expanded{% endif %}" data-group>
+          <button class="group-head" type="button" aria-expanded="{% if request.resolver_match and request.resolver_match.url_name in 'sucursal-list bodega-list ubicacion-list' %}true{% else %}false{% endif %}">
+            <span class="label">
+              <svg width="16" height="16" aria-hidden="true"><use xlink:href="#icon-warehouse"></use></svg>
+              Sucursales / Bodegas
+            <span class="caret">▶</span>
+          </button>
+          <div class="subnav" role="group" aria-label="Submenú Sucursales y Bodegas">
+            <a href="{% url 'sucursal-list' %}" class="subitem {% if request.resolver_match and request.resolver_match.url_name == 'sucursal-list' %}active{% endif %}">Sucursales</a>
+            <a href="{% url 'bodega-list' %}" class="subitem {% if request.resolver_match and request.resolver_match.url_name == 'bodega-list' %}active{% endif %}">Bodegas</a>         
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Accesos para todos los usuarios autenticados -->
+        {% if user.is_authenticated %}
+        <a href="{% url 'logout' %}" class="subitem">↩︎ Cerrar sesión</a>
+        {% else %}
+        <a href="{% url 'login' %}" class="item">🔐 Iniciar sesión</a>
+        {% endif %}
+    </nav>
+
+    <div class="sidenav-footer">
+        {% if user.is_authenticated %}
+        <a href="#" class="subitem">⚙️ Configuración</a>
+        {% endif %}
+    </div>
+</aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuBtn" aria-label="Abrir menú" aria-controls="sidenav" aria-expanded="false">☰</button>
+      <input class="search" placeholder="Buscar…" />
+      {% if user.is_authenticated %}
+        <div class="icons">
+          <span class="dot" title="Notificaciones"></span>
+          <span class="avatar" title="Perfil">👤</span>
+        </div>
+      {% endif %}
+    </header>
+
+    <section class="content">
+      <!-- ejemplo de cabecera de página -->
+      <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center fadein-up">
+        <div>
+          <h1 class="h4 mb-0 fw-bold">Panel general</h1>
+          <p class="text-secondary mb-0" style="font-size:.82rem">Resumen de sucursales, bodegas y stock.</p>
+        </div>
+        <div class="toolbar">
+          <a href="{% url 'bodega-create' %}" class="app-btn">＋ Nueva bodega</a>
+          <a href="{% url 'sucursal-create' %}" class="app-btn ghost">＋ Nueva sucursal</a>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpis fadein-up">
+        <article class="kpi">
+          <small>Sucursales activas</small>
+          <div class="num">12</div>
+          <span class="trend ok">▲ +3 este mes</span>
+        </article>
+        <article class="kpi">
+          <small>Bodegas totales</small>
+          <div class="num">34</div>
+          <span class="trend">Sin cambios</span>
+        </article>
+        <article class="kpi">
+          <small>Movimientos hoy</small>
+          <div class="num">58</div>
+          <span class="trend ok">▲ +12%</span>
+        </article>
+        <article class="kpi">
+          <small>Alertas de stock</small>
+          <div class="num" style="color:#b91c1c">5</div>
+          <span class="trend bad">▼ revisar</span>
+        </article>
+      </div>
+
+      {% block content %}{% endblock %}
+    </section>
+  </main>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Tu JS -->
+  <script src="{% static 'core/js/barcode_scanner.js' %}"></script>
+
+  <script>
+  (function(){
+    const btn = document.getElementById('menuBtn');
+    const sidenav = document.getElementById('sidenav');
+    const backdrop = document.getElementById('backdrop');
+
+    function openNav(){
+      sidenav.classList.add('open');
+      backdrop.classList.add('show');
+      btn.setAttribute('aria-expanded','true');
+    }
+    function closeNav(){
+      sidenav.classList.remove('open');
+      backdrop.classList.remove('show');
+      btn.setAttribute('aria-expanded','false');
+    }
+
+    if (btn) {
+      btn.addEventListener('click', () => {
+        if (sidenav.classList.contains('open')) closeNav(); else openNav();
+      });
+    }
+    if (backdrop) {
+      backdrop.addEventListener('click', closeNav);
+    }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeNav(); });
+
+    // Cerrar al navegar (móvil)
+    sidenav.addEventListener('click', (e) => {
+      const isLink = e.target.closest('a');
+      if (isLink && window.matchMedia('(max-width: 1024px)').matches) closeNav();
+    });
+
+    // Limpieza al volver a desktop
+    const mq = window.matchMedia('(min-width: 1025px)');
+    mq.addEventListener('change', (e) => { if (e.matches) closeNav(); });
+
+    // ===== Lógica colapsable para grupos =====
+    const groups = Array.from(document.querySelectorAll('[data-group]'));
+    groups.forEach(group => {
+      const head = group.querySelector('.group-head');
+      const sub = group.querySelector('.subnav');
+      const expanded = group.classList.contains('expanded');
+      head.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      if (!expanded) sub.style.display = 'none';
+      else sub.style.display = 'flex';
+
+      head.addEventListener('click', () => {
+        const isOpen = group.classList.toggle('expanded');
+        head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        sub.style.display = isOpen ? 'flex' : 'none';
+      });
+    });
+  })();
+  </script>
+</body>
+</html>

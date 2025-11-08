@@ -1,0 +1,97 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Movimiento: Bodega → Bodega{% endblock %}
+
+{% block content %}
+<div class="page-wrap container py-4">
+  <h2 class="mb-3">Movimiento: Bodega → Bodega</h2>
+
+  {% if error %}
+    <div class="alert alert-danger fade show" role="alert">
+      {{ error }}
+    </div>
+  {% endif %}
+  {% if success %}
+    <div class="alert alert-success fade show" role="alert">
+      {{ success }}
+    </div>
+  {% endif %}
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Bodega origen</label>
+          <select name="bodega_origen" id="bodega_origen" class="form-select" required>
+            <option value="">-- Seleccione --</option>
+            {% for b in bodegas %}
+              <option value="{{ b.id }}" {% if b.id|stringformat:"s" == bodega_sel|stringformat:"s" %}selected{% endif %}>
+                {{ b.codigo }} — {{ b.nombre }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">De aquí se descontará el stock.</div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Bodega destino</label>
+          <select name="bodega_destino" id="bodega_destino" class="form-select" required>
+            <option value="">-- Seleccione --</option>
+            {% for b in bodegas %}
+              <option value="{{ b.id }}">
+                {{ b.codigo }} — {{ b.nombre }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">Aquí se sumará el stock.</div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Producto</label>
+          {% if productos %}
+            <select name="producto" class="form-select" required>
+              <option value="">-- Seleccione --</option>
+              {% for p in productos %}
+                <option value="{{ p.id }}">
+                  {{ p.sku }} — {{ p.nombre }} (stock orig: {{ p.stock_total }})
+                </option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input type="number" name="producto" class="form-control" placeholder="ID de producto" required>
+            <div class="form-text">Seleccione primero la bodega de origen y envíe para ver productos.</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Cantidad</label>
+          <input type="number" name="cantidad" class="form-control" min="1" step="1" required>
+        </div>
+
+        <div class="col-12 d-flex gap-2 mt-3">
+          <button type="submit" class="btn btn-primary px-4">Mover</button>
+          <a href="" class="btn btn-outline-secondary">Limpiar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Evitar misma bodega en origen/destino
+  const bOrigen = document.getElementById('bodega_origen');
+  const bDestino = document.getElementById('bodega_destino');
+  function syncBodegas() {
+    const oVal = bOrigen.value;
+    [...bDestino.options].forEach(o => {
+      o.disabled = (o.value && o.value === oVal);
+    });
+  }
+  if (bOrigen && bDestino) {
+    bOrigen.addEventListener('change', syncBodegas);
+    syncBodegas();
+  }
+</script>
+{% endblock %}

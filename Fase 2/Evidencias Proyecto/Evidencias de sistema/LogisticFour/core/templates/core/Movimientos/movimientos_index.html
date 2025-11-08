@@ -1,0 +1,183 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Movimientos de Inventario{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink: #0f172a;
+    --muted: #64748b;
+    --line: #e2e8f0;
+    --bg: #f9fafb;
+    --card: #ffffff;
+    --accent: #111827;
+    --accent-light: #1e293b;
+    --hover: #f1f5f9;
+  }
+
+  .mv-home {
+    max-width: 1100px;
+    margin-inline: auto;
+    padding: 2rem 1rem 3rem;
+    display: grid;
+    gap: 1.8rem;
+    animation: fadeIn .4s ease;
+  }
+
+  .mv-head {
+    text-align: center;
+    display: grid;
+    gap: .4rem;
+  }
+
+  .mv-head h1 {
+    font-weight: 800;
+    font-size: clamp(1.6rem, 2.8vw, 2rem);
+    color: var(--ink);
+  }
+
+  .mv-head p {
+    color: var(--muted);
+    font-size: .95rem;
+  }
+
+  .mv-grid {
+    display: grid;
+    gap: 1.2rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .mv-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    padding: 1.4rem 1.3rem 1.2rem;
+    box-shadow: 0 10px 30px rgba(15,23,42,.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: .9rem;
+    transition: all .2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mv-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg, rgba(17,24,39,0.05), transparent 70%);
+    opacity: 0;
+    transition: opacity .2s ease;
+  }
+
+  .mv-card:hover::before {
+    opacity: 1;
+  }
+
+  .mv-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(15,23,42,.08);
+  }
+
+  .mv-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--hover);
+    color: var(--accent);
+    font-size: 1.4rem;
+    display: grid;
+    place-items: center;
+    transition: background .2s ease;
+  }
+
+  .mv-card:hover .mv-icon {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .mv-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--ink);
+  }
+
+  .mv-desc {
+    font-size: .88rem;
+    color: var(--muted);
+    flex-grow: 1;
+  }
+
+  .mv-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-weight: 600;
+    font-size: .88rem;
+    color: var(--accent);
+    transition: color .15s ease;
+  }
+
+  .mv-btn:hover {
+    color: #000;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="mv-home">
+  <div class="mv-head">
+    <h1>Centro de Movimientos</h1>
+    <p>Selecciona el tipo de movimiento de inventario que deseas realizar.</p>
+  </div>
+
+  <div class="mv-grid">
+    <!-- Movimiento 1 -->
+    <a href="{% url 'bodega_a_sucursal' %}" class="mv-card text-decoration-none">
+      <div class="mv-icon">🏭</div>
+      <div class="mv-title">Bodega → Sucursal</div>
+      <div class="mv-desc">
+        Transfiere stock desde una bodega principal a una sucursal.  
+        Ideal para abastecimientos o reposiciones.
+      </div>
+      <span class="mv-btn">Ir al movimiento →</span>
+    </a>
+
+    <!-- Movimiento 2 -->
+    <a href="{% url 'mov_sucursal_a_sucursal' %}" class="mv-card text-decoration-none">
+      <div class="mv-icon">🔁</div>
+      <div class="mv-title">Sucursal → Sucursal</div>
+      <div class="mv-desc">
+        Mueve productos entre sucursales dentro de la misma bodega o región.
+      </div>
+      <span class="mv-btn">Ir al movimiento →</span>
+    </a>
+
+    <!-- Movimiento 3 -->
+    <a href="{% url 'mov_bodega_a_bodega' %}" class="mv-card text-decoration-none">
+      <div class="mv-icon">🏢</div>
+      <div class="mv-title">Bodega → Bodega</div>
+      <div class="mv-desc">
+        Transfiere stock entre bodegas centrales.  
+        Útil para balancear existencias o consolidar envíos.
+      </div>
+      <span class="mv-btn">Ir al movimiento →</span>
+    </a>
+
+    <!-- Movimiento 4 -->
+    <a href="{% url 'mov_sucursal_a_bodega' %}" class="mv-card text-decoration-none">
+      <div class="mv-icon">↩️</div>
+      <div class="mv-title">Sucursal → Bodega</div>
+      <div class="mv-desc">
+        Devuelve stock desde una sucursal hacia la bodega de origen.
+      </div>
+      <span class="mv-btn">Ir al movimiento →</span>
+    </a>
+  </div>
+</div>
+{% endblock %}

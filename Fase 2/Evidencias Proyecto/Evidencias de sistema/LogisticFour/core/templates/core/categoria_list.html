@@ -1,0 +1,40 @@
+{% extends "core/base.html" %}
+
+{% block title %}Categorías{% endblock %}
+
+{% block content %}
+<h1 class="h1">Categorías</h1>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Listado de categorías</div>
+    <div class="table">
+  <div class="tr th"><div>Nombre</div><div>Código</div><div>Productos</div><div>Acciones</div></div>
+      {% for c in categorias %}
+      <div class="tr">
+        <div>{{ c.nombre }}</div>
+        <div>{{ c.codigo }}</div>
+  <div>{{ c.producto_set.count }}</div>
+        <div><a class="btn ghost" href="{% url 'categoria-products' c.nombre|slugify %}">Ver</a></div>
+      </div>
+      {% empty %}
+      <div class="tr"><div colspan="4">No hay categorías.</div></div>
+      {% endfor %}
+    </div>
+    {% if categorias.has_other_pages %}
+      <div class="toolbar">
+        {% if categorias.has_previous %}<a class="btn ghost" href="?page={{ categorias.previous_page_number }}">Anterior</a>{% endif %}
+        <span>Página {{ categorias.number }} de {{ categorias.paginator.num_pages }}</span>
+        {% if categorias.has_next %}<a class="btn ghost" href="?page={{ categorias.next_page_number }}">Siguiente</a>{% endif %}
+      </div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-title">Acciones</div>
+    <div class="content">
+      <a class="btn" href="{% url 'product_add' %}">+ Agregar producto</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Finanzas</h2>
+
+  <form method="get" class="row g-3 mb-2">
+    <div class="col-md-3">{{ form.bodega.label_tag }} {{ form.bodega }}</div>
+    <div class="col-md-3">{{ form.proveedor.label_tag }} {{ form.proveedor }}</div>
+    <div class="col-md-2">{{ form.fecha_desde.label_tag }} {{ form.fecha_desde }}</div>
+    <div class="col-md-2">{{ form.fecha_hasta.label_tag }} {{ form.fecha_hasta }}</div>
+    <div class="col-md-2 d-flex align-items-end">
+      <button class="btn btn-primary w-100" type="submit">Ver</button>
+    </div>
+  </form>
+
+  {% if has_filters == False %}
+    <div class="alert alert-info">Selecciona al menos un criterio (Bodega, Proveedor o Fechas) y presiona “Ver”.</div>
+  {% endif %}
+
+  {% if has_filters %}
+    <div class="d-flex gap-2 mb-3">
+      {% if form.cleaned_data.bodega %}<span class="badge bg-secondary">Bodega: {{ form.cleaned_data.bodega.codigo }}</span>{% endif %}
+      {% if form.cleaned_data.proveedor %}<span class="badge bg-secondary">Proveedor: {{ form.cleaned_data.proveedor.username }}</span>{% endif %}
+      {% if form.cleaned_data.fecha_desde %}<span class="badge bg-secondary">Desde: {{ form.cleaned_data.fecha_desde }}</span>{% endif %}
+      {% if form.cleaned_data.fecha_hasta %}<span class="badge bg-secondary">Hasta: {{ form.cleaned_data.fecha_hasta }}</span>{% endif %}
+    </div>
+
+    <div class="mb-3">
+      <a class="btn btn-success btn-sm" href="{% url 'finanzas_export_excel' %}?{{ request.GET.urlencode }}">Exportar Excel</a>
+      <a class="btn btn-danger btn-sm" href="{% url 'finanzas_export_pdf' %}?{{ request.GET.urlencode }}">Exportar PDF</a>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="card"><div class="card-body">
+          <div class="text-muted small">Órdenes</div>
+          <div class="h4 mb-0">{{ resumen.ordenes_count }}</div>
+        </div></div>
+      </div>
+      <div class="col-md-3">
+        <div class="card"><div class="card-body">
+          <div class="text-muted small">Facturas</div>
+          <div class="h4 mb-0">{{ resumen.facturas_count }}</div>
+        </div></div>
+      </div>
+      <div class="col-md-3">
+        <div class="card"><div class="card-body">
+          <div class="text-muted small">Recepciones</div>
+          <div class="h4 mb-0">{{ resumen.recepciones_count }}</div>
+        </div></div>
+      </div>
+      <div class="col-md-3">
+        <div class="card"><div class="card-body">
+          <div class="text-muted small">Stock total (prod.)</div>
+          <div class="h4 mb-0">{{ resumen.stock_total|floatformat:0 }}</div>
+        </div></div>
+      </div>
+    </div>
+  {% endif %}
+
+  <h4 class="mt-4">Órdenes de compra</h4>
+  <table class="table table-sm table-striped">
+    <thead><tr>
+      <th>OC</th><th>Proveedor</th><th>Bodega</th><th>Estado</th><th>Fecha esperada</th><th>Creada</th>
+    </tr></thead>
+    <tbody>
+    {% for oc in ordenes %}
+      <tr>
+        <td>{{ oc.numero_orden }}</td>
+        <td>{{ oc.proveedor.get_full_name|default:oc.proveedor.username }}</td>
+        <td>{{ oc.bodega.codigo }} - {{ oc.bodega.nombre }}</td>
+        <td>{{ oc.estado }}</td>
+        <td>{{ oc.fecha_esperada|date:"Y-m-d" }}</td>
+        <td>{{ oc.creado_en|date:"Y-m-d H:i" }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="6">Sin datos.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+
+  <h4>Facturas proveedor</h4>
+  <table class="table table-sm table-striped">
+    <thead><tr>
+      <th>N°</th><th>Proveedor</th><th>Monto</th><th>Fecha</th><th>Estado</th>
+    </tr></thead>
+    <tbody>
+    {% for f in facturas %}
+      <tr>
+        <td>{{ f.numero_factura }}</td>
+        <td>{{ f.proveedor.get_full_name|default:f.proveedor.username }}</td>
+        <td>{{ f.monto_total }}</td>
+        <td>{{ f.fecha_factura|date:"Y-m-d" }}</td>
+        <td>{{ f.estado }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="5">Sin datos.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+
+  <h4>Recepciones</h4>
+  <table class="table table-sm table-striped">
+    <thead><tr>
+      <th>N°</th><th>Bodega</th><th>Estado</th><th>Recibido en</th>
+    </tr></thead>
+    <tbody>
+    {% for r in recepciones %}
+      <tr>
+        <td>{{ r.numero_recepcion }}</td>
+        <td>{{ r.bodega.codigo }} - {{ r.bodega.nombre }}</td>
+        <td>{{ r.estado }}</td>
+        <td>{{ r.recibido_en|date:"Y-m-d H:i" }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="4">Sin datos.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+
+  <h4>Productos (según filtros)</h4>
+  <table class="table table-sm table-striped">
+    <thead><tr><th>SKU</th><th>Nombre</th><th class="text-end">Stock</th></tr></thead>
+    <tbody>
+    {% for p in productos %}
+      <tr>
+        <td>{{ p.sku }}</td>
+        <td>{{ p.nombre }}</td>
+        <td class="text-end">{{ p.stock_filtrado|default:0|floatformat:0 }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="3">Sin datos.</td></tr>{% endfor %}
+    </tbody>
+    {% if productos %}
+    <tfoot>
+      <tr><th></th><th class="text-end">Total</th><th class="text-end">{{ resumen.stock_total|floatformat:0 }}</th></tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</div>
+{% endblock %}

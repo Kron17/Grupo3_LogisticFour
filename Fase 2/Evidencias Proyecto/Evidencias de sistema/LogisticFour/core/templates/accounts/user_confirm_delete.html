@@ -1,0 +1,136 @@
+{% extends "core/base.html" %}
+{% block title %}Eliminar usuario{% endblock %}
+
+{% block content %}
+<style>
+  /* ===== Animaciones ===== */
+  @keyframes fadeInUp { 0%{opacity:0;transform:translateY(36px)} 100%{opacity:1;transform:translateY(0)} }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+  /* ===== Layout ===== */
+  .del-wrapper{min-height:75vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+  .del-card{
+    width:100%;max-width:720px;background:#fff;border-radius:16px;
+    box-shadow:0 12px 28px rgba(0,0,0,.12);padding:2rem;animation:fadeInUp .6s ease-out
+  }
+
+  .del-head{display:flex;gap:1rem;align-items:center;margin-bottom:1rem}
+  .del-icon{
+    flex:0 0 64px;height:64px;border-radius:50%;
+    background:rgba(185,28,28,.08);display:flex;align-items:center;justify-content:center
+  }
+  .del-icon i{color:#b91c1c;font-size:1.75rem;animation:pulse 1.8s infinite}
+  .del-title{margin:0;font-weight:700;color:#b91c1c}
+  .del-sub{margin:.15rem 0 0;color:#6b7280}
+
+  .del-body{margin-top:1rem;color:#374151}
+
+  .confirm-block{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;
+    border-radius:12px;padding:1rem;margin:1rem 0
+  }
+  .confirm-label{font-weight:600;margin-bottom:.5rem}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media (max-width:768px){ .grid{grid-template-columns:1fr} }
+
+  .form-control{
+    width:100%;border:1px solid #d1d5db;border-radius:.65rem;padding:.65rem .9rem;transition:.2s
+  }
+  .form-control:focus{outline:none;border-color:#0d6efd;box-shadow:0 0 0 .2rem rgba(13,110,253,.15)}
+  .is-invalid{border-color:#dc2626 !important;box-shadow:0 0 0 .2rem rgba(220,38,38,.15) !important}
+
+  .toolbar{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.25rem;flex-wrap:wrap}
+  .btn-ghost{
+    background:transparent;border:1px solid #cbd5e1;border-radius:.65rem;padding:.65rem 1.1rem;
+    font-weight:600;color:#334155;transition:.2s
+  }
+  .btn-ghost:hover{border-color:#94a3b8;background:#f8fafc}
+
+  .btn-danger{
+    background:#b91c1c;border:none;border-radius:.65rem;padding:.65rem 1.1rem;
+    font-weight:700;color:#fff;box-shadow:0 8px 18px rgba(185,28,28,.25);
+    transition:.25s;display:inline-flex;align-items:center;gap:.4rem
+  }
+  .btn-danger:hover{background:#991b1b;transform:translateY(-1px);box-shadow:0 12px 24px rgba(185,28,28,.35)}
+  .btn-danger:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+</style>
+
+<div class="del-wrapper">
+  <div class="del-card">
+    <div class="del-head">
+      <div class="del-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      <div>
+        <h3 class="del-title">Eliminar usuario</h3>
+        <p class="del-sub m-0">Esta acción es permanente y no se puede deshacer.</p>
+      </div>
+    </div>
+
+    <div class="del-body">
+      <p>
+        ¿Seguro que deseas eliminar al usuario
+        <strong>{{ obj.username }}</strong>
+        {% if obj.email %}<span class="text-muted">({{ obj.email }})</span>{% endif %}?
+      </p>
+
+      <div class="confirm-block">
+        <div class="confirm-label">Confirmación requerida</div>
+        <p class="mb-2">
+          Escribe <code>{{ obj.username }}</code> para confirmar y marca la casilla:
+        </p>
+
+        <div class="grid">
+          <div>
+            <input id="confirmInput" type="text" class="form-control" placeholder="Escribe exactamente: {{ obj.username }}">
+          </div>
+          <div class="d-flex align-items-center">
+            <input class="form-check-input me-2" type="checkbox" id="ackCheck">
+            <label for="ackCheck" class="m-0">Entiendo que esta acción eliminará el usuario y sus accesos.</label>
+          </div>
+        </div>
+      </div>
+
+      <form method="post" class="toolbar" id="deleteForm">
+        {% csrf_token %}
+        <a href="{% url 'usuario-list' %}" class="btn-ghost">
+          <i class="bi bi-arrow-left"></i> Cancelar
+        </a>
+        <button type="submit" class="btn-danger" id="deleteBtn" disabled>
+          <i class="bi bi-trash3-fill"></i> Eliminar
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const must = "{{ obj.username }}";
+    const input = document.getElementById('confirmInput');
+    const check = document.getElementById('ackCheck');
+    const btn = document.getElementById('deleteBtn');
+
+    function validate(){
+      const okText = (input.value || "").trim() === must;
+      const okCheck = check.checked;
+      if(okText && okCheck){
+        btn.disabled = false;
+        input.classList.remove('is-invalid');
+      } else {
+        btn.disabled = true;
+        if(input.value.length){ input.classList.add('is-invalid'); }
+        else { input.classList.remove('is-invalid'); }
+      }
+    }
+
+    input.addEventListener('input', validate);
+    check.addEventListener('change', validate);
+
+    // Evita doble envío por error
+    const form = document.getElementById('deleteForm');
+    form.addEventListener('submit', function(){
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Eliminando...';
+    });
+  })();
+</script>
+{% endblock %}

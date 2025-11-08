@@ -1,0 +1,171 @@
+{# core/templates/core/product_update.html #}
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Editar producto — Logistic{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f9fafb; --card:#fff;
+    --shadow:0 8px 24px rgba(2,6,23,.05); --ring:#3b82f6; --radius:12px;
+  }
+  .page-wrap { max-width:1080px; margin-inline:auto; padding:16px }
+  .cardx { background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); overflow:hidden }
+  .hdr { position:sticky; top:0; z-index:3; background:#fff; padding:16px 20px; border-bottom:1px solid var(--line);
+         display:flex; align-items:center; justify-content:space-between; gap:12px }
+  .hdr h3 { margin:0; font-weight:800; letter-spacing:.2px }
+  .badge-subtle { color:var(--muted); font-size:.9rem }
+  .body { padding:18px 20px; display:grid; grid-template-columns:1fr 1fr; gap:18px }
+  @media (max-width:992px){ .body{ grid-template-columns:1fr } }
+  .field { display:grid; gap:8px; animation:fadeIn .35s ease both }
+  .field label { font-size:.9rem; color:var(--muted) }
+  .form-control, .form-select { height:44px; padding:.6rem .9rem; font-size:1rem; border-radius:var(--radius);
+    border:1px solid var(--line); background:#fff; transition:border-color .2s, box-shadow .2s }
+  .form-control:focus, .form-select:focus { outline:none; border-color:var(--ring); box-shadow:0 0 0 3px rgba(59,130,246,.15) }
+  .form-select { appearance:none; -moz-appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg fill='none' stroke='%2364758b' stroke-width='2' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat; background-position:right .8rem center; background-size:1rem; }
+  select.form-select::-ms-expand{ display:none; }
+  .help{ display:block; min-height:20px; color:var(--muted); font-size:.8rem }
+  .foot{ position:sticky; bottom:0; background:#ffffffcc; backdrop-filter:blur(6px); padding:12px 20px;
+         border-top:1px solid var(--line); display:flex; gap:10px; justify-content:flex-end }
+  .btn{ border-radius:12px; padding:.65rem 1rem; transition:transform .06s ease, box-shadow .2s ease }
+  .btn:active{ transform:translateY(1px) }
+  .btn-primary{ background:#2563eb; border-color:#2563eb; color:#fff; box-shadow:0 8px 20px rgba(37,99,235,.25) }
+  .btn-outline-secondary{ background:#fff; color:#374151; border:1px solid var(--line) }
+  .errorlist{ margin:.25rem 0 0; padding-left:18px; color:#b91c1c; font-size:.86rem }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none} }
+</style>
+
+<div class="page-wrap">
+  <form method="post" class="cardx" novalidate>
+    {% csrf_token %}
+    {% if request.GET.next or request.POST.next %}
+      <input type="hidden" name="next" value="{{ request.GET.next|default:request.POST.next }}">
+    {% endif %}
+
+    <div class="hdr">
+      <h3>Editar producto</h3>
+      <span class="badge-subtle">SKU: {{ producto.sku }}</span>
+    </div>
+
+    <div class="body">
+      {% if form.errors %}
+        <div class="alert alert-danger" style="grid-column:1/-1">
+          <strong>No se pudo actualizar.</strong> Revisa los campos marcados.
+          <ul class="mb-0">
+            {% for name, errs in form.errors.items %}
+              {% for e in errs %}<li><b>{{ name|capfirst }}:</b> {{ e }}</li>{% endfor %}
+            {% endfor %}
+            {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <!-- Nombre -->
+      <div class="field">
+        <label for="{{ form.nombre.id_for_label }}">Nombre</label>
+        {{ form.nombre }}
+        <small class="help">&nbsp;</small>
+        {{ form.nombre.errors }}
+      </div>
+
+      <!-- SKU (no pongo scanner aquí, pero puedes dejarlo si quieres) -->
+      <div class="field">
+        <label for="{{ form.sku.id_for_label }}">Código / SKU</label>
+        {{ form.sku }}
+        <small class="help">Se guarda en mayúsculas.</small>
+        {{ form.sku.errors }}
+      </div>
+
+      <!-- Precio -->
+      <div class="field">
+        <label for="{{ form.precio.id_for_label }}">Precio</label>
+        {{ form.precio }}
+        <small class="help">&nbsp;</small>
+        {{ form.precio.errors }}
+      </div>
+
+      <!-- Marca -->
+      <div class="field">
+        <label for="{{ form.marca.id_for_label }}">Marca</label>
+        {{ form.marca }}
+        <small class="help">&nbsp;</small>
+        {{ form.marca.errors }}
+      </div>
+
+      <!-- Categoría -->
+      <div class="field">
+        <label for="{{ form.categoria.id_for_label }}">Categoría</label>
+        {{ form.categoria }}
+        <small class="help">&nbsp;</small>
+        {{ form.categoria.errors }}
+      </div>
+
+      <!-- Unidad base -->
+      <div class="field">
+        <label for="{{ form.unidad_base.id_for_label }}">Unidad base</label>
+        {{ form.unidad_base }}
+        <small class="help">&nbsp;</small>
+        {{ form.unidad_base.errors }}
+      </div>
+
+      <!-- Tasa de impuesto -->
+      <div class="field">
+        <label for="{{ form.tasa_impuesto.id_for_label }}">Tasa de impuesto</label>
+        {{ form.tasa_impuesto }}
+        <small class="help">&nbsp;</small>
+        {{ form.tasa_impuesto.errors }}
+      </div>
+
+      <!-- Opciones -->
+      <div class="field" style="grid-column:1/-1">
+        <div class="form-check form-check-inline me-4">
+          {{ form.activo }} <label class="form-check-label ms-1">Activo</label>
+        </div>
+        <div class="form-check form-check-inline me-4">
+          {{ form.es_serializado }} <label class="form-check-label ms-1">Serializado</label>
+        </div>
+        <div class="form-check form-check-inline">
+          {{ form.tiene_vencimiento }} <label class="form-check-label ms-1">Con vencimiento</label>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="foot">
+      <a class="btn btn-outline-secondary" href="{{ request.GET.next|default:request.META.HTTP_REFERER|default:'#' }}">Cancelar</a>
+      <button class="btn btn-primary" id="btnSubmit" type="submit">Guardar cambios</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Spinner de envío
+  (function(){
+    const btn = document.getElementById('btnSubmit');
+    const form = btn?.closest('form');
+    if(!btn || !form) return;
+    form.addEventListener('submit', () => {
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.dataset.old = old;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando…';
+      setTimeout(()=>{ btn.disabled=false; btn.textContent=old; }, 6000);
+    });
+  })();
+
+  // Marca inputs con error en rojo
+  (function(){
+    document.querySelectorAll('ul.errorlist').forEach(function(ul){
+      const control = ul.previousElementSibling;
+      if(control && (control.classList.contains('form-control') || control.classList.contains('form-select'))){
+        control.classList.add('is-invalid');
+      }else{
+        const fromGroup = ul.parentElement.querySelector('.form-control, .form-select');
+        if(fromGroup){ fromGroup.classList.add('is-invalid'); }
+      }
+    });
+  })();
+</script>
+{% endblock %}

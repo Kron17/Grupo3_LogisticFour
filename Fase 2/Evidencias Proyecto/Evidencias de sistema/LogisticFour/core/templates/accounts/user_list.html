@@ -1,0 +1,263 @@
+{% extends "core/base.html" %}
+{% block title %}Usuarios{% endblock %}
+
+{% block content %}
+<style>
+  /* ===== Animaciones y microinteracciones ===== */
+  @keyframes fadeInUp {0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
+  @keyframes pulse {0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+  .card{animation:fadeInUp .4s ease; padding: 20px; margin-top: 20px;}
+  .table .tr{transition:.15s; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; display: grid; grid-template-columns: 1fr 2fr 2fr 2fr 2fr;}
+  .table .tr:hover{background:#fafafa}
+
+  /* Alternancia de colores para filas */
+  .table .tr:nth-child(odd) {
+    background-color: #f9fafb;
+  }
+
+  /* Badges */
+  .badge{display:inline-block;padding:.25rem .55rem;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:600}
+  .badge.warn{background:#fff7ed;color:#7c2d12}
+
+  /* Buscador */
+  .search{border:1px solid var(--line,#e5e7eb);border-radius:.6rem;padding:.5rem .7rem;min-width:200px}
+  .search:focus{outline:none;border-color:#0d6efd;box-shadow:0 0 0 .15rem rgba(13,110,253,.15)}
+
+  /* Botones */
+  .btn{border-radius:.6rem;padding:.55rem .9rem;font-weight:600;transition:.2s;cursor:pointer}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.ghost{background:transparent;border:1px solid var(--line,#e5e7eb)}
+  .btn.ghost:hover{background:#f8fafc}
+  .btn.primary{background:#0d6efd;color:#fff;border:0;box-shadow:0 6px 16px rgba(13,110,253,.2)}
+  .btn.primary:hover{background:#0b5ed7}
+
+  /* Dropdown */
+  .dropdown{position:relative}
+  .dropdown-menu{
+    position:absolute;display:none;background:#fff;border:1px solid var(--line,#e5e7eb);
+    border-radius:.6rem;padding:.35rem;right:0;z-index:10;min-width:220px;box-shadow:0 12px 24px rgba(0,0,0,.08)
+  }
+  .dropdown .item{display:block;padding:.6rem .7rem;text-decoration:none;color:inherit;border-radius:.45rem}
+  .dropdown .item:hover{background:#f8fafc}
+
+  /* Select rol inline */
+  .role-select{
+    min-width:180px;border:1px solid #e5e7eb;border-radius:.55rem;padding:.45rem .55rem;background:#fff;
+    transition:.15s
+  }
+  .role-select:focus{outline:none;border-color:#0d6efd;box-shadow:0 0 0 .15rem rgba(13,110,253,.15)}
+  .role-select.loading{opacity:.6;pointer-events:none}
+  .role-select.success{border-color:#16a34a;box-shadow:0 0 0 .15rem rgba(22,163,74,.15)}
+  .role-select.error{border-color:#dc2626;box-shadow:0 0 0 .15rem rgba(220,38,38,.15)}
+
+  /* Toastr mini */
+  .toast-wrap{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:10px;z-index:50}
+  .toast{
+    background:#111827;color:#fff;padding:.65rem .9rem;border-radius:.6rem;box-shadow:0 10px 24px rgba(0,0,0,.25);
+    display:flex;align-items:center;gap:.5rem;min-width:220px;animation:fadeInUp .25s ease
+  }
+  .toast.success{background:#14532d}
+  .toast.error{background:#7f1d1d}
+  .toast .close{margin-left:auto;background:transparent;border:0;color:#fff;cursor:pointer}
+
+  /* Responsive tabla */
+  @media (max-width: 900px){
+    .table .tr.th{display:none}
+    .table .tr{display:grid;grid-template-columns:1fr;gap:6px;padding:12px;border-bottom:1px solid #f1f5f9}
+    .table .tr > div::before{
+      content:attr(data-label);display:block;font-size:.76rem;color:#6b7280;margin-bottom:2px
+    }
+  }
+</style>
+
+<div class="card">
+  <div class="d-flex justify-content-between align-items-center" style="gap:12px;">
+    <h2 class="h1 m-0">Usuarios</h2>
+
+    <div class="d-flex" style="gap:8px;">
+      <form method="get" class="d-flex" style="gap:8px;">
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar usuario..." class="search">
+        <select name="rol" class="search">
+          <option value="">Todos los roles</option>
+          {% for code,label in roles %}
+            <option value="{{ code }}" {% if rol == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn ghost" type="submit">Filtrar</button>
+      </form>
+
+      <div class="dropdown">
+        <button class="btn primary">+ Nuevo usuario</button>
+        <div class="dropdown-menu">
+          <a class="item" href="{% url 'usuario-create' %}?role=ADMIN">Administrador</a>
+          <a class="item" href="{% url 'usuario-create' %}?role=BODEGUERO">Bodeguero</a>
+          <a class="item" href="{% url 'usuario-create' %}?role=AUDITOR">Auditor</a>
+          <a class="item" href="{% url 'usuario-create' %}?role=PROVEEDOR">Proveedor</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if messages %}
+    <div style="margin-top:12px;">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="table" style="margin-top:12px;">
+    <div class="tr th">
+      <div>Usuario</div>
+      <div>Nombre</div>
+      <div>Email</div>
+      <div>Rol</div>
+      <div>Acciones</div>
+    </div>
+
+    {% for u in users %}
+      <div class="tr">
+        <div data-label="Usuario">{{ u.username }}</div>
+        <div data-label="Nombre">{{ u.get_full_name|default:"—" }}</div>
+        <div data-label="Email">{{ u.email|default:"—" }}</div>
+
+        <div data-label="Rol">
+          {% if u.perfil %}
+            {% if not u.is_superuser and u.id != request.user.id %}
+              <select
+                class="role-select"
+                data-user-id="{{ u.id }}"
+                data-current="{{ u.perfil.rol.code }}"
+                aria-label="Cambiar rol de {{ u.username }}"
+              >
+                {% for code,label in roles %}
+                  <option value="{{ code }}" {% if u.perfil.rol.code == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <small class="text-muted d-block mt-1">
+                Cambios automáticos
+              </small>
+            {% else %}
+              <span class="badge" title="No modificable">{{ u.perfil.rol }}</span>
+              <small class="text-muted d-block mt-1">No editable</small>
+            {% endif %}
+          {% else %}
+            <span class="badge warn">Sin perfil</span>
+          {% endif %}
+        </div>
+
+        <div class="d-flex" style="gap:8px; align-items:center;" data-label="Acciones">
+          <a class="btn ghost" href="{% url 'usuario-edit' u.id %}">Editar</a>
+          {% if not u.is_superuser and u.id != request.user.id %}
+            <a class="btn ghost" href="{% url 'usuario-delete' u.id %}">Eliminar</a>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="tr"><div class="col-span-2" style="padding:12px;">Sin usuarios.</div></div>
+    {% endfor %}
+  </div>
+
+  {% if users.paginator.num_pages > 1 %}
+    <div class="toolbar" style="margin-top:12px;">
+      {% if users.has_previous %}
+        <a class="btn ghost" href="?page={{ users.previous_page_number }}&q={{ q }}&rol={{ rol }}">« Anterior</a>
+      {% endif %}
+      <span class="btn ghost">Página {{ users.number }} / {{ users.paginator.num_pages }}</span>
+      {% if users.has_next %}
+        <a class="btn ghost" href="?page={{ users.next_page_number }}&q={{ q }}&rol={{ rol }}">Siguiente »</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+<!-- Toastr minimal -->
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+  // ===== Dropdown simple
+  (function(){
+    const dd = document.querySelector('.dropdown');
+    if(!dd) return;
+    const btn = dd.querySelector('.btn');
+    const menu = dd.querySelector('.dropdown-menu');
+    btn.addEventListener('click', () => {
+      menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+    });
+    document.addEventListener('click', (e) => { if(!dd.contains(e.target)) menu.style.display='none'; });
+  })();
+
+  // ===== CSRF desde cookie
+  function getCookie(name){
+    const v = document.cookie.split(';').map(c=>c.trim());
+    for(const c of v){ if(c.startsWith(name+'=')) return decodeURIComponent(c.split('=')[1]); }
+    return null;
+  }
+  const CSRF_TOKEN = getCookie('csrftoken');
+
+  // ===== Toastr simple
+  function toast(msg, type='default'){
+    const wrap = document.getElementById('toasts');
+    const el = document.createElement('div');
+    el.className = 'toast ' + (type==='success' ? 'success' : type==='error' ? 'error' : '');
+    el.innerHTML = `<span>${msg}</span><button class="close" aria-label="Cerrar">×</button>`;
+    wrap.appendChild(el);
+    const remove = ()=> el.remove();
+    el.querySelector('.close').addEventListener('click', remove);
+    setTimeout(remove, 3500);
+  }
+
+  // ===== Cambio de rol inline (auto-guardado)
+  async function changeRole(select){
+    const userId = select.dataset.userId;
+    const newRole = select.value;
+    const prev = select.dataset.current;
+
+    if(!userId || !newRole){ return; }
+
+    select.classList.add('loading');
+
+    try{
+      const res = await fetch(`{% url 'usuario-set-rol' 0 %}`.replace('/0/', `/${userId}/`), {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': CSRF_TOKEN,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rol: newRole })
+      });
+
+      if(!res.ok){
+        throw new Error('Error ' + res.status);
+      }
+      const data = await res.json();
+
+      if(data.ok){
+        select.dataset.current = newRole;
+        select.classList.remove('loading','error');
+        select.classList.add('success');
+        toast(`Rol actualizado a "${data.rol_label || newRole}"`, 'success');
+        setTimeout(()=> select.classList.remove('success'), 1200);
+      }else{
+        throw new Error(data.error || 'No se pudo actualizar el rol');
+      }
+    }catch(err){
+      // revertir
+      select.value = prev;
+      select.classList.remove('loading','success');
+      select.classList.add('error');
+      toast('No se pudo actualizar el rol. ' + (err.message || ''), 'error');
+      setTimeout(()=> select.classList.remove('error'), 1500);
+    }
+  }
+
+  // Delegación para todos los selects de rol
+  document.addEventListener('change', (e)=>{
+    const sel = e.target.closest('.role-select');
+    if(sel){ changeRole(sel); }
+  });
+</script>
+{% endblock %}

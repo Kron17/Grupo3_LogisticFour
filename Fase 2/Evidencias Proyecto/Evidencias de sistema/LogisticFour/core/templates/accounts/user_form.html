@@ -1,0 +1,235 @@
+{% extends "core/base.html" %}
+{% block title %}Editar usuario{% endblock %}
+
+{% block content %}
+<style>
+  /* ===== Animaciones ===== */
+  @keyframes fadeInUp {0%{opacity:0;transform:translateY(36px)}100%{opacity:1;transform:translateY(0)}}
+  @keyframes pulse {0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+  /* ===== Layout ===== */
+  .edit-wrapper{min-height:82vh;display:flex;justify-content:center;align-items:flex-start;padding:1.5rem}
+  .edit-card{
+    width:100%;max-width:980px;background:#fff;border-radius:16px;
+    box-shadow:0 10px 28px rgba(0,0,0,.10);padding:2rem;animation:fadeInUp .6s ease-out
+  }
+
+  /* ===== Header ===== */
+  .edit-head{display:flex;gap:1rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap}
+  .avatar{
+    width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#0d6efd,#6610f2);color:#fff;font-weight:700;letter-spacing:.5px;
+    box-shadow:0 6px 16px rgba(13,110,253,.35);animation:pulse 2s infinite
+  }
+  .title{margin:0;font-weight:700;color:#0d6efd}
+  .subtitle{margin:.1rem 0 0;color:#6c757d}
+
+  .state-badge{
+    margin-left:auto;background:#e9f7ef;color:#0f5132;border:1px solid #badbcc;border-radius:999px;
+    padding:.35rem .7rem;font-weight:600;display:inline-flex;align-items:center;gap:.35rem
+  }
+  .state-badge.off{background:#fff1f2;color:#7f1d1d;border-color:#fecdd3}
+
+  /* ===== Grid ===== */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media (max-width: 768px){ .grid-2{grid-template-columns:1fr} }
+
+  .section-title{font-weight:600;color:#212529;margin:1.25rem 0 .5rem}
+  .divider{height:1px;background:linear-gradient(90deg,#e9ecef,#dee2e6,#e9ecef);margin:1rem 0}
+
+  /* ===== Campos ===== */
+  .field label{font-weight:600;margin-bottom:.35rem;display:block}
+  .field input, .field select, .field textarea, .form-control{
+    width:100%;border:1px solid #ced4da;border-radius:.65rem;padding:.65rem .9rem;background:#fff;transition:.2s
+  }
+  .field input:focus, .field select:focus, .field textarea:focus, .form-control:focus{
+    outline:none;border-color:#0d6efd;box-shadow:0 0 0 .2rem rgba(13,110,253,.15)
+  }
+  .is-invalid{border-color:#dc3545 !important;box-shadow:0 0 0 .2rem rgba(220,53,69,.15) !important}
+  .errorlist, .field .errorlist li{margin:.35rem 0 0;color:#dc3545;font-size:.9rem;list-style:none;padding-left:0}
+
+  /* Switch “Activo” */
+  .switch{position:relative;display:inline-block;width:48px;height:26px;vertical-align:middle}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{
+    position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e5e7eb;transition:.2s;border-radius:999px
+  }
+  .slider:before{
+    position:absolute;content:"";height:20px;width:20px;left:3px;top:3px;background:#fff;transition:.2s;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.15)
+  }
+  .switch input:checked + .slider{background:#0d6efd}
+  .switch input:checked + .slider:before{transform:translateX(22px)}
+
+  /* ===== Toolbar ===== */
+  .toolbar{
+    position:sticky;bottom:0;display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;margin-top:1.25rem;
+    background:linear-gradient(180deg,rgba(255,255,255,0),#fff 35%);padding-top:1rem
+  }
+  .btn-primary{
+    background:#0d6efd;border:none;border-radius:.65rem;padding:.65rem 1.1rem;font-weight:600;
+    transition:.25s;box-shadow:0 8px 18px rgba(13,110,253,.25);display:inline-flex;align-items:center;gap:.4rem
+  }
+  .btn-primary:hover{background:#0b5ed7;transform:translateY(-1px);box-shadow:0 12px 24px rgba(13,110,253,.35)}
+  .btn-ghost{
+    background:transparent;border:1px solid #cbd5e1;border-radius:.65rem;padding:.65rem 1.1rem;font-weight:600;color:#334155;transition:.2s
+  }
+  .btn-ghost:hover{border-color:#94a3b8;background:#f8fafc}
+
+  /* Mensajes */
+  .alert{border-radius:.65rem}
+</style>
+
+<div class="edit-wrapper">
+  <div class="edit-card">
+    <div class="edit-head">
+      <div class="avatar">
+        {% with obj.first_name|default:""|slice:":1" as a %}
+        {% with obj.last_name|default:""|slice:":1" as b %}
+          {{ a|upper }}{{ b|upper }}
+        {% endwith %}
+        {% endwith %}
+      </div>
+      <div>
+        <h3 class="title">Editar usuario: {{ obj.username }}</h3>
+        <div class="subtitle">{{ obj.get_full_name|default:"Sin nombre asignado" }}</div>
+      </div>
+
+      {% if user_form.is_active.value %}
+        <span class="state-badge ms-auto"><i class="bi bi-check2-circle"></i> Activo</span>
+      {% else %}
+        <span class="state-badge off ms-auto"><i class="bi bi-x-circle"></i> Inactivo</span>
+      {% endif %}
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-3">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" id="editUserForm" novalidate>
+      {% csrf_token %}
+
+      <!-- DATOS DE ACCESO -->
+      <h6 class="section-title"><i class="bi bi-person-vcard me-1"></i> Datos de acceso</h6>
+      <div class="grid-2">
+        <div class="field">
+          <label for="{{ user_form.username.id_for_label }}">Usuario</label>
+          {{ user_form.username }}
+          {{ user_form.username.errors }}
+        </div>
+
+        <div class="field">
+          <label for="{{ user_form.email.id_for_label }}">Email</label>
+          {{ user_form.email }}
+          {{ user_form.email.errors }}
+        </div>
+
+        <div class="field">
+          <label for="{{ user_form.first_name.id_for_label }}">Nombre</label>
+          {{ user_form.first_name }}
+          {{ user_form.first_name.errors }}
+        </div>
+
+        <div class="field">
+          <label for="{{ user_form.last_name.id_for_label }}">Apellido</label>
+          {{ user_form.last_name }}
+          {{ user_form.last_name.errors }}
+        </div>
+
+        <div class="field d-flex align-items-center justify-content-between">
+          <div>
+            <label class="mb-1" for="{{ user_form.is_active.id_for_label }}">Activo</label><br>
+            <label class="switch">
+              {{ user_form.is_active }}
+              <span class="slider"></span>
+            </label>
+          </div>
+          <small class="text-muted ms-2">Controla si este usuario puede acceder al sistema.</small>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- PERFIL -->
+      <h6 class="section-title"><i class="bi bi-person-gear me-1"></i> Perfil</h6>
+      <div class="grid-2">
+        <div class="field">
+          <label for="{{ perfil_form.telefono.id_for_label }}">Teléfono</label>
+          {{ perfil_form.telefono }}
+          {{ perfil_form.telefono.errors }}
+        </div>
+
+        <div class="field">
+          <label for="{{ perfil_form.rol.id_for_label }}">Rol</label>
+          {{ perfil_form.rol }}
+          {{ perfil_form.rol.errors }}
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <a href="{% url 'usuario-list' %}" class="btn-ghost">
+          <i class="bi bi-arrow-left"></i> Cancelar
+        </a>
+        <button type="submit" class="btn-primary">
+          <i class="bi bi-save2-fill"></i> Guardar cambios
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // ===== Marcar inputs con errores como invalid (si hay errores del servidor)
+  {% if user_form.errors or perfil_form.errors %}
+  (function(){
+    const ids = [
+      {% for f in user_form %}{% if f.errors %}"{{ f.id_for_label }}",{% endif %}{% endfor %}
+      {% for f in perfil_form %}{% if f.errors %}"{{ f.id_for_label }}",{% endif %}{% endfor %}
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.classList.add('is-invalid');
+    });
+  })();
+  {% endif %}
+
+  // ===== Estado visual del badge al cambiar el switch
+  (function(){
+    const chk = document.getElementById('{{ user_form.is_active.id_for_label }}');
+    const badge = document.querySelector('.state-badge, .state-badge.off');
+    if(chk && badge){
+      const sync = () => {
+        if(chk.checked){
+          badge.classList.remove('off');
+          badge.innerHTML = '<i class="bi bi-check2-circle"></i> Activo';
+        }else{
+          badge.classList.add('off');
+          badge.innerHTML = '<i class="bi bi-x-circle"></i> Inactivo';
+        }
+      };
+      chk.addEventListener('change', sync); sync();
+    }
+  })();
+
+  // ===== Aviso de cambios sin guardar
+  (function(){
+    const form = document.getElementById('editUserForm');
+    if(!form) return;
+    let dirty = false;
+
+    form.querySelectorAll('input, select, textarea').forEach(el=>{
+      el.addEventListener('change', ()=> dirty = true);
+      el.addEventListener('input', ()=> dirty = true);
+    });
+
+    window.addEventListener('beforeunload', function(e){
+      if(!dirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
+
+    form.addEventListener('submit', ()=> { dirty = false; });
+  })();
+</script>
+{% endblock %}

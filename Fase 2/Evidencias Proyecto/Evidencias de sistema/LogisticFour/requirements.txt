@@ -1,0 +1,9 @@
+Django
+psycopg2-binary
+python-dotenv
+segno
+whitenoise
+django-widget-tweaks
+requests
+openpyxl
+reportlab

@@ -1,0 +1,682 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Sucursales{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink: #111827;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --bg: #f5f7fb;
+    --head: #eef0f6;
+    --pri: #111;
+    --pri-ink: #fff;
+    --sec-bg: #fff;
+    --sec-ink: #111;
+    --danger: #dc2626;
+  }
+
+  .lx-page {
+    display: grid;
+    gap: 16px;
+  }
+
+  .lx-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .lx-head h1 {
+    margin: 0;
+    font-weight: 800;
+    font-size: clamp(1.4rem, 2vw, 1.7rem);
+  }
+
+  /* filtros */
+  .lx-filter {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .lx-input {
+    flex: 1 1 280px;
+    min-width: 200px;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #f9fafb;
+    outline: none;
+    transition: box-shadow .12s ease, border .12s ease;
+  }
+
+  .lx-input:focus {
+    border-color: rgba(17,24,39,.5);
+    box-shadow: 0 0 0 3px rgba(17,24,39,.08);
+  }
+
+  .lx-btn {
+    background: var(--pri);
+    color: var(--pri-ink);
+    border: 0;
+    border-radius: 999px;
+    padding: 8.5px 14px 8px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    line-height: 1;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+
+  .lx-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(17,24,39,.12);
+  }
+
+  .lx-btn:active {
+    transform: translateY(0);
+  }
+
+  .lx-btn.ghost {
+    background: #fff;
+    border: 1px solid var(--line);
+    color: #111;
+    border-radius: 10px;
+  }
+
+  /* tabla */
+  .lx-wrap {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .lx-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+  }
+
+  .lx-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--head);
+    z-index: 1;
+    text-align: left;
+    padding: 11px 12px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .lx-table tbody tr {
+    animation: fadeRow .3s ease;
+  }
+
+  @keyframes fadeRow {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .lx-table tbody td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+  }
+
+  .lx-table tbody tr:hover {
+    background: #fafafa;
+  }
+
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  .lx-badge {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    padding: 3px 10px 4px;
+    font-size: 12px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+  }
+
+  .lx-badge.ok {
+    background: #e8f7ee;
+    color: #065f46;
+    border-color: #bfe7cb;
+  }
+
+  .lx-badge.no {
+    background: #fff1f0;
+    color: #7a1d1d;
+    border-color: #f3c3bf;
+  }
+
+  .lx-actions {
+    min-width: 190px;
+  }
+
+  .lx-acts {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .lx-act {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6.5px 10px 6px;
+    border-radius: 9px;
+    font-size: 13px;
+    line-height: 1;
+    border: 1px solid var(--line);
+    background: var(--sec-bg);
+    color: var(--sec-ink);
+    text-decoration: none;
+    transition: background .12s ease, transform .12s ease;
+    white-space: nowrap;
+  }
+
+  .lx-act svg {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    fill: currentColor;
+    display: block;
+  }
+
+  .lx-act.pri {
+    background: var(--pri);
+    color: #fff;
+    border-color: var(--pri);
+  }
+
+  .lx-act:hover {
+    transform: translateY(-1px);
+  }
+
+  .lx-act.danger {
+    background: #fff;
+    color: var(--danger);
+    border-color: #fecaca;
+  }
+
+  /* detalle expandible */
+  .lx-expand-row td {
+    padding: 0 !important;
+    background: #fbfbfd;
+  }
+
+  .lx-expand {
+    border-top: 1px dashed var(--line);
+  }
+
+  .lx-expand__inner {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 12px 13px 14px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .35s ease, opacity .25s ease;
+  }
+
+  .lx-expand.open .lx-expand__inner {
+    opacity: 1;
+  }
+
+  .lx-kv {
+    display: grid;
+    gap: 4px;
+  }
+
+  .lx-kv small {
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  /* responsive */
+  @media (max-width: 992px) {
+    .lx-head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 920px) {
+    .lx-wrap {
+      border: 0;
+      background: transparent;
+    }
+
+    .lx-table thead {
+      display: none;
+    }
+
+    .lx-table {
+      display: block;
+    }
+
+    .lx-table tbody {
+      display: grid;
+      gap: 12px;
+    }
+
+    .lx-table tr {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .lx-table td {
+      border: 0;
+      padding: 0;
+    }
+
+    .lx-table td[data-label]::before {
+      content: attr(data-label) ": ";
+      font-weight: 600;
+      color: var(--muted);
+      margin-right: 6px;
+    }
+
+    .lx-actions {
+      min-width: 0;
+    }
+
+    .lx-acts {
+      flex-wrap: wrap;
+    }
+
+    .lx-expand__inner {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lx-table tbody tr,
+    .lx-btn,
+    .lx-act,
+    .lx-expand__inner {
+      transition: none !important;
+    }
+  }
+</style>
+
+<!-- sprite icono -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <symbol id="icon-eye" viewBox="0 0 24 24">
+    <path d="M12 5c5.5 0 9.7 4.6 10.7 6-.9 1.3-5 6-10.7 6S2.3 12.3 1.3 11c1-1.4 5.2-6 10.7-6Zm0 2c-4.1 0-7.6 3.2-8.9 4.99C4.4 13.8 7.9 17 12 17s7.6-3.2 8.9-5.01C19.6 10.2 16.1 7 12 7Zm0 2.5A2.5 2.5 0 1 1 9.5 12 2.5 2.5 0 0 1 12 9.5Z" />
+  </symbol>
+</svg>
+
+<div class="lx-page">
+
+  <div class="lx-head">
+    <h1>Sucursales</h1>
+    <div>
+      {% if request.user.is_authenticated and request.user.is_superuser %}
+        <a class="lx-btn" href="{% url 'sucursal-create' %}">
+          <span aria-hidden="true">＋</span>
+          Crear sucursal
+        </a>
+      {% elif request.user.is_authenticated and request.user.perfil.rol == 'ADMIN' %}
+        <a class="lx-btn" href="{% url 'sucursal-create' %}">
+          <span aria-hidden="true">＋</span>
+          Crear sucursal
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- filtros -->
+  <form method="get" action="{% url 'sucursal-list' %}" class="lx-filter" id="sucSearchForm" role="search">
+    <input
+      id="qInput"
+      type="search"
+      name="q"
+      value="{{ q|default:'' }}"
+      class="lx-input"
+      placeholder="Buscar por código, nombre, ciudad o bodega…" />
+    <button type="submit" class="lx-btn">Buscar</button>
+    {% if q %}
+      <a href="{% url 'sucursal-list' %}" class="lx-btn ghost">Limpiar</a>
+    {% endif %}
+    <button type="button" id="btnScanQ" class="lx-btn ghost" title="Escanear código">
+      📷
+    </button>
+  </form>
+
+  <!-- tabla -->
+  <div class="lx-wrap">
+    <table class="lx-table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Ciudad</th>
+          <th>Bodega</th>
+          <th>Ubicaciones</th>
+          <th>Productos</th>
+          <th>Stock total</th>
+          <th>Activo</th>
+          <th class="lx-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="rows-suc">
+        {% for s in sucursales %}
+        <tr>
+          <td data-label="Código"><span class="mono">{{ s.codigo }}</span></td>
+          <td data-label="Nombre"><strong>{{ s.nombre }}</strong></td>
+          <td data-label="Ciudad">{{ s.ciudad|default:"—" }}</td>
+          <td data-label="Bodega">
+            {% if s.bodega %}
+              {{ s.bodega.codigo }} — {{ s.bodega.nombre }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td data-label="Ubicaciones">{{ s.ubicaciones_count|default:0 }}</td>
+          <td data-label="Productos">{{ s.productos_count|default:0 }}</td>
+          <td data-label="Stock total"><strong>{{ s.total_stock|default:0 }}</strong></td>
+          <td data-label="Activo">
+            {% if s.activo %}
+              <span class="lx-badge ok">Sí</span>
+            {% else %}
+              <span class="lx-badge no">No</span>
+            {% endif %}
+          </td>
+          <td class="lx-actions" data-label="Acciones">
+            <div class="lx-acts">
+              <button type="button"
+                      class="lx-act pri"
+                      data-target="s{{ s.pk }}"
+                      aria-controls="s{{ s.pk }}"
+                      aria-expanded="false">
+                <svg aria-hidden="true"><use href="#icon-eye"></use></svg>
+                <span>Ver</span>
+              </button>
+              <button type="button"
+                      class="lx-act"
+                      onclick="showOnMap('{{ s.direccion|default:'' }} {{ s.ciudad|default:'' }} {{ s.region|default:'' }}')">
+                Ver en mapa
+              </button>
+              <a class="lx-act" href="{% url 'sucursal-edit' s.pk %}">Editar</a>
+            </div>
+          </td>
+        </tr>
+
+        <!-- fila de detalle -->
+        <tr id="s{{ s.pk }}" class="lx-expand-row">
+          <td colspan="9">
+            <div class="lx-expand" data-expand>
+              <div class="lx-expand__inner">
+                <div class="lx-kv">
+                  <small>Ubicaciones de la sucursal</small>
+                  {% if s.ubicaciones.all %}
+                    <ul style="margin:0; padding-left:1rem">
+                      {% for u in s.ubicaciones.all %}
+                        <li>
+                          {{ u.codigo }}
+                          {% if u.area %} ({{ u.area }}){% endif %}
+                          {% if u.tipo %} — {{ u.tipo.codigo }}{% endif %}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    <span class="muted">No hay ubicaciones para esta sucursal.</span>
+                  {% endif %}
+                </div>
+
+                <div class="lx-kv">
+                  <small>Productos con stock aquí</small>
+                  {% with ubicaciones=s.ubicaciones.all %}
+                    {% if ubicaciones %}
+                      <ul style="margin:0; padding-left:1rem">
+                        {% for u in ubicaciones %}
+                          {% for st in u.stocks.all %}
+                            <li>
+                              {{ st.producto.sku }} — {{ st.producto.nombre }}:
+                              <strong>{{ st.cantidad_disponible }}</strong>
+                            </li>
+                          {% empty %}
+                          {% endfor %}
+                        {% endfor %}
+                      </ul>
+                    {% else %}
+                      <span class="muted">No hay stock asignado a ubicaciones de esta sucursal.</span>
+                    {% endif %}
+                  {% endwith %}
+                </div>
+
+                <div class="lx-kv">
+                  <small>Nota</small>
+                  <span class="muted">
+                    El stock total se calcula desde las filas de <code>Stock</code>
+                    asociadas a las ubicaciones de esta sucursal.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9">No hay sucursales.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+  <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+    {% if page_obj.has_previous %}
+      <a class="lx-btn ghost" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">← Anterior</a>
+    {% else %}
+      <span class="lx-btn ghost" aria-disabled="true">← Anterior</span>
+    {% endif %}
+
+    <span class="lx-btn" style="pointer-events:none">
+      Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+      <a class="lx-btn ghost" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}">Siguiente →</a>
+    {% else %}
+      <span class="lx-btn ghost" aria-disabled="true">Siguiente →</span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{# ===== MODAL DEL MAPA ===== #}
+<div id="mapModal"
+     style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.3);z-index:9999;">
+  <div style="background:#fff;border-radius:14px;overflow:hidden;min-width:60vw;max-width:80vw;min-height:60vh;display:flex;flex-direction:column;">
+    <div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+      <strong>Ubicación en mapa</strong>
+      <button type="button" onclick="closeMapModal()" style="border:0;background:transparent;font-size:18px;line-height:1;cursor:pointer">×</button>
+    </div>
+    <div id="map" style="width:100%;flex:1 1 auto;min-height:380px;background:#ddd"></div>
+    <div id="mapAddr" style="padding:8px 14px;border-top:1px solid #e5e7eb;font-size:13px;color:#374151">—</div>
+  </div>
+</div>
+
+<!-- Leaflet CSS (sin integrity) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="{% static 'core/js/barcode_scanner.js' %}"></script>
+<script>
+  // buscar con Enter
+  (function(){
+    const form  = document.getElementById('sucSearchForm');
+    const input = document.getElementById('qInput');
+    if(!form || !input) return;
+    input.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+  })();
+
+  // escáner para filtrar
+  (function(){
+    const form  = document.getElementById('sucSearchForm');
+    const input = document.getElementById('qInput');
+    const btn   = document.getElementById('btnScanQ');
+    if(!btn || !form || !input) return;
+
+    btn.addEventListener('click', ()=>{
+      if(!window.BarcodeScanner){
+        alert('Escáner no disponible.');
+        return;
+      }
+      BarcodeScanner.open({
+        title: 'Escanear código de sucursal',
+        continuous: false,
+        preferFacing: 'environment',
+        onScan: (code)=>{
+          input.value = code;
+          setTimeout(()=>form.requestSubmit(), 0);
+        }
+      });
+    });
+  })();
+
+  // acordeón de detalle
+  (function () {
+    const tbody = document.getElementById('rows-suc');
+    if (!tbody) return;
+
+    function closeAll() {
+      tbody.querySelectorAll('.lx-act.pri[aria-expanded="true"]').forEach(btn => {
+        btn.setAttribute('aria-expanded', 'false');
+      });
+      tbody.querySelectorAll('.lx-expand').forEach(wrap => {
+        const inner = wrap.querySelector('.lx-expand__inner');
+        if (inner) {
+          inner.style.maxHeight = '0px';
+          inner.style.opacity = '0';
+        }
+        wrap.classList.remove('open');
+      });
+    }
+
+    tbody.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.lx-act.pri');
+      if(!btn) return;
+
+      const id = btn.getAttribute('data-target');
+      const row = document.getElementById(id);
+      if(!row) return;
+
+      const wrap = row.querySelector('[data-expand]');
+      const inner = wrap ? wrap.querySelector('.lx-expand__inner') : null;
+      const isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+      closeAll();
+
+      if(!isOpen && wrap && inner){
+        btn.setAttribute('aria-expanded', 'true');
+        wrap.classList.add('open');
+        inner.style.maxHeight = inner.scrollHeight + 'px';
+        inner.style.opacity = '1';
+      }
+    });
+  })();
+
+  // ===== MAPA =====
+  let _leafletMap = null;
+  let _leafletMarker = null;
+
+  function openMapModal() {
+    document.getElementById('mapModal').style.display = 'flex';
+  }
+  function closeMapModal() {
+    document.getElementById('mapModal').style.display = 'none';
+  }
+
+  async function showOnMap(rawAddress) {
+    if (!rawAddress || !rawAddress.trim()) {
+      alert("Esta sucursal no tiene dirección.");
+      return;
+    }
+
+    const addr = rawAddress.trim();
+    openMapModal();
+    document.getElementById('mapAddr').textContent = addr;
+
+    // usamos tu endpoint de Django
+    const url = `/api/geocode/?q=${encodeURIComponent(addr)}`;
+    try {
+      const resp = await fetch(url);
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        alert("No se pudo cargar el mapa (geocoding falló).");
+        return;
+      }
+
+      const lat = parseFloat(data.lat);
+      const lon = parseFloat(data.lon);
+
+      if (isNaN(lat) || isNaN(lon)) {
+        alert("Geocoding sin coordenadas.");
+        return;
+      }
+
+      if (!_leafletMap) {
+        _leafletMap = L.map('map').setView([lat, lon], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(_leafletMap);
+      } else {
+        _leafletMap.setView([lat, lon], 15);
+      }
+
+      if (_leafletMarker) {
+        _leafletMarker.setLatLng([lat, lon]);
+      } else {
+        _leafletMarker = L.marker([lat, lon]).addTo(_leafletMap);
+      }
+
+      setTimeout(() => {
+        _leafletMap.invalidateSize();
+      }, 200);
+
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo cargar el mapa.");
+    }
+  }
+</script>
+{% endblock %}

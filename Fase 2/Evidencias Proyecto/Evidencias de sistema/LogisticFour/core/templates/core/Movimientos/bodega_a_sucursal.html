@@ -1,0 +1,430 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Movimiento de Bodega a Sucursal{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ink: #0f172a;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --bg: #f3f4f6;
+    --card: #ffffff;
+    --accent: #111827;
+    --success-bg: #ecfdf5;
+    --success-border: #a7f3d0;
+    --success-ink: #065f46;
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --error-ink: #991b1b;
+  }
+
+  .mv-shell {
+    max-width: 1080px;
+    margin-inline: auto;
+    display: grid;
+    gap: 18px;
+    padding-bottom: 18px;
+  }
+
+  .mv-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .mv-title {
+    font-weight: 800;
+    font-size: clamp(1.35rem, 2.4vw, 1.65rem);
+    margin: 0;
+    display: flex;
+    gap: .65rem;
+    align-items: center;
+  }
+
+  .mv-title-badge {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-radius: 999px;
+    padding: 3px 10px 4px;
+    font-size: .70rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .mv-sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: .86rem;
+  }
+
+  .mv-formwrap {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 1.1fr .9fr;
+  }
+
+  .mv-card {
+    background: var(--card);
+    border: 1px solid rgba(226,232,240,.8);
+    border-radius: 14px;
+    box-shadow: 0 12px 35px rgba(15,23,42,.04);
+    animation: fadeUp .35s ease;
+  }
+
+  .mv-card-body {
+    padding: 16px 16px 6px 16px;
+  }
+
+  .mv-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .mv-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mv-label {
+    font-weight: 600;
+    color: var(--ink);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .mv-label small {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .mv-input,
+  .mv-select {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #f8fafc;
+    outline: none;
+    transition: box-shadow .15s ease, border .15s ease, background .15s ease;
+    font-size: .9rem;
+  }
+
+  .mv-input:focus,
+  .mv-select:focus {
+    border-color: rgba(17,24,39,.55);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(15,23,42,.08);
+  }
+
+  .mv-input[disabled],
+  .mv-select[disabled] {
+    background: #e5e7eb;
+    cursor: not-allowed;
+    opacity: .8;
+  }
+
+  .mv-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 9.5px 14px 9px;
+    font-weight: 600;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+
+  .mv-btn:hover {
+    background: #000;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(15,23,42,.15);
+  }
+
+  .mv-btn:active {
+    transform: translateY(0);
+  }
+
+  .mv-messages {
+    margin-top: 14px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .msg-success {
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: var(--success-ink);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .msg-error {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-ink);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .msg-icon {
+    width: 26px;
+    height: 26px;
+    background: rgba(255,255,255,.65);
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+  }
+
+  /* panel lateral */
+  .mv-side {
+    border-inline: 0;
+  }
+
+  .mv-side-head {
+    padding: 14px 16px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mv-side-title {
+    font-weight: 600;
+  }
+
+  .mv-side-grid {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px 16px;
+  }
+
+  .mv-metric {
+    background: #f8fafc;
+    border: 1px solid rgba(148,163,184,.25);
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: grid;
+    gap: 3px;
+  }
+
+  .mv-metric small {
+    color: var(--muted);
+  }
+
+  .mv-metric strong {
+    font-size: 1.35rem;
+  }
+
+  .mv-loading {
+    font-size: .8rem;
+    color: var(--muted);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 1000px) {
+    .mv-formwrap {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .mv-card-body,
+    .mv-side-grid { padding-inline: 12px; }
+    .mv-head { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+
+<div class="mv-shell">
+  <div class="mv-head">
+    <div>
+      <h1 class="mv-title">
+        <span>Movimiento de Bodega a Sucursal</span>
+        <span class="mv-title-badge">Inventario</span>
+      </h1>
+      <p class="mv-sub">
+        Elige la bodega origen, la sucursal destino y el producto que quieres mover.
+        Si la bodega y la sucursal usan la misma ubicación, se mostrará el error.
+      </p>
+    </div>
+  </div>
+
+  <div class="mv-formwrap">
+    <!-- FORM -->
+    <div class="mv-card">
+      <div class="mv-card-body">
+        <form method="POST" class="mv-form">
+          {% csrf_token %}
+
+          <div class="mv-field">
+            <label for="bodegaSelect" class="mv-label">
+              Bodega origen
+              <small>obligatorio</small>
+            </label>
+            <select name="bodega" id="bodegaSelect" class="mv-select" required>
+              <option value="">— Selecciona una bodega —</option>
+              {% for b in bodegas %}
+                <option value="{{ b.id }}">{{ b.codigo }} — {{ b.nombre }}</option>
+              {% endfor %}
+            </select>
+            <p class="mv-loading" id="bodegaHelp">Al seleccionar se cargarán las sucursales y los productos.</p>
+          </div>
+
+          <div class="mv-field">
+            <label for="sucursalSelect" class="mv-label">Sucursal destino</label>
+            <select name="sucursal" id="sucursalSelect" class="mv-select" required disabled>
+              <option value="">— Selecciona primero una bodega —</option>
+            </select>
+          </div>
+
+          <div class="mv-field">
+            <label for="productoSelect" class="mv-label">Producto a mover</label>
+            <select name="producto" id="productoSelect" class="mv-select" required disabled>
+              <option value="">— Selecciona primero una bodega —</option>
+            </select>
+            <small id="productoHelp" class="mv-loading">Verás aquí el stock disponible para esa bodega.</small>
+          </div>
+
+          <div class="mv-field">
+            <label for="cantidadInput" class="mv-label">Cantidad</label>
+            <input type="number" name="cantidad" min="1" id="cantidadInput" class="mv-input" required value="1">
+          </div>
+
+          <button type="submit" class="mv-btn">
+            <span aria-hidden="true">⇄</span>
+            <span>Mover producto</span>
+          </button>
+
+          <div class="mv-messages">
+            {% if success %}
+              <div class="msg-success">
+                <span class="msg-icon">✓</span>
+                <div>{{ success }}</div>
+              </div>
+            {% endif %}
+            {% if error %}
+              <div class="msg-error">
+                <span class="msg-icon">!</span>
+                <div>{{ error }}</div>
+              </div>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- LATERAL / INFO -->
+    <div class="mv-card mv-side" aria-label="Resumen rápido">
+      <div class="mv-side-head">
+        <div>
+          <p class="mv-side-title">Ayuda rápida</p>
+          <p class="mv-sub" style="margin-top:2px;">Datos de la bodega seleccionada.</p>
+        </div>
+      </div>
+      <div class="mv-side-grid" id="sideInfo">
+        <div class="mv-metric">
+          <small>Productos cargados</small>
+          <strong id="infoProductos">0</strong>
+        </div>
+        <div class="mv-metric">
+          <small>Sucursales de la bodega</small>
+          <strong id="infoSucursales">0</strong>
+        </div>
+        <div class="mv-metric" id="infoEstado">
+          <small>Estado</small>
+          <span class="mv-loading">Selecciona una bodega…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const bodegaSelect   = document.getElementById("bodegaSelect");
+const sucursalSelect = document.getElementById("sucursalSelect");
+const productoSelect = document.getElementById("productoSelect");
+const infoProductos  = document.getElementById("infoProductos");
+const infoSucursales = document.getElementById("infoSucursales");
+const infoEstado     = document.getElementById("infoEstado");
+const bodegaHelp     = document.getElementById("bodegaHelp");
+const productoHelp   = document.getElementById("productoHelp");
+
+bodegaSelect.addEventListener("change", async () => {
+  const bodegaId = bodegaSelect.value;
+
+  sucursalSelect.innerHTML = '<option value="">Cargando sucursales…</option>';
+  productoSelect.innerHTML = '<option value="">Cargando productos…</option>';
+  sucursalSelect.disabled = true;
+  productoSelect.disabled = true;
+
+  infoProductos.textContent  = "0";
+  infoSucursales.textContent = "0";
+  infoEstado.innerHTML       = '<small>Estado</small><span class="mv-loading">Cargando…</span>';
+  bodegaHelp.textContent     = "Consultando servidor…";
+
+  if (!bodegaId) {
+    sucursalSelect.innerHTML = '<option value="">— Selecciona primero una bodega —</option>';
+    productoSelect.innerHTML = '<option value="">— Selecciona primero una bodega —</option>';
+    infoEstado.innerHTML     = '<small>Estado</small><span class="mv-loading">Sin selección</span>';
+    bodegaHelp.textContent   = "Al seleccionar se cargarán las sucursales y los productos.";
+    return;
+  }
+
+  try {
+    const res   = await fetch(`/ajax/sucursales-y-productos/?bodega_id=${bodegaId}`);
+    const data  = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    // sucursales
+    sucursalSelect.innerHTML = '<option value="">— Selecciona una sucursal —</option>';
+    data.sucursales.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = `${s.codigo} — ${s.nombre}`;
+      sucursalSelect.appendChild(opt);
+    });
+    sucursalSelect.disabled = false;
+
+    // productos
+    productoSelect.innerHTML = '<option value="">— Selecciona un producto —</option>';
+    data.productos.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `${p.nombre} (SKU: ${p.sku}) — Stock: ${p.stock_total || 0}`;
+      productoSelect.appendChild(opt);
+    });
+    productoSelect.disabled = false;
+
+    // panel lateral
+    infoSucursales.textContent = data.sucursales.length;
+    infoProductos.textContent  = data.productos.length;
+    infoEstado.innerHTML       = '<small>Estado</small><span class="mv-loading" style="color:#047857;">Listo para mover</span>';
+    bodegaHelp.textContent     = "Elige la sucursal destino y el producto.";
+    productoHelp.textContent   = "Si el stock del producto es 0, no podrás moverlo.";
+  } catch (err) {
+    console.error(err);
+    sucursalSelect.innerHTML = '<option value="">Error al cargar sucursales</option>';
+    productoSelect.innerHTML = '<option value="">Error al cargar productos</option>';
+    infoEstado.innerHTML     = '<small>Estado</small><span class="mv-loading" style="color:#b91c1c;">Error al cargar datos</span>';
+    bodegaHelp.textContent   = "No se pudo obtener la información. Intenta de nuevo.";
+  }
+});
+</script>
+{% endblock %}

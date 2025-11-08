@@ -1,0 +1,158 @@
+{% extends "core/base.html" %}
+{% block title %}Productos en Bodega{% endblock %}
+
+{% block content %}
+
+
+<style>
+  :root{ --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --bg:#f5f7fb; --head:#eef0f6;
+         --pri:#111; --pri-ink:#fff; --danger:#dc2626; }
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .page-head h1{margin:0;font-weight:800;letter-spacing:.3px}
+  .page-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .lx-btn.icon{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:12px;
+               background:#111;color:#fff;border:1px solid #111;text-decoration:none}
+  .filter-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;
+               display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .filter-card .input{flex:1 1 280px;min-width:220px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fafafa}
+  .filter-card .btn{background:#111;color:#fff;border:0;border-radius:10px;padding:10px 14px;cursor:pointer}
+  .filter-card .btn.ghost{background:#fff;color:#111;border:1px solid var(--line)}
+  .table-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .data-table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+  .data-table thead th{position:sticky;top:0;background:var(--head);z-index:1;text-align:left;padding:12px;font-weight:700;border-bottom:1px solid var(--line)}
+  .data-table tbody td{padding:12px;border-bottom:1px solid var(--line)}
+  .data-table tbody tr:hover{background:#fafafa}
+  .col-actions{text-align:right;min-width:280px;white-space:nowrap}
+  .lx-badge{display:inline-block;padding:4px 8px;font-size:12px;border-radius:999px;border:1px solid var(--line);background:#f8fafc;color:#374151}
+  .lx-badge.ok{background:#e8f7ee;color:#065f46;border-color:#bfe7cb}
+  .lx-badge.no{background:#fff1f0;color:#7a1d1d;border-color:#f3c3bf}
+  @media (max-width:760px){
+    .data-table thead{display:none}
+    .data-table{display:block}
+    .data-table tbody{display:grid;gap:10px}
+    .data-table tr{display:grid;gap:8px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px}
+    .data-table td{border:0;padding:0}
+    .data-table td[data-label]::before{content:attr(data-label) ": ";font-weight:600;color:var(--muted);margin-right:6px}
+    .col-actions{text-align:left;min-width:0}
+  }
+  /* ===== Modal (mismo set que bodegas) ===== */
+  dialog.lx-modal{ border:0; padding:0; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.2);
+                   width:clamp(320px,92vw,640px); max-width:95vw; }
+  dialog.lx-modal::backdrop{ background:rgba(17,24,39,.45); backdrop-filter: blur(2px); }
+
+
+
+  /* Acciones */
+  .lx-acts{display:flex;gap:8px;flex-wrap:wrap}
+  .lx-act{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:7px 10px;border-radius:10px;font-size:13px;line-height:1;border:1px solid var(--line);
+    background:var(--sec-bg);color:var(--sec-ink);text-decoration:none;cursor:pointer
+  }
+  .lx-act svg{width:14px;height:14px;display:block}
+  .lx-act.pri{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)}
+  .lx-act.danger{background:#fff;color:var(--danger);border-color:#fecaca}
+  .lx-act.danger:hover{background:#fff5f5}
+  .lx-act[aria-expanded="true"]{background:var(--pri);color:#fff;border-color:var(--pri)}
+
+  /* Expandible */
+  .lx-expand-row td{padding:0!important;background:#fbfbfd}
+  .lx-expand{border-top:1px dashed var(--line)}
+  .lx-expand__inner{
+    display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));
+    padding:12px; opacity:0; max-height:0; overflow:hidden;
+    transition:max-height .35s ease, opacity .25s ease;
+  }
+  .lx-expand.open .lx-expand__inner{opacity:1}
+
+  .lx-kv{display:grid;gap:2px}
+  .lx-kv small{color:var(--muted)}
+
+  /* Responsive: tabla → cards */
+  @media (max-width:760px){
+    .lx-table thead{display:none}
+    .lx-table{display:block}
+    .lx-table tbody{display:grid;gap:10px}
+    .lx-table tr{display:grid;gap:8px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px}
+    .lx-table td{border:0;padding:0}
+    .lx-table td[data-label]::before{content:attr(data-label) ": ";font-weight:600;color:var(--muted);margin-right:6px}
+    .lx-expand__inner{grid-template-columns:1fr}
+  }
+</style>
+
+<div class="page-head">
+  <h1>Productos en la Bodega: {{ bodega.nombre }}</h1>
+  <div class="page-actions">
+  </div>
+</div>
+
+<form method="get" class="filter-card" role="search">
+  <input type="search" class="input" name="q" value="{{ q }}" placeholder="Buscar SKU, nombre, marca o categoría…" />
+  <button class="btn" type="submit">Buscar</button>
+  <a class="btn ghost" href="{% url 'productos_por_bodega' bodega.id %}">Limpiar</a>
+</form>
+
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>SKU / Nombre</th>
+        <th>Marca</th>
+        <th>Categoría</th>
+        <th>Ubicación</th>
+        <th>Estado</th>
+        <th>Stock</th>
+        <th>Precio</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in productos %}
+      <tr>
+        <td data-label="SKU / Nombre">
+          <div><code>{{ p.sku }}</code></div>
+          <div><strong>{{ p.nombre }}</strong></div>
+        </td>
+        <td>{{ p.marca|default:"—" }}</td>
+        <td>{{ p.categoria|default:"—" }}</td>
+        <td>{{ p.ubicacion|default:"—" }}</td>
+        <td>
+          {% if p.activo %}
+            <span class="lx-badge ok">Activo</span>
+          {% else %}
+            <span class="lx-badge no">Inactivo</span>
+          {% endif %}
+        </td>
+        <td><strong>{{ p.stock }}</strong></td>
+        <td>${{ p.precio }}</td>
+        <td class="col-actions">
+          <a href="{% url 'producto-update' p.pk %}">Editar</a>
+          <form method="post" action="{% url 'producto-delete' p.pk %}" onsubmit="return confirm('¿Eliminar este producto?')">
+            {% csrf_token %}
+            <button type="submit" class="lx-act danger">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8">No hay productos en esta bodega.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+  <nav class="pager" aria-label="Paginación">
+    {% if page_obj.has_previous %}
+      <a href="?q={{ q }}&page={{ page_obj.previous_page_number }}">← Anterior</a>
+    {% else %}
+      <span class="muted">← Anterior</span>
+    {% endif %}
+    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?q={{ q }}&page={{ page_obj.next_page_number }}">Siguiente →</a>
+    {% else %}
+      <span class="muted">Siguiente →</span>
+    {% endif %}
+  </nav>
+{% endif %}
+{% endblock %}
