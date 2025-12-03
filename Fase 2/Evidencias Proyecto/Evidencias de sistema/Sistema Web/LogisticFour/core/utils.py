@@ -1,5 +1,9 @@
 # core/utils.py
 from urllib.parse import quote_plus
+# core/utils.py
+
+from django.db.models import Q   
+
 
 from .models import (
     Sucursal,
@@ -9,21 +13,49 @@ from .models import (
 )
 
 
+
 def ensure_ubicacion_sucursal(sucursal: Sucursal) -> UbicacionSucursal:
     """
-    Devuelve la primera ubicación de la sucursal.
-    Si no tiene, crea una ubicación predefinida.
+    Devuelve la ubicación 'SIN UBICACIÓN' de una sucursal.
+    Si no existe, la crea como <COD-SUC>-000-000.
+    Siempre será la ubicación por defecto para movimientos que llegan a sucursal.
     """
-    ubi = sucursal.ubicaciones.first()
-    if ubi:
-        return ubi
-
-    # crea la ubicación DEFAULT para esa sucursal
-    return UbicacionSucursal.objects.create(
-        sucursal=sucursal,
-        nombre="GENERAL",
-        codigo=f"SUC-{sucursal.id}-GEN",
+    ubi_default = (
+        UbicacionSucursal.objects
+        .filter(sucursal=sucursal)
+        .filter(
+            Q(codigo__endswith="-000-000") |
+            Q(area__iexact="SIN UBICACION") |
+            Q(area__iexact="SIN UBICACIÓN")
+        )
+        .order_by("id")
+        .first()
     )
+    if ubi_default:
+        return ubi_default
+
+    # Crear la default si no existe
+    area_cod = "000"
+    estante_cod = "000"
+
+    ubi_default = UbicacionSucursal(
+        sucursal=sucursal,
+        area_codigo=area_cod,
+        estante_codigo=estante_cod,
+        area="SIN UBICACIÓN",
+        activo=True,
+    )
+
+    # Si tu modelo tiene set_codigo, úsalo
+    if hasattr(ubi_default, "set_codigo"):
+        ubi_default.set_codigo(area_cod, estante_cod)
+    else:
+        # fallback si no existe set_codigo
+        prefijo = getattr(sucursal, "codigo", str(sucursal.id)).upper()
+        ubi_default.codigo = f"{prefijo}-{area_cod}-{estante_cod}"
+
+    ubi_default.save()
+    return ubi_default
 
 
 def ensure_ubicacion_bodega(bodega: Bodega) -> UbicacionBodega:

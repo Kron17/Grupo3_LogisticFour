@@ -187,20 +187,9 @@
               {{ sform.cantidad_inicial.errors }}
             </div>
           </div>
-          <div class="col-12 col-md-6">
-            <div class="field">
-              <label for="{{ sform.costo_unitario.id_for_label }}">Costo unitario (opcional)</label>
-              {{ sform.costo_unitario }}
-              {{ sform.costo_unitario.errors }}
-            </div>
-          </div>
-          <div class="col-12 col-md-6">
-            <div class="field">
-              <label for="{{ sform.lote.id_for_label }}">Lote (opcional)</label>
-              {{ sform.lote }}
-              {{ sform.lote.errors }}
-            </div>
-          </div>
+
+          {# Se eliminaron costo_unitario y lote de la visual #}
+
           <div class="col-12">
             <div id="row_fecha_vto" class="field slide hide">
               <label for="{{ sform.fecha_vencimiento.id_for_label }}">Fecha de vencimiento</label>

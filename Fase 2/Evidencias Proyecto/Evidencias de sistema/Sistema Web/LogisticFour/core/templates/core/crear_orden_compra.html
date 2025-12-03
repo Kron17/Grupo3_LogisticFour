@@ -1,0 +1,53 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 640px;">
+  <h2 class="mb-3">Crear Orden de Compra</h2>
+
+  {# Muestra errores generales del form #}
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.numero_orden.id_for_label }}">Número orden</label>
+      {{ form.numero_orden }}
+      {{ form.numero_orden.errors }}
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.proveedor.id_for_label }}">Proveedor</label>
+        {{ form.proveedor }}
+        {{ form.proveedor.errors }}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.bodega.id_for_label }}">Bodega</label>
+        {{ form.bodega }}
+        {{ form.bodega.errors }}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.estado.id_for_label }}">Estado</label>
+        {{ form.estado }}
+        {{ form.estado.errors }}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.fecha_esperada.id_for_label }}">Fecha esperada</label>
+        {{ form.fecha_esperada }}
+        {{ form.fecha_esperada.errors }}
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{% url 'finanzas_reporte' %}" class="btn btn-link">Volver</a>
+  </form>
+</div>
+{% endblock %}

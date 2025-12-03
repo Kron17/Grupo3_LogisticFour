@@ -138,6 +138,8 @@
     gap: 6px;
     align-items: center;
     cursor: pointer;
+    text-decoration: none;
+    font-size: .9rem;
     transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
   }
 
@@ -149,6 +151,25 @@
 
   .mv-btn:active {
     transform: translateY(0);
+  }
+
+  /* Botón "Ver guía de despacho" */
+  .mv-btn-ghost {
+    background: #ffffff;
+    border-radius: 999px;
+    border: 1px solid rgba(22, 163, 74, .4);
+    padding: 6px 14px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--success-ink);
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    text-decoration: none;
+  }
+
+  .mv-btn-ghost:hover {
+    background: #f0fdf4;
   }
 
   .mv-messages {
@@ -165,7 +186,7 @@
     padding: 10px 12px;
     display: flex;
     gap: 10px;
-    align-items: center;
+    align-items: flex-start;
   }
 
   .msg-error {
@@ -233,6 +254,46 @@
     color: var(--muted);
   }
 
+  /* Chips de colores para Validado / Stock */
+  .mv-product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: .78rem;
+    transition: opacity .15s ease;
+  }
+
+  .mv-product-meta.is-empty {
+    opacity: .6;
+  }
+
+  .mv-chip {
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .mv-chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .mv-chip-valid {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .mv-chip-stock {
+    background: #e0f2fe;
+    color: #075985;
+  }
+
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(5px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -260,7 +321,7 @@
       </h1>
       <p class="mv-sub">
         Elige la bodega origen, la sucursal destino y el producto que quieres mover.
-        Si la bodega y la sucursal usan la misma ubicación, se mostrará el error.
+        Solo se mostrarán productos con stock validado en la bodega origen.
       </p>
     </div>
   </div>
@@ -280,30 +341,91 @@
             <select name="bodega" id="bodegaSelect" class="mv-select" required>
               <option value="">— Selecciona una bodega —</option>
               {% for b in bodegas %}
-                <option value="{{ b.id }}">{{ b.codigo }} — {{ b.nombre }}</option>
+                <option value="{{ b.id }}" {% if bodega_sel == b.id %}selected{% endif %}>
+                  {{ b.codigo }} — {{ b.nombre }}
+                </option>
               {% endfor %}
             </select>
-            <p class="mv-loading" id="bodegaHelp">Al seleccionar se cargarán las sucursales y los productos.</p>
+            <p class="mv-loading" id="bodegaHelp">
+              Al seleccionar se cargarán las sucursales y los productos con stock validado.
+            </p>
           </div>
 
           <div class="mv-field">
             <label for="sucursalSelect" class="mv-label">Sucursal destino</label>
-            <select name="sucursal" id="sucursalSelect" class="mv-select" required disabled>
-              <option value="">— Selecciona primero una bodega —</option>
+            <select
+              name="sucursal"
+              id="sucursalSelect"
+              class="mv-select"
+              required
+              {% if not sucursales %}disabled{% endif %}
+            >
+              {% if sucursales %}
+                <option value="">— Selecciona una sucursal —</option>
+                {% for s in sucursales %}
+                  <option value="{{ s.id }}" {% if sucursal_sel == s.id %}selected{% endif %}>
+                    {{ s.codigo }} — {{ s.nombre }}
+                  </option>
+                {% endfor %}
+              {% else %}
+                <option value="">— Selecciona primero una bodega —</option>
+              {% endif %}
             </select>
           </div>
 
           <div class="mv-field">
             <label for="productoSelect" class="mv-label">Producto a mover</label>
-            <select name="producto" id="productoSelect" class="mv-select" required disabled>
-              <option value="">— Selecciona primero una bodega —</option>
+            <select
+              name="producto"
+              id="productoSelect"
+              class="mv-select"
+              required
+              {% if not productos %}disabled{% endif %}
+            >
+              {% if productos %}
+                <option value="">— Selecciona un producto validado —</option>
+                {% for p in productos %}
+                  <option
+                    value="{{ p.id }}"
+                    data-validado="{{ p.stock_validado|floatformat:0 }}"
+                    data-stock="{{ p.stock_total|floatformat:0 }}"
+                  >
+                    {{ p.codigo }} — {{ p.nombre }}
+                    (SKU: {{ p.sku }}) — ✅ {{ p.stock_validado|floatformat:0 }} val. · 📦 {{ p.stock_total|floatformat:0 }} stock
+                  </option>
+                {% endfor %}
+              {% else %}
+                <option value="">— Selecciona primero una bodega —</option>
+              {% endif %}
             </select>
-            <small id="productoHelp" class="mv-loading">Verás aquí el stock disponible para esa bodega.</small>
+            <small id="productoHelp" class="mv-loading">
+              Verás aquí solo productos con stock <strong>validado</strong> y disponible en la bodega origen.
+            </small>
+
+            <!-- Chips de colores que destacan Validado vs Stock total -->
+            <div class="mv-product-meta is-empty" id="productoMeta" aria-live="polite">
+              <span class="mv-chip mv-chip-valid">
+                <span class="mv-chip-dot"></span>
+                Validado: <span id="metaValidado">—</span>
+              </span>
+              <span class="mv-chip mv-chip-stock">
+                <span class="mv-chip-dot"></span>
+                Stock total: <span id="metaStock">—</span>
+              </span>
+            </div>
           </div>
 
           <div class="mv-field">
             <label for="cantidadInput" class="mv-label">Cantidad</label>
-            <input type="number" name="cantidad" min="1" id="cantidadInput" class="mv-input" required value="1">
+            <input
+              type="number"
+              name="cantidad"
+              min="1"
+              id="cantidadInput"
+              class="mv-input"
+              required
+              value="1"
+            >
           </div>
 
           <button type="submit" class="mv-btn">
@@ -315,7 +437,19 @@
             {% if success %}
               <div class="msg-success">
                 <span class="msg-icon">✓</span>
-                <div>{{ success }}</div>
+                <div>
+                  <div>{{ success }}</div>
+                  {% if transferencia_id %}
+                    <div style="margin-top:6px;">
+                      <a
+                        href="{% url 'detalle_transferencia' transferencia_id %}"
+                        class="mv-btn-ghost"
+                      >
+                        Ver guía de despacho
+                      </a>
+                    </div>
+                  {% endif %}
+                </div>
               </div>
             {% endif %}
             {% if error %}
@@ -334,21 +468,31 @@
       <div class="mv-side-head">
         <div>
           <p class="mv-side-title">Ayuda rápida</p>
-          <p class="mv-sub" style="margin-top:2px;">Datos de la bodega seleccionada.</p>
+          <p class="mv-sub" style="margin-top:2px;">
+            Datos de la bodega seleccionada y productos con stock validado.
+          </p>
         </div>
       </div>
       <div class="mv-side-grid" id="sideInfo">
         <div class="mv-metric">
-          <small>Productos cargados</small>
-          <strong id="infoProductos">0</strong>
+          <small>Productos validados cargados</small>
+          <strong id="infoProductos">
+            {% if productos %}{{ productos|length }}{% else %}0{% endif %}
+          </strong>
         </div>
         <div class="mv-metric">
           <small>Sucursales de la bodega</small>
-          <strong id="infoSucursales">0</strong>
+          <strong id="infoSucursales">
+            {% if sucursales %}{{ sucursales|length }}{% else %}0{% endif %}
+          </strong>
         </div>
         <div class="mv-metric" id="infoEstado">
           <small>Estado</small>
-          <span class="mv-loading">Selecciona una bodega…</span>
+          {% if bodega_sel %}
+            <span>Mostrando solo productos con stock validado &gt; 0.</span>
+          {% else %}
+            <span class="mv-loading">Selecciona una bodega…</span>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -365,9 +509,45 @@ const infoEstado     = document.getElementById("infoEstado");
 const bodegaHelp     = document.getElementById("bodegaHelp");
 const productoHelp   = document.getElementById("productoHelp");
 
+const productoMeta   = document.getElementById("productoMeta");
+const metaValidado   = document.getElementById("metaValidado");
+const metaStock      = document.getElementById("metaStock");
+
+function setProductoHelpDefault() {
+  if (!productoHelp) return;
+  productoHelp.innerHTML =
+    'Verás aquí solo productos con stock <strong>validado</strong> y disponible en la bodega origen.';
+}
+
+function resetProductoMeta() {
+  if (!productoMeta) return;
+  metaValidado.textContent = "—";
+  metaStock.textContent    = "—";
+  productoMeta.classList.add("is-empty");
+}
+
+// Inicial
+setProductoHelpDefault();
+resetProductoMeta();
+
+// Cuando se selecciona un producto, actualizar los chips de colores
+if (productoSelect) {
+  productoSelect.addEventListener("change", () => {
+    const opt = productoSelect.options[productoSelect.selectedIndex];
+    if (!opt || !opt.dataset.validado) {
+      resetProductoMeta();
+      return;
+    }
+    metaValidado.textContent = opt.dataset.validado || "0";
+    metaStock.textContent    = opt.dataset.stock || "0";
+    productoMeta.classList.remove("is-empty");
+  });
+}
+
 bodegaSelect.addEventListener("change", async () => {
   const bodegaId = bodegaSelect.value;
 
+  // Estado inicial de carga
   sucursalSelect.innerHTML = '<option value="">Cargando sucursales…</option>';
   productoSelect.innerHTML = '<option value="">Cargando productos…</option>';
   sucursalSelect.disabled = true;
@@ -375,24 +555,33 @@ bodegaSelect.addEventListener("change", async () => {
 
   infoProductos.textContent  = "0";
   infoSucursales.textContent = "0";
-  infoEstado.innerHTML       = '<small>Estado</small><span class="mv-loading">Cargando…</span>';
-  bodegaHelp.textContent     = "Consultando servidor…";
+  infoEstado.innerHTML       =
+    '<small>Estado</small><span class="mv-loading">Cargando…</span>';
+  bodegaHelp.textContent   = "Consultando servidor…";
+  setProductoHelpDefault();
+  resetProductoMeta();
 
+  // Si no hay bodega seleccionada
   if (!bodegaId) {
-    sucursalSelect.innerHTML = '<option value="">— Selecciona primero una bodega —</option>';
-    productoSelect.innerHTML = '<option value="">— Selecciona primero una bodega —</option>';
-    infoEstado.innerHTML     = '<small>Estado</small><span class="mv-loading">Sin selección</span>';
-    bodegaHelp.textContent   = "Al seleccionar se cargarán las sucursales y los productos.";
+    sucursalSelect.innerHTML =
+      '<option value="">— Selecciona primero una bodega —</option>';
+    productoSelect.innerHTML =
+      '<option value="">— Selecciona primero una bodega —</option>';
+    infoEstado.innerHTML =
+      '<small>Estado</small><span class="mv-loading">Sin selección</span>';
+    bodegaHelp.textContent =
+      "Al seleccionar se cargarán las sucursales y los productos con stock validado.";
     return;
   }
 
   try {
-    const res   = await fetch(`/ajax/sucursales-y-productos/?bodega_id=${bodegaId}`);
-    const data  = await res.json();
+    // 👇 Endpoint que devuelve sucursales + SOLO productos con stock_validado > 0
+    const res  = await fetch(`/ajax/sucursales-y-productos/?bodega_id=${bodegaId}`);
+    const data = await res.json();
 
     if (data.error) throw new Error(data.error);
 
-    // sucursales
+    // ===== Sucursales =====
     sucursalSelect.innerHTML = '<option value="">— Selecciona una sucursal —</option>';
     data.sucursales.forEach(s => {
       const opt = document.createElement("option");
@@ -402,29 +591,63 @@ bodegaSelect.addEventListener("change", async () => {
     });
     sucursalSelect.disabled = false;
 
-    // productos
-    productoSelect.innerHTML = '<option value="">— Selecciona un producto —</option>';
-    data.productos.forEach(p => {
-      const opt = document.createElement("option");
-      opt.value = p.id;
-      opt.textContent = `${p.nombre} (SKU: ${p.sku}) — Stock: ${p.stock_total || 0}`;
-      productoSelect.appendChild(opt);
-    });
-    productoSelect.disabled = false;
+    // ===== Productos (SOLO validados; el backend ya filtró) =====
+    if (!data.productos || data.productos.length === 0) {
+      productoSelect.innerHTML =
+        '<option value="">No hay productos con stock validado en esta bodega</option>';
+      productoSelect.disabled = true;
 
-    // panel lateral
-    infoSucursales.textContent = data.sucursales.length;
-    infoProductos.textContent  = data.productos.length;
-    infoEstado.innerHTML       = '<small>Estado</small><span class="mv-loading" style="color:#047857;">Listo para mover</span>';
-    bodegaHelp.textContent     = "Elige la sucursal destino y el producto.";
-    productoHelp.textContent   = "Si el stock del producto es 0, no podrás moverlo.";
+      infoSucursales.textContent = data.sucursales.length;
+      infoProductos.textContent  = "0";
+      infoEstado.innerHTML =
+        '<small>Estado</small><span class="mv-loading" style="color:#b45309;">Sin productos validados para mover</span>';
+      productoHelp.textContent =
+        "Valida productos en esta bodega para poder mover stock a sucursal.";
+      resetProductoMeta();
+    } else {
+      productoSelect.innerHTML =
+        '<option value="">— Selecciona un producto validado —</option>';
+
+      data.productos.forEach(p => {
+        const opt = document.createElement("option");
+        const stockTotal    = Number(p.stock_total ?? 0);
+        const stockValidado = Number(p.stock_validado ?? 0);
+
+        opt.value = p.id;
+        opt.dataset.validado = stockValidado;
+        opt.dataset.stock    = stockTotal;
+
+        // Texto del option con iconos para diferenciar visualmente
+        opt.textContent =
+          `${p.nombre} (SKU: ${p.sku}) — ✅ ${stockValidado} val. · 📦 ${stockTotal} stock`;
+
+        productoSelect.appendChild(opt);
+      });
+      productoSelect.disabled = false;
+
+      infoSucursales.textContent = data.sucursales.length;
+      infoProductos.textContent  = data.productos.length;
+      infoEstado.innerHTML =
+        '<small>Estado</small><span class="mv-loading" style="color:#047857;">Listo para mover (solo productos validados)</span>';
+      productoHelp.innerHTML =
+        'Mostrando productos con stock <strong>validado</strong> en la bodega origen.';
+      resetProductoMeta();
+    }
+
+    bodegaHelp.textContent = "Elige la sucursal destino y el producto validado.";
   } catch (err) {
     console.error(err);
-    sucursalSelect.innerHTML = '<option value="">Error al cargar sucursales</option>';
-    productoSelect.innerHTML = '<option value="">Error al cargar productos</option>';
-    infoEstado.innerHTML     = '<small>Estado</small><span class="mv-loading" style="color:#b91c1c;">Error al cargar datos</span>';
+    sucursalSelect.innerHTML =
+      '<option value="">Error al cargar sucursales</option>';
+    productoSelect.innerHTML =
+      '<option value="">Error al cargar productos</option>';
+    infoEstado.innerHTML =
+      '<small>Estado</small><span class="mv-loading" style="color:#b91c1c;">Error al cargar datos</span>';
     bodegaHelp.textContent   = "No se pudo obtener la información. Intenta de nuevo.";
+    productoHelp.textContent = "No se pudo cargar el listado de productos.";
+    resetProductoMeta();
   }
 });
 </script>
+
 {% endblock %}

@@ -1,0 +1,159 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Escanear producto en {{ bodega.nombre }}{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ink:#0f172a;
+    --muted:#6b7280;
+    --bg:#f3f4f6;
+    --card:#ffffff;
+  }
+
+  .qr-wrap{
+    max-width:480px;
+    margin:20px auto;
+    padding:16px;
+    background:var(--card);
+    border-radius:16px;
+    box-shadow:0 16px 40px rgba(15,23,42,.08);
+  }
+
+  .qr-title{
+    margin:0 0 4px;
+    font-size:1.1rem;
+    font-weight:700;
+    color:var(--ink);
+    text-align:center;
+  }
+
+  .qr-sub{
+    margin:0 0 12px;
+    font-size:.88rem;
+    color:var(--muted);
+    text-align:center;
+  }
+
+  #qr-reader{
+    width:100%;
+    min-height:260px;
+  }
+
+  .last-read{
+    margin-top:10px;
+    font-size:.8rem;
+    color:var(--muted);
+    text-align:center;
+  }
+
+  .last-read-code{
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size:.9rem;
+    padding:4px 8px;
+    border-radius:8px;
+    background:#f9fafb;
+    border:1px dashed #e5e7eb;
+    display:inline-block;
+    margin-top:4px;
+  }
+</style>
+
+<div class="qr-wrap">
+  <h1 class="qr-title">Escanear producto por QR</h1>
+  <p class="qr-sub">
+    Bodega: <strong>{{ bodega.nombre }}</strong><br>
+    Apunta la cámara al código QR del producto (SKU).
+  </p>
+
+  <!-- Contenedor del lector -->
+  <div id="qr-reader"></div>
+
+  <div class="last-read">
+    Último leído:<br>
+    <span id="last-scan" class="last-read-code">—</span>
+  </div>
+</div>
+
+<!-- Librería de lectura de QR -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const lastScanEl = document.getElementById("last-scan");
+    let processing = false;
+
+    function onScanSuccess(decodedText, decodedResult) {
+      if (processing) return;
+      processing = true;
+
+      lastScanEl.textContent = decodedText;
+
+      fetch("", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({ sku: decodedText })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.ok && data.redirect_url) {
+          // Producto existe en la bodega → redirigir
+          window.location.href = data.redirect_url;
+        } else {
+          // Error → mostrar SweetAlert
+          Swal.fire({
+            icon: "error",
+            title: "Producto no encontrado",
+            text: data.error || "El producto no existe en esta bodega.",
+            confirmButtonText: "Volver a intentar"
+          }).then(() => {
+            processing = false; // permitir escanear de nuevo
+          });
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Error de comunicación con el servidor.",
+          confirmButtonText: "OK"
+        }).then(() => {
+          processing = false;
+        });
+      });
+    }
+
+    function onScanFailure(error) {
+      // errores de lectura continuos, se ignoran
+    }
+
+    // Usar la API "baja" para poder forzar cámara trasera
+    const html5QrCode = new Html5Qrcode("qr-reader");
+
+    const config = { fps: 10, qrbox: 250 };
+
+    // facingMode:"environment" → intenta usar la cámara principal/trasera
+    html5QrCode.start(
+      { facingMode: "environment" },
+      config,
+      onScanSuccess,
+      onScanFailure
+    ).catch(err => {
+      console.error("No se pudo iniciar la cámara:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Cámara",
+        text: "No se pudo acceder a la cámara. Verifica los permisos del navegador.",
+      });
+    });
+  });
+</script>
+{% endblock %}

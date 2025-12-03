@@ -46,10 +46,15 @@ INSTALLED_APPS = [
     'core',
     'django.contrib.sites',
     'widget_tweaks',
+    'django.contrib.humanize',
 
    
 
 ]
+
+# settings.py
+
+
 
 SITE_ID = 1
 

@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from core.models import Bodega, UsuarioPerfil
+from core.models import Bodega, UsuarioPerfil, OrdenCompra, FacturaProveedor, RecepcionMercaderia, Producto
 from django.db.models import Q
 from core.models import (
     # usuarios
@@ -69,35 +69,74 @@ class UsuarioPerfilEditForm(forms.ModelForm):
 #  (sin el campo ubicacion porque ya no existe en el modelo)
 # =========================================================
 class ProductoForm(forms.ModelForm):
-    marca = forms.ModelChoiceField(queryset=Marca.objects.none(), required=False, empty_label="— Selecciona una marca —")
-    categoria = forms.ModelChoiceField(queryset=CategoriaProducto.objects.none(), required=False, empty_label="— Selecciona una categoría —")
-    unidad_base = forms.ModelChoiceField(queryset=UnidadMedida.objects.none(), required=True, empty_label=None)
-    tasa_impuesto = forms.ModelChoiceField(queryset=TasaImpuesto.objects.none(), required=False, empty_label="— Sin impuesto —")
+    marca = forms.ModelChoiceField(
+        queryset=Marca.objects.none(),
+        required=False,
+        empty_label="— Selecciona una marca —",
+    )
+    categoria = forms.ModelChoiceField(
+        queryset=CategoriaProducto.objects.none(),
+        required=False,
+        empty_label="— Selecciona una categoría —",
+    )
+    unidad_base = forms.ModelChoiceField(
+        queryset=UnidadMedida.objects.none(),
+        required=True,
+        empty_label=None,
+    )
+    tasa_impuesto = forms.ModelChoiceField(
+        queryset=TasaImpuesto.objects.none(),
+        required=False,
+        empty_label="— Sin impuesto —",
+    )
 
     class Meta:
         model = Producto
         fields = [
-            "sku", "nombre",
-            "marca", "categoria",
-            "unidad_base", "tasa_impuesto",
-            "activo", "es_serializado", "tiene_vencimiento",
+            "sku",
+            "nombre",
+            # "descripcion",  ← LA SACAMOS PARA DESBLOQUEAR EL ERROR
+            "marca",
+            "categoria",
+            "unidad_base",
+            "tasa_impuesto",
+            "activo",
+            "es_serializado",
+            "tiene_vencimiento",
             "precio",
+            "stock",
         ]
         widgets = {
             "sku": forms.TextInput(attrs={"placeholder": "SKU o código interno"}),
             "nombre": forms.TextInput(attrs={"placeholder": "Nombre del producto"}),
+            # puedes dejar este widget o borrarlo; si el campo no está en fields,
+            # simplemente no se usará
+            # "descripcion": forms.Textarea(
+            #     attrs={
+            #         "rows": 3,
+            #         "placeholder": "Descripción del producto",
+            #     }
+            # ),
             "precio": forms.NumberInput(attrs={"min": 0, "step": 1}),
+            "stock": forms.NumberInput(attrs={"min": 0, "step": 1}),
         }
 
     def __init__(self, *args, include_stock: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Querysets ordenados
         self.fields["marca"].queryset = Marca.objects.all().order_by("nombre")
         self.fields["categoria"].queryset = CategoriaProducto.objects.all().order_by("nombre")
         self.fields["unidad_base"].queryset = UnidadMedida.objects.all().order_by("codigo")
-        self.fields["tasa_impuesto"].queryset = TasaImpuesto.objects.filter(activo=True).order_by("nombre")
+        self.fields["tasa_impuesto"].queryset = (
+            TasaImpuesto.objects.filter(activo=True).order_by("nombre")
+        )
 
-        # APLICAR CLASES CORRECTAS POR TIPO DE WIDGET
+        # Si no quieres mostrar/editar stock en este formulario:
+        if not include_stock and "stock" in self.fields:
+            self.fields.pop("stock")
+
+        # Clases CSS según tipo de widget
         for name, field in self.fields.items():
             w = field.widget
             if isinstance(w, (forms.Select, forms.SelectMultiple)):
@@ -108,7 +147,7 @@ class ProductoForm(forms.ModelForm):
                 w.attrs.setdefault("class", "form-control")
 
 
- # donde tengas StockInlineForm (en views.py o forms.py)
+
 class StockInlineForm(forms.Form):
     bodega = forms.ModelChoiceField(queryset=Bodega.objects.all(), required=True, label="Bodega destino",
                                     widget=forms.Select(attrs={"class":"form-select"}))
@@ -368,44 +407,151 @@ class TipoUbicacionForm(forms.ModelForm):
 #  Ubicaciones NUEVAS
 # =========================================================
 class UbicacionBodegaForm(forms.ModelForm):
+    area_codigo = forms.CharField(
+        max_length=20,
+        required=True,
+        label="Area codigo",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Ej: 003",
+            }
+        ),
+    )
+    estante_codigo = forms.CharField(
+        max_length=20,
+        required=True,
+        label="Estante codigo",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Ej: 001",
+            }
+        ),
+    )
+
     class Meta:
         model = UbicacionBodega
-        fields = ["bodega", "codigo", "nombre", "area", "tipo", "pickeable", "almacenable", "activo"]
+        fields = [
+            "area_codigo",
+            "estante_codigo",
+            "area",
+            "tipo",
+            "activo",
+        ]
         widgets = {
-            "bodega": forms.Select(attrs={"class": "form-select"}),
-            "codigo": forms.TextInput(attrs={"placeholder": "Ej: PAS-01-N2", "class": "form-control"}),
-            "nombre": forms.TextInput(attrs={"placeholder": "Nombre visible (opcional)", "class": "form-control"}),
-            "area": forms.TextInput(attrs={"placeholder": "Zona / Pasillo / Sector", "class": "form-control"}),
+            "area": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Zona / pasillo / sector (opcional)",
+                }
+            ),
             "tipo": forms.Select(attrs={"class": "form-select"}),
-            "pickeable": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "almacenable": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "activo": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
-    def clean_codigo(self):
-        codigo = (self.cleaned_data.get("codigo") or "").strip()
-        return codigo.upper()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Si estamos editando una ubicación, rellenar los componentes
+        if self.instance and self.instance.pk:
+            self.fields["area_codigo"].initial = self.instance.area_codigo
+            self.fields["estante_codigo"].initial = self.instance.estante_codigo
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Guardamos los códigos separados en el instance
+        area_cod = (self.cleaned_data["area_codigo"] or "").strip().upper()
+        estante_cod = (self.cleaned_data["estante_codigo"] or "").strip().upper()
+
+        instance.area_codigo = area_cod
+        instance.estante_codigo = estante_cod
+
+        # NO llamamos a set_codigo aquí si todavía no tiene bodega
+        if instance.bodega_id:
+            instance.set_codigo(area_cod, estante_cod)
+
+        if commit:
+            instance.save()
+        return instance
 
 
 class UbicacionSucursalForm(forms.ModelForm):
+    """
+    Igual idea que UbicacionBodegaForm, pero para sucursales.
+    codigo = <sucursal.codigo>-<area_codigo>-<estante_codigo>
+    """
+
+    area_codigo = forms.CharField(
+        max_length=20,
+        required=True,
+        label="Area codigo",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Ej: 003",
+            }
+        ),
+    )
+
+    estante_codigo = forms.CharField(
+        max_length=20,
+        required=True,
+        label="Estante codigo",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Ej: 001",
+            }
+        ),
+    )
+
     class Meta:
         model = UbicacionSucursal
-        fields = ["sucursal", "codigo", "nombre", "area", "tipo", "pickeable", "almacenable", "activo"]
+        # 👇 OJO: ya NO incluimos "sucursal" aquí
+        fields = [
+            "area_codigo",
+            "estante_codigo",
+            "area",
+            "tipo",
+            "activo",
+        ]
         widgets = {
-            "sucursal": forms.Select(attrs={"class": "form-select"}),
-            "codigo": forms.TextInput(attrs={"placeholder": "Ej: ANDEN-01", "class": "form-control"}),
-            "nombre": forms.TextInput(attrs={"placeholder": "Nombre visible (opcional)", "class": "form-control"}),
-            "area": forms.TextInput(attrs={"placeholder": "Zona / Sector", "class": "form-control"}),
+            "area": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Zona / sector (opcional)",
+                }
+            ),
             "tipo": forms.Select(attrs={"class": "form-select"}),
-            "pickeable": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "almacenable": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "activo": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
-    def clean_codigo(self):
-        codigo = (self.cleaned_data.get("codigo") or "").strip()
-        return codigo.upper()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
+        # Si estamos editando, rellenar los códigos
+        if self.instance and self.instance.pk:
+            self.fields["area_codigo"].initial = self.instance.area_codigo
+            self.fields["estante_codigo"].initial = self.instance.estante_codigo
+
+    def save(self, commit=True):
+        instance: UbicacionSucursal = super().save(commit=False)
+
+        area_cod = (self.cleaned_data.get("area_codigo") or "").strip().upper()
+        estante_cod = (self.cleaned_data.get("estante_codigo") or "").strip().upper()
+
+        instance.area_codigo = area_cod
+        instance.estante_codigo = estante_cod
+
+        # Aquí asumimos que la vista ya puso instance.sucursal
+        if instance.sucursal_id and hasattr(instance, "set_codigo"):
+            instance.set_codigo(area_cod, estante_cod)
+
+        if commit:
+            instance.save()
+        return instance
 
 # =========================================================
 #  Lotes
@@ -532,4 +678,122 @@ class SerieProductoForm(forms.ModelForm):
         if lote and prod and lote.producto_id != prod.id:
             self.add_error("lote", "El lote seleccionado no pertenece a este producto.")
         return cd
+
+
+
+
+
+
+
+from django import forms
+from .models import UbicacionBodega, Producto
+
+class UbicacionBodegaProductoForm(forms.ModelForm):
+    productos = forms.ModelMultipleChoiceField(
+        queryset=Producto.objects.filter(activo=True),  # Solo productos activos
+        widget=forms.CheckboxSelectMultiple,
+        required=True
+    )
+
+    class Meta:
+        model = UbicacionBodega
+        fields = ["bodega", "codigo", "area", "tipo", "productos"]
+        widgets = {
+            "bodega": forms.Select(attrs={"class": "form-select"}),
+            "codigo": forms.TextInput(attrs={"placeholder": "Ej: 031-033-301", "class": "form-control", "readonly": "readonly"}),  # Código de la ubicación, autocompletado
+            "area": forms.TextInput(attrs={"placeholder": "Zona / Pasillo / Sector", "class": "form-control"}),
+            "tipo": forms.Select(attrs={"class": "form-select"}),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Crear el código completo de la ubicación
+        bodega_codigo = self.cleaned_data.get("bodega").codigo  # Suponiendo que bodega tiene un código
+        area_codigo = self.cleaned_data.get("area_codigo", "000")  # Default si no se especifica
+        estante_codigo = self.cleaned_data.get("estante_codigo", "000")  # Default si no se especifica
+        instance.set_codigo(bodega_codigo, area_codigo, estante_codigo)
+
+        if commit:
+            instance.save()
+
+        # Asignar los productos seleccionados a la ubicación
+        productos = self.cleaned_data.get("productos")
+        for producto in productos:
+            # Verificar si el producto tiene una ubicación, de lo contrario asignar la ubicación por defecto
+            if not producto.ubicacion:
+                producto.ubicacion = instance
+                producto.save()
+
+        return instance
+# =========================================================
+
+class OrdenCompraForm(forms.ModelForm):
+    fecha_esperada = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}),
+        label="Fecha esperada"
+    )
+
+    class Meta:
+        model = OrdenCompra
+        fields = ['numero_orden', 'proveedor', 'bodega', 'estado', 'fecha_esperada']
+
+class FacturaProveedorForm(forms.ModelForm):
+    class Meta:
+        model = FacturaProveedor
+        fields = ["numero_factura", "proveedor", "monto_total", "fecha_factura", "estado"]
+        widgets = {
+            # 🔹 HTML5 datepicker
+            "fecha_factura": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "class": "form-control",
+                }
+            ),
+            # 🔹 Select para el estado (ya con choices del modelo)
+            "estado": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+            # opcional, por prolijidad visual:
+            "numero_factura": forms.TextInput(attrs={"class": "form-control"}),
+            "proveedor": forms.Select(attrs={"class": "form-select"}),
+            "monto_total": forms.NumberInput(attrs={"class": "form-control"}),
+        }
+
+# --- Recepción de mercadería ---
+class RecepcionMercaderiaForm(forms.ModelForm):
+    ESTADO_CHOICES = [
+        ("OPEN", "Abierta"),
+        ("CLOSED", "Cerrada"),
+        # Si más adelante quieres agregar otro:
+        # ("CANCELLED", "Cancelada"),
+    ]
+
+    estado = forms.ChoiceField(
+        choices=ESTADO_CHOICES,
+        initial="OPEN",
+        label="Estado",
+    )
+
+    class Meta:
+        model = RecepcionMercaderia
+        fields = ["numero_recepcion", "bodega", "estado"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # estilos Bootstrap
+        self.fields["numero_recepcion"].widget.attrs.update({
+            "class": "form-control",
+            "placeholder": "Ej: REC-0001",
+        })
+        self.fields["bodega"].widget.attrs.update({
+            "class": "form-select",
+        })
+        self.fields["estado"].widget.attrs.update({
+            "class": "form-select",
+        })
+
 

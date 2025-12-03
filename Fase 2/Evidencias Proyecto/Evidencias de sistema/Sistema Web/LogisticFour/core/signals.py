@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 import logging
 from .models import Producto, Sucursal,UbicacionSucursal, UbicacionBodega,Bodega
+from core.alerts.services import trigger_low_stock_alert
 
 logger = logging.getLogger(__name__)
 
@@ -74,4 +75,22 @@ def crear_ubicacion_bodega_default(sender, instance: Bodega, created, **kwargs):
             bodega=instance,
             nombre="GENERAL",
             codigo=f"BOD-{instance.id}-GEN",
+        )
+
+
+
+
+
+@receiver(post_save, sender=Producto)
+def verificar_stock(sender, instance, created, **kwargs):
+    """
+    Esta señal se dispara cada vez que un producto es guardado.
+    Verifica si el stock es bajo (≤10).
+    """
+    if instance.stock <= 10:  # Verifica si el stock del producto es menor o igual a 10
+        trigger_low_stock_alert(
+            producto=instance,
+            stock_actual=instance.stock,
+            ubicacion_bodega=None,  # O ajusta según el caso
+            ubicacion_sucursal=None  # O ajusta según el caso
         )

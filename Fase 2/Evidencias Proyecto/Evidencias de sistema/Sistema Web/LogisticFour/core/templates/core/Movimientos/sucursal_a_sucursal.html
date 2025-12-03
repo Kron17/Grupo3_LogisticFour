@@ -24,7 +24,7 @@
     margin-inline: auto;
     display: grid;
     gap: 1.1rem;
-    padding-bottom: 1.1rem;
+    padding: 0 0 1.1rem;
   }
 
   .mv-head {
@@ -61,8 +61,9 @@
 
   .mv-formwrap {
     display: grid;
-    gap: 14px;
+    gap: 1rem;
     grid-template-columns: 1.05fr .95fr;
+    align-items: flex-start;
   }
 
   .mv-card {
@@ -162,6 +163,7 @@
     padding: 9px 14px 8px;
     font-weight: 500;
     color: #0f172a;
+    text-decoration: none;
   }
 
   .mv-messages {
@@ -198,6 +200,25 @@
     display: grid;
     place-items: center;
     font-weight: 700;
+  }
+
+  /* Botón "Ver guía de despacho" */
+  .mv-btn-ghost {
+    background: #ffffff;
+    border-radius: 999px;
+    border: 1px solid rgba(22, 163, 74, .4);
+    padding: 6px 14px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--success-ink);
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    text-decoration: none;
+  }
+
+  .mv-btn-ghost:hover {
+    background: #f0fdf4;
   }
 
   /* SIDE */
@@ -254,23 +275,130 @@
     background: rgba(241,245,249,.3);
   }
 
+  /* ==== Chips de producto (validado vs stock total) ==== */
+  .mv-product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: .78rem;
+    transition: opacity .15s ease;
+  }
+
+  .mv-product-meta.is-empty {
+    opacity: .6;
+  }
+
+  .mv-chip {
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .mv-chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .mv-chip-valid {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .mv-chip-stock {
+    background: #e0f2fe;
+    color: #075985;
+  }
+
+  /* Cantidad: ancho fijo en desktop, full en móvil */
+  .mv-field--cantidad {
+    max-width: 190px;
+  }
+
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(5px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  @media (max-width: 1000px) {
-    .mv-formwrap { grid-template-columns: 1fr; }
+  /* ====== RESPONSIVE ====== */
+
+  @media (max-width: 960px) {
+    .mv-formwrap {
+      grid-template-columns: 1fr;
+    }
   }
 
-  @media (max-width: 560px) {
-    .mv-head { flex-direction: column; align-items: flex-start; }
-    .mv-btnrow { width: 100%; }
-    .mv-btn-primary, .mv-btn-secondary { flex: 1 1 auto; justify-content: center; }
+  @media (max-width: 720px) {
+    .mv-shell {
+      padding-inline: 10px;
+      gap: 1.25rem;
+    }
+
+    .mv-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .4rem;
+    }
+
+    .mv-card-body,
+    .mv-side-content {
+      padding-inline: 12px;
+    }
+
+    .mv-title {
+      font-size: 1.3rem;
+      flex-wrap: wrap;
+      gap: .4rem;
+    }
+
+    .mv-sub {
+      font-size: .8rem;
+    }
+
+    .mv-form {
+      gap: 1rem;
+    }
+
+    .mv-field--cantidad {
+      max-width: 100%;
+    }
+
+    .mv-btnrow {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .mv-btn-primary,
+    .mv-btn-secondary {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .mv-card-body,
+    .mv-side-content {
+      padding-block: 12px;
+    }
+
+    .mv-title-badge {
+      font-size: .62rem;
+    }
+
+    .mv-metric strong {
+      font-size: 1.1rem;
+    }
   }
 </style>
 
 <div class="mv-shell">
+
   <!-- Encabezado -->
   <div class="mv-head">
     <div>
@@ -279,19 +407,21 @@
         <span class="mv-title-badge">Inventario</span>
       </h1>
       <p class="mv-sub">
-        Mueve stock desde una sucursal a otra. Primero selecciona la sucursal de origen
-        para cargar los productos disponibles.
+        Mueve stock entre sucursales. Selecciona la sucursal origen para cargar productos y destinos válidos.
       </p>
     </div>
   </div>
 
   <div class="mv-formwrap">
+
     <!-- FORM PRINCIPAL -->
     <div class="mv-card">
       <div class="mv-card-body">
+
         <form method="post" class="mv-form">
           {% csrf_token %}
 
+          <!-- ORIGEN -->
           <div class="mv-field">
             <label class="mv-label">
               <span class="mv-step-pill">1</span> Sucursal origen
@@ -304,9 +434,10 @@
                 </option>
               {% endfor %}
             </select>
-            <small class="text-muted">Desde aquí se descontará el stock.</small>
+            <small class="text-muted">De aquí se descontará el stock.</small>
           </div>
 
+          <!-- DESTINO -->
           <div class="mv-field">
             <label class="mv-label">
               <span class="mv-step-pill">2</span> Sucursal destino
@@ -326,74 +457,119 @@
             <small class="text-muted">Aquí se sumará el stock.</small>
           </div>
 
+          <!-- PRODUCTO -->
           <div class="mv-field">
             <label class="mv-label">
               <span class="mv-step-pill">3</span> Producto
             </label>
             {% if productos %}
-              <select name="producto" class="mv-select" required>
+              <select name="producto" id="productoSelect" class="mv-select" required>
                 <option value="">— Seleccione producto —</option>
                 {% for p in productos %}
-                  <option value="{{ p.id }}">
-                    {{ p.sku }} — {{ p.nombre }} ({{ p.stock_total|floatformat:0 }} disp.)
+                  <option
+                    value="{{ p.id }}"
+                    data-validado="{{ p.stock_validado|floatformat:0 }}"
+                    data-stock="{{ p.stock_total|floatformat:0 }}"
+                  >
+                    {{ p.sku }} — {{ p.nombre }}
+                    — ✅ {{ p.stock_validado|floatformat:0 }} val. · 📦 {{ p.stock_total|floatformat:0 }} disp.
                   </option>
                 {% endfor %}
               </select>
-              <small class="text-muted">Solo se muestran los productos con stock en la sucursal origen.</small>
+              <small class="text-muted">
+                Solo se muestran productos con stock <strong>validado</strong> en la sucursal origen.
+              </small>
             {% else %}
-              <select class="mv-select" disabled>
+              <select class="mv-select" id="productoSelect" disabled>
                 <option>Seleccione una sucursal de origen…</option>
               </select>
+              <small class="text-muted">Selecciona primero la sucursal origen.</small>
             {% endif %}
+
+            <!-- Chips de colores bajo el select -->
+            <div class="mv-product-meta is-empty" id="productoMeta" aria-live="polite">
+              <span class="mv-chip mv-chip-valid">
+                <span class="mv-chip-dot"></span>
+                Validado: <span id="metaValidado">—</span>
+              </span>
+              <span class="mv-chip mv-chip-stock">
+                <span class="mv-chip-dot"></span>
+                Stock total: <span id="metaStock">—</span>
+              </span>
+            </div>
           </div>
 
-          <div class="mv-field" style="max-width: 180px;">
+          <!-- CANTIDAD -->
+          <div class="mv-field mv-field--cantidad">
             <label class="mv-label">
               <span class="mv-step-pill">4</span> Cantidad
             </label>
             <input type="number" name="cantidad" class="mv-input" min="1" value="1" required>
           </div>
 
+          <!-- BOTONES -->
           <div class="mv-btnrow">
             <button type="submit" class="mv-btn-primary">
-              <span style="font-size:1.1rem; line-height:1;">⇄</span>
-              <span>Mover ahora</span>
+              <span style="font-size:1.1rem;">⇄</span> Mover ahora
             </button>
-            <a href="{% url 'mov_sucursal_a_sucursal' %}" class="mv-btn-secondary">Limpiar</a>
+
+            <a href="{% url 'mov_sucursal_a_sucursal' %}" class="mv-btn-secondary">
+              Limpiar
+            </a>
           </div>
 
+          <!-- MENSAJES -->
           <div class="mv-messages">
+
             {% if success %}
               <div class="msg-success">
                 <span class="msg-icon">✓</span>
-                <div>{{ success }}</div>
+                <div>
+                  <div>{{ success }}</div>
+
+                  {% if transferencia_id %}
+                    <div style="margin-top:6px;">
+                      <a href="{% url 'detalle_transferencia' transferencia_id %}"
+                         class="mv-btn-ghost">
+                        Ver guía de despacho
+                      </a>
+                    </div>
+                  {% endif %}
+                </div>
               </div>
             {% endif %}
+
             {% if error %}
               <div class="msg-error">
                 <span class="msg-icon">!</span>
                 <div>{{ error }}</div>
               </div>
             {% endif %}
+
           </div>
+
         </form>
+
       </div>
     </div>
 
     <!-- PANEL LATERAL -->
-    <div class="mv-card" aria-label="Resumen del movimiento">
+    <div class="mv-card">
       <div class="mv-side-head">
         <div>
           <p class="mv-side-title">Resumen rápido</p>
           <p class="mv-sub" style="margin-top:2px;">Estado actual del formulario.</p>
         </div>
       </div>
+
       <div class="mv-side-content">
+
         {% if sucursal_sel %}
           <span class="mv-badge">
             <span style="width:7px;height:7px;border-radius:999px;background:#22c55e;display:inline-block;"></span>
             Origen seleccionado
           </span>
+
           <div class="mv-metric">
             <small>Sucursal origen</small>
             <strong>
@@ -404,25 +580,68 @@
               {% endfor %}
             </strong>
           </div>
+
           <div class="mv-metric">
             <small>Productos disponibles</small>
             <strong>{{ productos|length|default:0 }}</strong>
           </div>
+
           <div class="mv-metric">
-            <small>Otras sucursales destino</small>
+            <small>Sucursales destino</small>
             <strong>{{ sucursales_destino|length|default:0 }}</strong>
           </div>
-          <p class="mv-sub" style="font-size:.72rem;">
-            Si no ves un producto aquí, es porque su stock en la sucursal origen es 0.
-          </p>
+
         {% else %}
+
           <div class="mv-empty">
-            Selecciona primero una <strong>sucursal de origen</strong> para ver aquí
-            las sucursales destino y los productos movibles.
+            Selecciona una <strong>sucursal de origen</strong> para ver opciones aquí.
           </div>
+
         {% endif %}
+
       </div>
     </div>
+
   </div>
+
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const productoSelect = document.getElementById("productoSelect");
+  const productoMeta   = document.getElementById("productoMeta");
+  const metaValidado   = document.getElementById("metaValidado");
+  const metaStock      = document.getElementById("metaStock");
+
+  function resetProductoMeta() {
+    if (!productoMeta) return;
+    metaValidado.textContent = "—";
+    metaStock.textContent    = "—";
+    productoMeta.classList.add("is-empty");
+  }
+
+  resetProductoMeta();
+
+  if (productoSelect && !productoSelect.disabled) {
+    const selectedOpt = productoSelect.options[productoSelect.selectedIndex];
+    if (selectedOpt && selectedOpt.dataset.validado) {
+      metaValidado.textContent = selectedOpt.dataset.validado || "0";
+      metaStock.textContent    = selectedOpt.dataset.stock || "0";
+      productoMeta.classList.remove("is-empty");
+    }
+
+    productoSelect.addEventListener("change", () => {
+      const opt = productoSelect.options[productoSelect.selectedIndex];
+      if (!opt || !opt.dataset.validado) {
+        resetProductoMeta();
+        return;
+      }
+      metaValidado.textContent = opt.dataset.validado || "0";
+      metaStock.textContent    = opt.dataset.stock || "0";
+      productoMeta.classList.remove("is-empty");
+    });
+  }
+});
+</script>
+
 {% endblock %}

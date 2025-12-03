@@ -1,97 +1,580 @@
 {% extends "core/base.html" %}
 {% load static %}
-{% block title %}Movimiento: Bodega → Bodega{% endblock %}
+{% block title %}Movimiento de Bodega a Bodega{% endblock %}
 
 {% block content %}
-<div class="page-wrap container py-4">
-  <h2 class="mb-3">Movimiento: Bodega → Bodega</h2>
+<style>
+  :root {
+    --ink: #0f172a;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --bg: #f3f4f6;
+    --card: #ffffff;
+    --accent: #111827;
+    --success-bg: #ecfdf5;
+    --success-border: #a7f3d0;
+    --success-ink: #065f46;
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --error-ink: #991b1b;
+  }
 
-  {% if error %}
-    <div class="alert alert-danger fade show" role="alert">
-      {{ error }}
+  .mv-shell {
+    max-width: 1080px;
+    margin-inline: auto;
+    display: grid;
+    gap: 18px;
+    padding-bottom: 18px;
+  }
+
+  .mv-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .mv-title {
+    font-weight: 800;
+    font-size: clamp(1.35rem, 2.4vw, 1.65rem);
+    margin: 0;
+    display: flex;
+    gap: .65rem;
+    align-items: center;
+  }
+
+  .mv-title-badge {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-radius: 999px;
+    padding: 3px 10px 4px;
+    font-size: .70rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .mv-sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: .86rem;
+  }
+
+  .mv-formwrap {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 1.1fr .9fr;
+  }
+
+  .mv-card {
+    background: var(--card);
+    border: 1px solid rgba(226,232,240,.8);
+    border-radius: 14px;
+    box-shadow: 0 12px 35px rgba(15,23,42,.04);
+    animation: fadeUp .35s ease;
+  }
+
+  .mv-card-body {
+    padding: 16px 16px 6px 16px;
+  }
+
+  .mv-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .mv-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mv-label {
+    font-weight: 600;
+    color: var(--ink);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .mv-label small {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .mv-input,
+  .mv-select {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #f8fafc;
+    outline: none;
+    transition: box-shadow .15s ease, border .15s ease, background .15s ease;
+    font-size: .9rem;
+  }
+
+  .mv-input:focus,
+  .mv-select:focus {
+    border-color: rgba(17,24,39,.55);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(15,23,42,.08);
+  }
+
+  .mv-input[disabled],
+  .mv-select[disabled] {
+    background: #e5e7eb;
+    cursor: not-allowed;
+    opacity: .8;
+  }
+
+  .mv-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 9.5px 14px 9px;
+    font-weight: 600;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: .9rem;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+
+  .mv-btn:hover {
+    background: #000;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(15,23,42,.15);
+  }
+
+  .mv-btn:active {
+    transform: translateY(0);
+  }
+
+  .mv-btn-ghost {
+    background: #ffffff;
+    border-radius: 999px;
+    border: 1px solid rgba(22,163,74,.4);
+    padding: 6px 14px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--success-ink);
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    text-decoration: none;
+  }
+
+  .mv-btn-ghost:hover {
+    background: #f0fdf4;
+  }
+
+  .mv-messages {
+    margin-top: 14px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .msg-success {
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: var(--success-ink);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .msg-error {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-ink);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .msg-icon {
+    width: 26px;
+    height: 26px;
+    background: rgba(255,255,255,.65);
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+  }
+
+  .mv-side {
+    border-inline: 0;
+  }
+
+  .mv-side-head {
+    padding: 14px 16px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mv-side-title {
+    font-weight: 600;
+  }
+
+  .mv-side-grid {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px 16px;
+  }
+
+  .mv-metric {
+    background: #f8fafc;
+    border: 1px solid rgba(148,163,184,.25);
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: grid;
+    gap: 3px;
+  }
+
+  .mv-metric small {
+    color: var(--muted);
+  }
+
+  .mv-metric strong {
+    font-size: 1.35rem;
+  }
+
+  .mv-loading {
+    font-size: .8rem;
+    color: var(--muted);
+  }
+
+  /* === Chips para validado vs stock total === */
+  .mv-product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: .78rem;
+    transition: opacity .15s ease;
+  }
+
+  .mv-product-meta.is-empty {
+    opacity: .6;
+  }
+
+  .mv-chip {
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .mv-chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .mv-chip-valid {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .mv-chip-stock {
+    background: #e0f2fe;
+    color: #075985;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 1000px) {
+    .mv-formwrap { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .mv-card-body,
+    .mv-side-grid { padding-inline: 12px; }
+    .mv-head { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+
+<div class="mv-shell">
+  <div class="mv-head">
+    <div>
+      <h1 class="mv-title">
+        <span>Movimiento de Bodega a Bodega</span>
+        <span class="mv-title-badge">Inventario</span>
+      </h1>
+      <p class="mv-sub">
+        Mueve stock entre bodegas. Solo se podrán transferir productos con stock <strong>validado</strong>
+        en la bodega origen.
+      </p>
     </div>
-  {% endif %}
-  {% if success %}
-    <div class="alert alert-success fade show" role="alert">
-      {{ success }}
-    </div>
-  {% endif %}
+  </div>
 
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <form method="post" class="row g-3">
-        {% csrf_token %}
+  <div class="mv-formwrap">
+    <!-- FORM PRINCIPAL -->
+    <div class="mv-card">
+      <div class="mv-card-body">
+        <form method="post" class="mv-form">
+          {% csrf_token %}
 
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Bodega origen</label>
-          <select name="bodega_origen" id="bodega_origen" class="form-select" required>
-            <option value="">-- Seleccione --</option>
-            {% for b in bodegas %}
-              <option value="{{ b.id }}" {% if b.id|stringformat:"s" == bodega_sel|stringformat:"s" %}selected{% endif %}>
-                {{ b.codigo }} — {{ b.nombre }}
-              </option>
-            {% endfor %}
-          </select>
-          <div class="form-text">De aquí se descontará el stock.</div>
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Bodega destino</label>
-          <select name="bodega_destino" id="bodega_destino" class="form-select" required>
-            <option value="">-- Seleccione --</option>
-            {% for b in bodegas %}
-              <option value="{{ b.id }}">
-                {{ b.codigo }} — {{ b.nombre }}
-              </option>
-            {% endfor %}
-          </select>
-          <div class="form-text">Aquí se sumará el stock.</div>
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Producto</label>
-          {% if productos %}
-            <select name="producto" class="form-select" required>
-              <option value="">-- Seleccione --</option>
-              {% for p in productos %}
-                <option value="{{ p.id }}">
-                  {{ p.sku }} — {{ p.nombre }} (stock orig: {{ p.stock_total }})
+          <!-- BODEGA ORIGEN -->
+          <div class="mv-field">
+            <label class="mv-label" for="bodega_origen">
+              Bodega origen
+              <small>obligatorio</small>
+            </label>
+            <select
+              name="bodega_origen"
+              id="bodega_origen"
+              class="mv-select"
+              required
+              onchange="this.form.submit()"
+            >
+              <option value="">— Selecciona bodega origen —</option>
+              {% for b in bodegas %}
+                <option value="{{ b.id }}" {% if b.id|stringformat:"s" == bodega_sel|stringformat:"s" %}selected{% endif %}>
+                  {{ b.codigo }} — {{ b.nombre }}
                 </option>
               {% endfor %}
             </select>
-          {% else %}
-            <input type="number" name="producto" class="form-control" placeholder="ID de producto" required>
-            <div class="form-text">Seleccione primero la bodega de origen y envíe para ver productos.</div>
-          {% endif %}
-        </div>
+            <p class="mv-loading">De aquí se descontará el stock validado.</p>
+          </div>
 
-        <div class="col-md-3">
-          <label class="form-label fw-semibold">Cantidad</label>
-          <input type="number" name="cantidad" class="form-control" min="1" step="1" required>
-        </div>
+          <!-- BODEGA DESTINO -->
+          <div class="mv-field">
+            <label class="mv-label" for="bodega_destino">
+              Bodega destino
+              <small>obligatorio</small>
+            </label>
+            <select name="bodega_destino" id="bodega_destino" class="mv-select" required>
+              <option value="">— Selecciona bodega destino —</option>
+              {% if bodegas_destino %}
+                {% for b in bodegas_destino %}
+                  <option value="{{ b.id }}"
+                    {% if bodega_destino_sel and b.id|stringformat:"s" == bodega_destino_sel|stringformat:"s" %}selected{% endif %}
+                  >
+                    {{ b.codigo }} — {{ b.nombre }}
+                  </option>
+                {% endfor %}
+              {% else %}
+                {% for b in bodegas %}
+                  <option value="{{ b.id }}">
+                    {{ b.codigo }} — {{ b.nombre }}
+                  </option>
+                {% endfor %}
+              {% endif %}
+            </select>
+            <small class="mv-loading">Aquí se sumará el stock.</small>
+          </div>
 
-        <div class="col-12 d-flex gap-2 mt-3">
-          <button type="submit" class="btn btn-primary px-4">Mover</button>
-          <a href="" class="btn btn-outline-secondary">Limpiar</a>
+          <!-- PRODUCTO (SOLO VALIDADOS) -->
+          <div class="mv-field">
+            <label class="mv-label" for="productoSelect">
+              Producto validado
+            </label>
+            {% if productos %}
+              <select name="producto" id="productoSelect" class="mv-select" required>
+                <option value="">— Selecciona un producto validado —</option>
+                {% for p in productos %}
+                  <option
+                    value="{{ p.id }}"
+                    data-validado="{{ p.stock_validado|floatformat:0 }}"
+                    data-stock="{{ p.stock_total|floatformat:0 }}"
+                  >
+                    {{ p.sku }} — {{ p.nombre }}
+                    — ✅ {{ p.stock_validado|floatformat:0 }} val. · 📦 {{ p.stock_total|floatformat:0 }} stock
+                  </option>
+                {% endfor %}
+              </select>
+              <small class="mv-loading">
+                Solo se muestran productos con stock <strong>validado</strong> y disponible en la bodega origen.
+              </small>
+            {% elif bodega_sel %}
+              <select id="productoSelect" class="mv-select" disabled>
+                <option>No hay productos con stock validado en esta bodega.</option>
+              </select>
+              <small class="mv-loading">
+                Valida productos en esta bodega para poder mover stock.
+              </small>
+            {% else %}
+              <select id="productoSelect" class="mv-select" disabled>
+                <option>Selecciona la bodega origen para ver productos validados…</option>
+              </select>
+              <small class="mv-loading">
+                Primero selecciona la bodega de origen.
+              </small>
+            {% endif %}
+
+            <!-- Chips de colores para validado / stock total -->
+            <div class="mv-product-meta is-empty" id="productoMeta" aria-live="polite">
+              <span class="mv-chip mv-chip-valid">
+                <span class="mv-chip-dot"></span>
+                Validado: <span id="metaValidado">—</span>
+              </span>
+              <span class="mv-chip mv-chip-stock">
+                <span class="mv-chip-dot"></span>
+                Stock total: <span id="metaStock">—</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- CANTIDAD -->
+          <div class="mv-field" style="max-width: 200px;">
+            <label class="mv-label" for="cantidadInput">
+              Cantidad
+            </label>
+            <input
+              type="number"
+              name="cantidad"
+              id="cantidadInput"
+              class="mv-input"
+              min="1"
+              step="1"
+              required
+            >
+          </div>
+
+          <!-- BOTÓN PRINCIPAL -->
+          <button type="submit" class="mv-btn">
+            <span aria-hidden="true">⇄</span>
+            <span>Mover entre bodegas</span>
+          </button>
+
+          <!-- MENSAJES -->
+          <div class="mv-messages">
+            {% if success %}
+              <div class="msg-success">
+                <span class="msg-icon">✓</span>
+                <div>
+                  <div>{{ success }}</div>
+
+                  {% if transferencia_id %}
+                    <div style="margin-top:6px;">
+                      <a href="{% url 'detalle_transferencia' transferencia_id %}"
+                         class="mv-btn-ghost">
+                        Ver guía de despacho
+                      </a>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% if error %}
+              <div class="msg-error">
+                <span class="msg-icon">!</span>
+                <div>{{ error }}</div>
+              </div>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PANEL LATERAL -->
+    <div class="mv-card mv-side" aria-label="Resumen rápido">
+      <div class="mv-side-head">
+        <div>
+          <p class="mv-side-title">Resumen del movimiento</p>
+          <p class="mv-sub" style="margin-top:2px;">Datos según la selección actual.</p>
         </div>
-      </form>
+      </div>
+      <div class="mv-side-grid">
+        <div class="mv-metric">
+          <small>Bodegas disponibles</small>
+          <strong>{{ bodegas|length|default:0 }}</strong>
+        </div>
+        <div class="mv-metric">
+          <small>Productos validados en bodega origen</small>
+          <strong>
+            {% if productos %}
+              {{ productos|length }}
+            {% else %}
+              0
+            {% endif %}
+          </strong>
+        </div>
+        <div class="mv-metric">
+          <small>Estado</small>
+          <span class="mv-loading">
+            {% if bodega_sel %}
+              Origen seleccionado. Solo productos con stock validado.
+            {% else %}
+              Selecciona una bodega de origen para comenzar.
+            {% endif %}
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
   // Evitar misma bodega en origen/destino
-  const bOrigen = document.getElementById('bodega_origen');
+  const bOrigen  = document.getElementById('bodega_origen');
   const bDestino = document.getElementById('bodega_destino');
+
   function syncBodegas() {
+    if (!bOrigen || !bDestino) return;
     const oVal = bOrigen.value;
     [...bDestino.options].forEach(o => {
       o.disabled = (o.value && o.value === oVal);
     });
   }
+
   if (bOrigen && bDestino) {
     bOrigen.addEventListener('change', syncBodegas);
     syncBodegas();
   }
+
+  // Chips de producto (validado vs stock total)
+  document.addEventListener("DOMContentLoaded", () => {
+    const productoSelect = document.getElementById("productoSelect");
+    const productoMeta   = document.getElementById("productoMeta");
+    const metaValidado   = document.getElementById("metaValidado");
+    const metaStock      = document.getElementById("metaStock");
+
+    function resetProductoMeta() {
+      if (!productoMeta) return;
+      metaValidado.textContent = "—";
+      metaStock.textContent    = "—";
+      productoMeta.classList.add("is-empty");
+    }
+
+    resetProductoMeta();
+
+    if (productoSelect && !productoSelect.disabled) {
+      // por si ya viene uno seleccionado tras un POST con error
+      const initial = productoSelect.options[productoSelect.selectedIndex];
+      if (initial && initial.dataset.validado) {
+        metaValidado.textContent = initial.dataset.validado || "0";
+        metaStock.textContent    = initial.dataset.stock || "0";
+        productoMeta.classList.remove("is-empty");
+      }
+
+      productoSelect.addEventListener("change", () => {
+        const opt = productoSelect.options[productoSelect.selectedIndex];
+        if (!opt || !opt.dataset.validado) {
+          resetProductoMeta();
+          return;
+        }
+        metaValidado.textContent = opt.dataset.validado || "0";
+        metaStock.textContent    = opt.dataset.stock || "0";
+        productoMeta.classList.remove("is-empty");
+      });
+    }
+  });
 </script>
 {% endblock %}

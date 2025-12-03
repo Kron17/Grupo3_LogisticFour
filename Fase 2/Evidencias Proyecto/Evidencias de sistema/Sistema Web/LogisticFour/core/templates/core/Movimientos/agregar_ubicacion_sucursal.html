@@ -1,0 +1,442 @@
+{# core/Movimientos/agregar_ubicacion_sucursal.html #}
+{% extends "core/base.html" %}
+
+{% block title %}Agregar ubicación de sucursal{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ubi-bg-page:#e5edf7;
+    --ubi-card:#ffffff;
+    --ubi-ink:#0f172a;
+    --ubi-muted:#6b7280;
+    --ubi-line:#e5e7eb;
+    --ubi-pri:#111827;
+    --ubi-pri-soft:#e0ecff;
+    --ubi-shadow:0 20px 45px rgba(15,23,42,.18);
+    --ubi-radius:18px;
+  }
+
+  body{
+    background: radial-gradient(circle at top, #e0edff 0, #e5edf7 40%, #e5edf7 100%);
+  }
+
+  .ubi-shell{
+    max-width: 780px;
+    margin: 26px auto 32px;
+    padding: 18px 20px 26px;
+    background:var(--ubi-card);
+    border:1px solid rgba(148,163,184,.35);
+    border-radius:var(--ubi-radius);
+    box-shadow:var(--ubi-shadow);
+    animation: ubiFadeIn .35s ease-out, ubiFloatUp .35s ease-out;
+  }
+
+  .ubi-head{
+    margin-bottom:16px;
+    border-bottom:1px solid var(--ubi-line);
+    padding-bottom:12px;
+  }
+  .ubi-head h1{
+    margin:0;
+    font-size:1.45rem;
+    font-weight:800;
+    letter-spacing:.02em;
+    color:var(--ubi-ink);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .ubi-head h1::before{
+    content:"📍";
+    font-size:1.4rem;
+  }
+  .ubi-head p{
+    margin:5px 0 0;
+    font-size:.86rem;
+    color:var(--ubi-muted);
+  }
+
+  .ubi-code-preview{
+    margin-top:8px;
+    font-size:.8rem;
+    color:var(--ubi-muted);
+  }
+  .ubi-code-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:3px 10px;
+    border-radius:999px;
+    background:var(--ubi-pri-soft);
+    color:var(--ubi-ink);
+    font-weight:700;
+    font-size:.8rem;
+  }
+
+  .ubi-bodega{
+    margin:12px 0 18px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:linear-gradient(90deg,#f9fafb,#eef2ff);
+    border:1px solid #e5e7eb;
+    font-size:.86rem;
+    color:#374151;
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .ubi-bodega strong{font-weight:700;}
+  .ubi-badge-id{
+    padding:3px 9px;
+    border-radius:999px;
+    background:#111827;
+    color:#f9fafb;
+    font-size:.78rem;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,"Liberation Mono","Courier New",monospace;
+  }
+
+  /* ===== Formulario ===== */
+  .ubi-form{
+    display:block;
+  }
+  .ubi-form p{
+    margin:0 0 12px;
+  }
+  .ubi-form label{
+    display:block;
+    font-size:.84rem;
+    font-weight:600;
+    margin-bottom:4px;
+    color:#374151;
+  }
+  .ubi-form input,
+  .ubi-form select{
+    width:100%;
+    border-radius:11px;
+    border:1px solid #d1d5db;
+    padding:8px 11px;
+    font-size:.9rem;
+    background:#f9fafb;
+    transition:border .15s ease, box-shadow .15s ease, background .15s ease, transform .08s ease;
+  }
+  .ubi-form input:focus,
+  .ubi-form select:focus{
+    outline:none;
+    border-color:var(--ubi-pri);
+    box-shadow:0 0 0 2px rgba(17,24,39,.18);
+    background:#ffffff;
+    transform:translateY(-1px);
+  }
+
+  @media (min-width:640px){
+    .ubi-grid-2{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px 14px;
+    }
+    .ubi-grid-2 p{margin-bottom:0;}
+  }
+
+  .ubi-activo-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:4px;
+  }
+  .ubi-activo-row input[type="checkbox"]{
+    width:auto;
+    height:16px;
+  }
+
+  .ubi-inline-hint{
+    display:block;
+    margin-top:3px;
+    font-size:.74rem;
+    color:var(--ubi-muted);
+  }
+  .ubi-inline-hint strong{
+    font-weight:700;
+  }
+
+  .ubi-hints-box{
+    margin-top:10px;
+    padding:9px 11px;
+    border-radius:12px;
+    background:#f9fafb;
+    border:1px dashed #cbd5e1;
+    font-size:.78rem;
+    color:#4b5563;
+  }
+  .ubi-hints-title{
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .ubi-hints-box ul{
+    margin:4px 0 0;
+    padding-left:16px;
+  }
+
+  .ubi-actions{
+    margin-top:18px;
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+  }
+  .btn-primary{
+    background:var(--ubi-pri);
+    color:#ffffff;
+    border-radius:999px;
+    border:1px solid var(--ubi-pri);
+    padding:9px 20px;
+    font-size:.9rem;
+    font-weight:700;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  .btn-primary:hover{
+    transform:translateY(-1px);
+    box-shadow:0 12px 22px rgba(15,23,42,.22);
+    background:#020617;
+  }
+  .btn-secondary{
+    background:#ffffff;
+    color:#111827;
+    border-radius:999px;
+    border:1px solid #e5e7eb;
+    padding:9px 18px;
+    font-size:.9rem;
+    font-weight:600;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:background .12s ease, transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-secondary:hover{
+    background:#f9fafb;
+    transform:translateY(-1px);
+    box-shadow:0 10px 20px rgba(148,163,184,.35);
+  }
+
+  .errorlist{
+    margin:4px 0 0;
+    padding-left:16px;
+    color:#b91c1c;
+    font-size:.8rem;
+  }
+
+  @keyframes ubiFadeIn{
+    from{opacity:0;}
+    to{opacity:1;}
+  }
+  @keyframes ubiFloatUp{
+    from{transform:translateY(10px);}
+    to{transform:translateY(0);}
+  }
+
+  @media (max-width:640px){
+    .ubi-shell{
+      margin:16px 10px 24px;
+      padding:14px 14px 22px;
+      border-radius:14px;
+    }
+  }
+</style>
+
+<div class="ubi-shell">
+  <div class="ubi-head">
+    <h1>Agregar ubicación de sucursal</h1>
+    <p>
+      Define el código de ubicación (por ejemplo <strong>031-033-301</strong>),
+      su tipo y si estará activa.
+    </p>
+    <div class="ubi-code-preview">
+      Código resultante:
+      <span class="ubi-code-pill">
+        <span id="codigo-preview">---</span>
+      </span>
+    </div>
+  </div>
+
+  {% if sucursal %}
+    <div class="ubi-bodega">
+      <div>
+        <strong>Sucursal seleccionada:</strong>
+        {{ sucursal.codigo }} — {{ sucursal.nombre }}
+      </div>
+      <span class="ubi-badge-id">ID {{ sucursal.id }}</span>
+    </div>
+  {% endif %}
+
+  <form method="post" class="ubi-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="ubi-grid-2">
+      <p>
+        {{ form.area_codigo.label_tag }}
+        {{ form.area_codigo }}
+        {{ form.area_codigo.errors }}
+        <span class="ubi-inline-hint" id="hint-area">
+          Ej: <strong>031</strong> → Pasillo 03, lado 1 (izquierda).
+        </span>
+      </p>
+      <p>
+        {{ form.estante_codigo.label_tag }}
+        {{ form.estante_codigo }}
+        {{ form.estante_codigo.errors }}
+        <span class="ubi-inline-hint" id="hint-estante">
+          Ej: <strong>201</strong> → Nivel 2 (medio), posición 01.
+        </span>
+      </p>
+    </div>
+
+    <div class="ubi-hints-box">
+      <div class="ubi-hints-title">Lógica sugerida para los códigos</div>
+      <ul>
+        <li>
+          <strong>Área (AAA):</strong> los dos primeros dígitos son el
+          <em>pasillo</em> (01–99) y el tercer dígito es el <em>lado</em>:
+          1 = izquierda, 2 = derecha, 3 = centro.
+        </li>
+        <li>
+          <strong>Estante (EEE):</strong> el primer dígito es el
+          <em>nivel/altura</em> (1 = suelo, 2 = medio, 3 = superior, 4 = extra)
+          y los dos últimos dígitos son la <em>posición horizontal</em> (01–99).
+        </li>
+        <li>
+          Ejemplo completo: <strong>{{ sucursal.codigo|default:"SUC" }}-031-201</strong>
+          = sucursal {{ sucursal.codigo|default:"SUC" }}, pasillo 03 lado izquierdo,
+          nivel medio, posición 01.
+        </li>
+      </ul>
+    </div>
+
+    <p>
+      <p>Referencia de ubicación:</p>
+      {{ form.area }}
+      {{ form.area.errors }}
+    </p>
+
+    <p>
+      {{ form.tipo.label_tag }}
+      {{ form.tipo }}
+      {{ form.tipo.errors }}
+    </p>
+
+    <p>
+      <span class="ubi-activo-row">
+        {{ form.activo }}
+        <label for="{{ form.activo.id_for_label }}" style="margin:0;font-weight:600;">
+          {{ form.activo.label }}
+        </label>
+      </span>
+      {{ form.activo.errors }}
+    </p>
+
+    {# campo oculto con el código base de la sucursal (ej: 031) - opcional #}
+    {{ form.sucursal_codigo }}
+
+    <div class="ubi-actions">
+      <a href="{% url 'sucursal-list' %}" class="btn-secondary">Cancelar</a>
+      <button type="submit" class="btn-primary">
+        💾 Guardar ubicación
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Preview en vivo del código resultante SUC-AREA-ESTANTE
+  document.addEventListener("DOMContentLoaded", function () {
+    // Código de sucursal tomado directamente del contexto
+    const sucursalBase = "{{ sucursal.codigo|default_if_none:''|escapejs }}";
+
+    const areaInput    = document.getElementById("id_area_codigo");
+    const estanteInput = document.getElementById("id_estante_codigo");
+    const preview      = document.getElementById("codigo-preview");
+
+    const areaHint     = document.getElementById("hint-area");
+    const estanteHint  = document.getElementById("hint-estante");
+
+    function buildPreview() {
+      if (!preview) return;
+
+      const s = sucursalBase ? sucursalBase.toUpperCase() : "___";
+      const a = (areaInput && areaInput.value)
+                  ? areaInput.value.toUpperCase()
+                  : "___";
+      const e = (estanteInput && estanteInput.value)
+                  ? estanteInput.value.toUpperCase()
+                  : "___";
+
+      preview.textContent = s + "-" + a + "-" + e;
+    }
+
+    function updateAreaHint(val) {
+      if (!areaHint) return;
+      const clean = (val || "").trim();
+      if (!clean) {
+        areaHint.textContent = "Ej: 031 → Pasillo 03, lado 1 (izquierda).";
+        return;
+      }
+
+      const pasillo = clean.slice(0, 2).padStart(2, "0");
+      const ladoCode = clean.slice(2, 3);
+      let ladoTxt = "";
+
+      if (ladoCode === "1") ladoTxt = "lado 1 (izquierda)";
+      else if (ladoCode === "2") ladoTxt = "lado 2 (derecha)";
+      else if (ladoCode === "3") ladoTxt = "lado 3 (centro)";
+      else ladoTxt = "lado " + (ladoCode || "?");
+
+      areaHint.textContent = `Área ${clean} → Pasillo ${pasillo}, ${ladoTxt}.`;
+    }
+
+    function updateEstanteHint(val) {
+      if (!estanteHint) return;
+      const clean = (val || "").trim();
+      if (!clean) {
+        estanteHint.textContent = "Ej: 201 → Nivel 2 (medio), posición 01.";
+        return;
+      }
+
+      const nivelCode = clean.slice(0, 1);
+      const pos = clean.slice(1, 3).padStart(2, "0");
+      let nivelTxt = "";
+
+      if (nivelCode === "1") nivelTxt = "nivel 1 (suelo)";
+      else if (nivelCode === "2") nivelTxt = "nivel 2 (medio)";
+      else if (nivelCode === "3") nivelTxt = "nivel 3 (superior)";
+      else if (nivelCode === "4") nivelTxt = "nivel 4 (mezanina / extra)";
+      else nivelTxt = "nivel " + (nivelCode || "?");
+
+      estanteHint.textContent = `Estante ${clean} → ${nivelTxt}, posición ${pos}.`;
+    }
+
+    function handleAreaInput() {
+      buildPreview();
+      updateAreaHint(areaInput ? areaInput.value : "");
+    }
+
+    function handleEstanteInput() {
+      buildPreview();
+      updateEstanteHint(estanteInput ? estanteInput.value : "");
+    }
+
+    if (areaInput)    areaInput.addEventListener("input", handleAreaInput);
+    if (estanteInput) estanteInput.addEventListener("input", handleEstanteInput);
+
+    // Primera carga
+    buildPreview();
+    if (areaInput)    updateAreaHint(areaInput.value);
+    if (estanteInput) updateEstanteHint(estanteInput.value);
+  });
+</script>
+{% endblock %}

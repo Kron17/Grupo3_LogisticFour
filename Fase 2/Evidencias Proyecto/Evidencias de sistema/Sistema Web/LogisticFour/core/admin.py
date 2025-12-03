@@ -142,19 +142,48 @@ class TipoUbicacionAdmin(admin.ModelAdmin):
 # ==========================
 @admin.register(UbicacionBodega)
 class UbicacionBodegaAdmin(admin.ModelAdmin):
-    list_display = ("bodega", "codigo", "nombre", "area", "tipo", "pickeable", "almacenable", "activo")
-    search_fields = ("codigo", "nombre", "area", "bodega__codigo", "bodega__nombre")
-    list_filter = ("bodega", "pickeable", "almacenable", "activo")
+    list_display = (
+        "bodega",
+        "codigo",
+        "area_codigo",
+        "estante_codigo",
+        "area",
+        "tipo",
+        "activo",
+    )
+    search_fields = (
+        "codigo",
+        "area_codigo",
+        "estante_codigo",
+        "area",
+        "bodega__codigo",
+        "bodega__nombre",
+    )
+    list_filter = ("bodega", "activo", "tipo")
     autocomplete_fields = ["bodega", "tipo"]
 
 
 @admin.register(UbicacionSucursal)
 class UbicacionSucursalAdmin(admin.ModelAdmin):
-    list_display = ("sucursal", "codigo", "nombre", "area", "tipo", "pickeable", "almacenable", "activo")
-    search_fields = ("codigo", "nombre", "area", "sucursal__codigo", "sucursal__nombre")
-    list_filter = ("sucursal", "pickeable", "almacenable", "activo")
+    list_display = (
+        "sucursal",
+        "codigo",
+        "area_codigo",
+        "estante_codigo",
+        "area",
+        "tipo",
+        "activo",
+    )
+    search_fields = (
+        "codigo",
+        "area_codigo",
+        "estante_codigo",
+        "area",
+        "sucursal__codigo",
+        "sucursal__nombre",
+    )
+    list_filter = ("sucursal", "activo", "tipo")
     autocomplete_fields = ["sucursal", "tipo"]
-
 
 # ==========================
 # Marca

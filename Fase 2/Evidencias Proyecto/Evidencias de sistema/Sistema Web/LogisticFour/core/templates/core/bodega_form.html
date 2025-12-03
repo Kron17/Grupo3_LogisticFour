@@ -3,87 +3,502 @@
 
 {% block content %}
 <style>
-.form-shell{background:#fff;border:1px solid var(--line,#e5e7eb);border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.04)}
-.form-head{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fff 0%,#fafafa 100%);border-bottom:1px solid var(--line,#e5e7eb);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.form-head h1{margin:0;font-weight:800;letter-spacing:.2px;font-size:20px}
-.form-body{padding:16px;display:grid;gap:14px}
-.form-grid{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
-@media (max-width:760px){.form-grid{grid-template-columns:1fr}}
-.field{display:grid;gap:6px;animation:fadeIn .35s ease both}
-.field label{font-size:12px;color:#6b7280}
-.field .err{font-size:12px;color:#b91c1c}
-.field input[type="text"], .field select, .field textarea{
-  padding:10px 12px;border:1px solid var(--line,#e5e7eb);border-radius:10px;background:#fafafa;outline:none;transition:border-color .2s ease,background .2s ease,transform .1s ease}
-.field input[type="text"]:focus, .field select:focus, .field textarea:focus{border-color:#111;background:#fff;transform:translateY(-1px)}
-.field.invalid input[type="text"], .field.invalid select, .field.invalid textarea{border-color:#ef4444;background:#fffafa}
-.switch{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px dashed var(--line,#e5e7eb);border-radius:12px;background:#fcfcfc}
-.switch label{margin:0;font-weight:600}
-.switch .hint{font-size:12px;color:#6b7280}
-.form-actions{position:sticky;bottom:0;z-index:10;padding:10px;background:rgba(255,255,255,.9);border-top:1px solid var(--line,#e5e7eb);display:flex;gap:8px;justify-content:flex-end;backdrop-filter:saturate(1.2) blur(4px)}
-.btnx{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;text-decoration:none;border:1px solid transparent;cursor:pointer}
-.btnx.primary{background:#111;color:#fff}
-.btnx.ghost{background:#fff;color:#111;border-color:var(--line,#e5e7eb)}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.badge{display:inline-block;padding:4px 8px;font-size:12px;border-radius:999px;border:1px solid var(--line,#e5e7eb);background:#f8fafc;color:#374151}
-.badge.ok{background:#e8f7ee;color:#065f46;border-color:#bfe7cb}
-.badge.no{background:#fff1f0;color:#7a1d1d;border-color:#f3c3bf}
-.breadcrumb{margin-bottom:10px;font-size:13px;color:#6b7280}
-.breadcrumb a{color:inherit;text-decoration:none}
-.breadcrumb a:hover{text-decoration:underline}
+  :root{
+    --ink:#0f172a;
+    --muted:#6b7280;
+    --line:#e5e7eb;
+    --card:#ffffff;
+    --bg-soft:#f3f4f6;
+    --accent:#111827;
+    --accent-soft:#eef2ff;
+    --ok:#16a34a;
+    --danger:#dc2626;
+  }
+
+  body{
+    background:radial-gradient(circle at top,#e5edff 0,#f9fafb 55%,#e5e7eb 100%);
+  }
+
+  .b-shell{
+    max-width:960px;
+    margin-inline:auto;
+    padding:18px 12px 26px;
+    display:grid;
+    gap:14px;
+    animation:bFadeIn .35s ease-out;
+  }
+
+  @keyframes bFadeIn{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* ===== MIGAS DE PAN ===== */
+  .breadcrumb{
+    font-size:.8rem;
+    color:var(--muted);
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    align-items:center;
+  }
+  .breadcrumb a{
+    color:inherit;
+    text-decoration:none;
+  }
+  .breadcrumb a:hover{
+    text-decoration:underline;
+  }
+  .breadcrumb span.sep{
+    opacity:.6;
+  }
+
+  /* ===== CARD FORM ===== */
+  .form-shell{
+    background:var(--card);
+    border-radius:18px;
+    border:1px solid rgba(226,232,240,.95);
+    box-shadow:0 16px 40px rgba(15,23,42,.08);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    max-height:calc(100vh - 120px);
+  }
+
+  /* HEADER */
+  .form-head{
+    padding:14px 16px 12px;
+    background:linear-gradient(120deg,#0f172a,#111827 55%,#1f2937);
+    color:#e5e7eb;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .form-head-main{
+    display:grid;
+    gap:4px;
+  }
+  .form-head-title{
+    margin:0;
+    font-weight:800;
+    letter-spacing:.03em;
+    font-size:clamp(1.1rem,2.2vw,1.4rem);
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+  .form-head-pill{
+    font-size:.68rem;
+    padding:3px 9px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.6);
+    background:rgba(15,23,42,.7);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .form-head-sub{
+    margin:0;
+    font-size:.85rem;
+    color:#cbd5f5;
+    max-width:520px;
+  }
+
+  .form-head-meta{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    align-items:flex-end;
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 9px;
+    font-size:.72rem;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.6);
+    background:rgba(15,23,42,.5);
+    color:#e5e7eb;
+    backdrop-filter:blur(4px);
+  }
+  .badge-dot{
+    width:7px;
+    height:7px;
+    border-radius:999px;
+    background:#22c55e;
+  }
+  .badge-dot.off{ background:#f97316; }
+
+  .pill-id{
+    font-size:.72rem;
+    color:#cbd5f5;
+    background:rgba(15,23,42,.4);
+    border-radius:999px;
+    padding:3px 7px;
+  }
+
+  /* BODY SCROLLABLE */
+  .form-body{
+    padding:14px 16px 70px; /* espacio para las acciones sticky */
+    display:grid;
+    gap:16px;
+    overflow:auto;
+  }
+
+  .form-section-title{
+    font-size:.82rem;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:var(--muted);
+    margin:0 0 2px;
+  }
+  .form-section-sub{
+    margin:0;
+    font-size:.8rem;
+    color:#9ca3af;
+  }
+
+  .form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+    margin-top:8px;
+  }
+  @media (max-width:760px){
+    .form-shell{
+      max-height:none;
+    }
+    .form-body{
+      padding:12px 12px 72px;
+    }
+    .form-grid{
+      grid-template-columns:1fr;
+    }
+    .form-head{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+    .form-head-meta{
+      align-items:flex-start;
+    }
+  }
+
+  /* CAMPOS */
+  .field{
+    display:grid;
+    gap:5px;
+    animation: fieldFade .35s ease both;
+  }
+  @keyframes fieldFade{
+    from{opacity:0;transform:translateY(4px);}
+    to{opacity:1;transform:none;}
+  }
+
+  .field label{
+    font-size:.78rem;
+    font-weight:600;
+    color:var(--ink);
+    display:flex;
+    justify-content:space-between;
+    gap:6px;
+    align-items:center;
+  }
+
+  .label-pill{
+    font-size:.68rem;
+    padding:1px 6px 2px;
+    border-radius:999px;
+    background:#f3f4ff;
+    color:#4f46e5;
+    border:1px solid #e0e7ff;
+  }
+
+  .field .help{
+    font-size:.75rem;
+    color:#9ca3af;
+  }
+  .field .err{
+    font-size:.75rem;
+    color:var(--danger);
+  }
+
+  .field input[type="text"],
+  .field textarea{
+    padding:9px 11px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:#f9fafb;
+    font-size:.88rem;
+    transition:border .18s ease,box-shadow .18s ease,background .18s ease,transform .09s ease;
+  }
+  .field textarea{
+    min-height:80px;
+    resize:vertical;
+  }
+  .field input[type="text"]:focus,
+  .field textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+    background:#ffffff;
+    box-shadow:0 0 0 2px rgba(15,23,42,.15);
+    transform:translateY(-1px);
+  }
+  .field.invalid input[type="text"],
+  .field.invalid textarea{
+    border-color:#ef4444;
+    background:#fef2f2;
+  }
+
+  /* SWITCH ACTIVO */
+  .switch{
+    border-radius:14px;
+    border:1px dashed var(--line);
+    background:#f9fafb;
+    padding:10px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .switch label{
+    margin:0;
+    font-weight:600;
+    font-size:.85rem;
+    color:var(--ink);
+  }
+  .switch .hint{
+    font-size:.8rem;
+    color:var(--muted);
+  }
+
+  /* CONTADOR CÓDIGO */
+  .counter{
+    font-size:.74rem;
+    color:#9ca3af;
+    justify-self:flex-end;
+  }
+  .counter.too-long{
+    color:var(--danger);
+    font-weight:600;
+  }
+
+  /* ACCIONES STICKY */
+  .form-actions{
+    position:sticky;
+    bottom:0;
+    padding:9px 12px;
+    border-top:1px solid rgba(226,232,240,.96);
+    background:rgba(248,250,252,.94);
+    backdrop-filter:blur(6px);
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+  }
+
+  .btnx{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:8.5px 14px;
+    border-radius:999px;
+    border:1px solid transparent;
+    cursor:pointer;
+    font-size:.85rem;
+    font-weight:600;
+    text-decoration:none;
+    transition:background .16s ease,box-shadow .16s ease,transform .09s ease,border-color .16s ease;
+  }
+  .btnx.primary{
+    background:var(--accent);
+    color:#ffffff;
+    box-shadow:0 10px 25px rgba(15,23,42,.24);
+  }
+  .btnx.primary:hover{
+    background:#000000;
+    transform:translateY(-1px);
+    box-shadow:0 14px 34px rgba(15,23,42,.33);
+  }
+  .btnx.ghost{
+    background:#ffffff;
+    color:var(--ink);
+    border-color:var(--line);
+  }
+  .btnx.ghost:hover{
+    background:#f9fafb;
+    transform:translateY(-1px);
+  }
+  .btnx:disabled{
+    opacity:.6;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+
+  .btn-icon{
+    font-size:1rem;
+  }
 </style>
 
-<nav class="breadcrumb" aria-label="Breadcrumb">
-  <a href="{% url 'dashboard' %}">Inicio</a> / <a href="{% url 'bodega-list' %}">Bodegas</a> / {% if object %}Editar{% else %}Crear{% endif %}
-</nav>
+<div class="b-shell">
 
-<div class="form-shell">
-  <div class="form-head">
-    <h1>{% if object %}Editar Bodega{% else %}Crear Bodega{% endif %}</h1>
-    {% if object %}
-      {% if object.activo %}<span class="badge ok">Activa</span>{% else %}<span class="badge no">Inactiva</span>{% endif %}
-    {% endif %}
-  </div>
+  <!-- Migas de pan -->
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="sep">/</span>
+    <a href="{% url 'bodega-list' %}">Bodegas</a>
+    <span class="sep">/</span>
+    <span>{% if object %}Editar{% else %}Crear{% endif %}</span>
+  </nav>
 
-  <form method="post" novalidate>
-    {% csrf_token %}
+  <div class="form-shell">
+    <!-- HEADER -->
+    <header class="form-head">
+      <div class="form-head-main">
+        <h1 class="form-head-title">
+          <span>{% if object %}Editar bodega{% else %}Crear bodega{% endif %}</span>
+          <span class="form-head-pill">Bodega</span>
+        </h1>
+        <p class="form-head-sub">
+          Completa los datos básicos de la bodega. El código se usa para identificarla en
+          reportes, ubicaciones y movimientos de stock.
+        </p>
+      </div>
 
-    {% if form.non_field_errors %}
+      <div class="form-head-meta">
+        {% if object %}
+          <span class="badge">
+            <span class="badge-dot {% if not object.activo %}off{% endif %}"></span>
+            {% if object.activo %}Activa{% else %}Inactiva{% endif %}
+          </span>
+          <span class="pill-id">ID: {{ object.id }}</span>
+        {% else %}
+          <span class="badge">
+            <span class="badge-dot"></span>
+            Nueva bodega
+          </span>
+        {% endif %}
+      </div>
+    </header>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- Errores generales -->
+      {% if form.non_field_errors %}
+        <div class="form-body">
+          <div class="field invalid">
+            <div class="err">{{ form.non_field_errors }}</div>
+          </div>
+        </div>
+      {% endif %}
+
       <div class="form-body">
-        <div class="field invalid"><div class="err">{{ form.non_field_errors }}</div></div>
-      </div>
-    {% endif %}
 
+        <!-- Bloque datos básicos -->
+        <div>
+          <p class="form-section-title">Datos básicos</p>
+          <p class="form-section-sub">
+            Código, nombre y descripción se usarán en guías, reportes y paneles de stock.
+          </p>
 
-        <div class="field {% if form.codigo.errors %}invalid{% endif %}">
-          <label for="{{ form.codigo.id_for_label }}">Código</label>
-          {{ form.codigo }}
-          {% for e in form.codigo.errors %}<div class="err">{{ e }}</div>{% endfor %}
+          <div class="form-grid">
+            <!-- Código -->
+            <div class="field {% if form.codigo.errors %}invalid{% endif %}">
+              <label for="{{ form.codigo.id_for_label }}">
+                <span>Código</span>
+                <span class="label-pill">máx. 30 caracteres</span>
+              </label>
+              {{ form.codigo }}
+              {% if form.codigo.help_text %}
+                <div class="help">{{ form.codigo.help_text }}</div>
+              {% endif %}
+              <div class="counter" id="codigoCounter">0/20</div>
+              {% for e in form.codigo.errors %}
+                <div class="err">{{ e }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Nombre -->
+            <div class="field {% if form.nombre.errors %}invalid{% endif %}">
+              <label for="{{ form.nombre.id_for_label }}">Nombre</label>
+              {{ form.nombre }}
+              {% for e in form.nombre.errors %}
+                <div class="err">{{ e }}</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="form-grid" style="margin-top:10px;">
+            <div class="field {% if form.descripcion.errors %}invalid{% endif %}" style="grid-column:1/-1;">
+              <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
+              {{ form.descripcion }}
+              {% for e in form.descripcion.errors %}
+                <div class="err">{{ e }}</div>
+              {% endfor %}
+            </div>
+          </div>
         </div>
 
-        <div class="field {% if form.nombre.errors %}invalid{% endif %}">
-          <label for="{{ form.nombre.id_for_label }}">Nombre</label>
-          {{ form.nombre }}
-          {% for e in form.nombre.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        <!-- Bloque estado -->
+        <div>
+          <p class="form-section-title">Estado operativo</p>
+          <p class="form-section-sub">
+            Controla si la bodega puede utilizarse para movimientos de stock y asignaciones a sucursales.
+          </p>
+
+          <div class="switch">
+            {{ form.activo }}
+            <label for="{{ form.activo.id_for_label }}">
+              Bodega activa
+            </label>
+            <span class="hint">
+              Cuando está inactiva no podrá ser seleccionada en movimientos ni nuevas ubicaciones.
+            </span>
+          </div>
         </div>
 
-        <div class="field col-span-2 {% if form.descripcion.errors %}invalid{% endif %}">
-          <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
-          {{ form.descripcion }}
-          {% for e in form.descripcion.errors %}<div class="err">{{ e }}</div>{% endfor %}
-        </div>
       </div>
 
-      <div class="switch">
-        {{ form.activo }}
-        <label for="{{ form.activo.id_for_label }}">Activa</label>
-        <span class="hint">Habilita/inhabilita la bodega para operaciones.</span>
+      <!-- ACCIONES -->
+      <div class="form-actions">
+        <a class="btnx ghost" href="{% url 'bodega-list' %}">
+          <span class="btn-icon">←</span>
+          <span>Cancelar</span>
+        </a>
+        <button class="btnx primary" type="submit">
+          <span class="btn-icon">💾</span>
+          <span>Guardar</span>
+        </button>
       </div>
-    </div>
-
-    <div class="form-actions">
-      <a class="btnx ghost" href="{% url 'bodega-list' %}">Cancelar</a>
-      <button class="btnx primary" type="submit">Guardar</button>
-    </div>
-  </form>
+    </form>
+  </div>
 </div>
+
+<script>
+/* Mayúsculas y contador para Código (igual que en Sucursal) */
+(function(){
+  const input   = document.getElementById('{{ form.codigo.id_for_label }}');
+  const counter = document.getElementById('codigoCounter');
+  if (!input || !counter) return;
+
+  const max = parseInt(input.getAttribute('maxlength') || '20', 10);
+
+  const update = () => {
+    const caret = input.selectionStart;
+    const val   = (input.value || "").toUpperCase();
+    if (val !== input.value){
+      input.value = val;
+      try{ input.setSelectionRange(caret, caret); }catch(e){}
+    }
+    const len = input.value.length;
+    counter.textContent = `${len}/${max}`;
+    counter.classList.toggle('too-long', len > max);
+  };
+
+  input.addEventListener('input', update);
+  update();
+})();
+</script>
+
 {% endblock %}

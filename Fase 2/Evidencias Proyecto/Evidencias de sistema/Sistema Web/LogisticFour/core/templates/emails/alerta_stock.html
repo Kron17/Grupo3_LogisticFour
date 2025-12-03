@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background-color: #f8fafc;
+      margin: 0;
+      padding: 20px;
+      color: #111827;
+    }
+    .email-container {
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      max-width: 600px;
+      margin: auto;
+      padding: 24px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+    h2 {
+      color: #b91c1c;
+      margin-top: 0;
+    }
+    .info-box {
+      background: #fef2f2;
+      border-left: 4px solid #dc2626;
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin-top: 18px;
+    }
+    .info-row {
+      margin-bottom: 8px;
+    }
+    .info-row strong {
+      color: #0f172a;
+    }
+    .footer {
+      margin-top: 24px;
+      font-size: 0.85rem;
+      color: #6b7280;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 12px;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 10px 18px;
+      background: #111827;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <h2>⚠ Alerta de stock bajo</h2>
+    <p>Estimado encargado,</p>
+    <p>Se ha detectado un nivel bajo de inventario en una de sus sucursales:</p>
+
+    <div class="info-box">
+      <div class="info-row"><strong>Producto:</strong> {{ producto.nombre }}</div>
+      <div class="info-row"><strong>SKU:</strong> {{ sku }}</div>
+      <div class="info-row"><strong>Sucursal:</strong> {{ sucursal }}</div>
+      <div class="info-row"><strong>Stock disponible:</strong> {{ stock }}</div>
+    </div>
+
+    <p>Te recomendamos revisar el inventario y reabastecer este producto lo antes posible.</p>
+
+    <a href="http://127.0.0.1:8000/productos/{{ producto.id }}/" class="btn">Ver producto</a>
+
+    <div class="footer">
+      <p>Este es un mensaje automático del sistema de inventario LogisticFour.</p>
+    </div>
+  </div>
+</body>
+</html>

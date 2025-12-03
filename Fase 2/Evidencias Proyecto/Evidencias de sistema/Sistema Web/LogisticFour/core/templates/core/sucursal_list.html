@@ -15,11 +15,25 @@
     --sec-bg: #fff;
     --sec-ink: #111;
     --danger: #dc2626;
+    --accent-soft: #e0f2fe;
+  }
+
+  /* contenedor centrado */
+  .lx-shell{
+    max-width:1200px;
+    margin:0 auto;
+    padding:18px 18px 26px;
   }
 
   .lx-page {
     display: grid;
     gap: 16px;
+    animation: pageIn .3s ease-out;
+  }
+
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   .lx-head {
@@ -33,6 +47,12 @@
     margin: 0;
     font-weight: 800;
     font-size: clamp(1.4rem, 2vw, 1.7rem);
+  }
+
+  .lx-head-sub {
+    margin: 2px 0 0;
+    font-size: .8rem;
+    color: var(--muted);
   }
 
   /* filtros */
@@ -52,15 +72,16 @@
     min-width: 200px;
     padding: 9px 12px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 999px;
     background: #f9fafb;
     outline: none;
-    transition: box-shadow .12s ease, border .12s ease;
+    transition: box-shadow .12s ease, border .12s ease, background .12s ease;
   }
 
   .lx-input:focus {
-    border-color: rgba(17,24,39,.5);
-    box-shadow: 0 0 0 3px rgba(17,24,39,.08);
+    border-color: rgba(17,24,39,.6);
+    box-shadow: 0 0 0 3px rgba(17,24,39,.10);
+    background: #fff;
   }
 
   .lx-btn {
@@ -77,6 +98,7 @@
     font-weight: 500;
     line-height: 1;
     transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    white-space: nowrap;
   }
 
   .lx-btn:hover {
@@ -92,7 +114,13 @@
     background: #fff;
     border: 1px solid var(--line);
     color: #111;
-    border-radius: 10px;
+    border-radius: 999px;
+  }
+
+  .lx-btn-outline {
+    background: transparent;
+    border: 1px dashed var(--line);
+    color: var(--muted);
   }
 
   /* tabla */
@@ -122,12 +150,12 @@
   }
 
   .lx-table tbody tr {
-    animation: fadeRow .3s ease;
+    animation: fadeRow .25s ease;
   }
 
   @keyframes fadeRow {
     from { opacity: 0; transform: translateY(3px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   .lx-table tbody td {
@@ -166,8 +194,14 @@
     border-color: #f3c3bf;
   }
 
+  .lx-badge.chip {
+    background: var(--accent-soft);
+    color: #075985;
+    border-color: #bae6fd;
+  }
+
   .lx-actions {
-    min-width: 190px;
+    min-width: 260px;
   }
 
   .lx-acts {
@@ -180,41 +214,43 @@
   .lx-act {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 6.5px 10px 6px;
-    border-radius: 9px;
+    gap: 6px;
+    padding: 6.5px 12px 6px;
+    border-radius: 999px;
     font-size: 13px;
     line-height: 1;
     border: 1px solid var(--line);
     background: var(--sec-bg);
     color: var(--sec-ink);
     text-decoration: none;
-    transition: background .12s ease, transform .12s ease;
+    transition: background .12s ease, transform .12s ease, box-shadow .12s ease;
     white-space: nowrap;
   }
 
-  .lx-act svg {
-    width: 15px;
-    height: 15px;
-    flex: 0 0 15px;
-    fill: currentColor;
-    display: block;
+  .lx-act:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(15,23,42,.15);
   }
 
-  .lx-act.pri {
+  .lx-act-main {
     background: var(--pri);
     color: #fff;
     border-color: var(--pri);
   }
 
-  .lx-act:hover {
-    transform: translateY(-1px);
+  .lx-act-icon{
+    font-size:14px;
   }
 
-  .lx-act.danger {
-    background: #fff;
-    color: var(--danger);
-    border-color: #fecaca;
+  .lx-act-danger{
+    background:#fff;
+    color:var(--danger);
+    border-color:#fecaca;
+  }
+
+  .muted {
+    color: var(--muted);
+    font-size: 13px;
   }
 
   /* detalle expandible */
@@ -250,14 +286,16 @@
   .lx-kv small {
     color: var(--muted);
     font-weight: 600;
-  }
-
-  .muted {
-    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size: 11px;
   }
 
   /* responsive */
   @media (max-width: 992px) {
+    .lx-shell{
+      padding-inline:12px;
+    }
     .lx-head {
       flex-direction: column;
       align-items: flex-start;
@@ -314,6 +352,7 @@
 
     .lx-expand__inner {
       grid-template-columns: 1fr;
+      padding-top: 10px;
     }
   }
 
@@ -327,28 +366,24 @@
   }
 </style>
 
-<!-- sprite icono -->
-<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
-  <symbol id="icon-eye" viewBox="0 0 24 24">
-    <path d="M12 5c5.5 0 9.7 4.6 10.7 6-.9 1.3-5 6-10.7 6S2.3 12.3 1.3 11c1-1.4 5.2-6 10.7-6Zm0 2c-4.1 0-7.6 3.2-8.9 4.99C4.4 13.8 7.9 17 12 17s7.6-3.2 8.9-5.01C19.6 10.2 16.1 7 12 7Zm0 2.5A2.5 2.5 0 1 1 9.5 12 2.5 2.5 0 0 1 12 9.5Z" />
-  </symbol>
-</svg>
-
+<div class="lx-shell">
 <div class="lx-page">
 
   <div class="lx-head">
-    <h1>Sucursales</h1>
     <div>
-      {% if request.user.is_authenticated and request.user.is_superuser %}
-        <a class="lx-btn" href="{% url 'sucursal-create' %}">
-          <span aria-hidden="true">＋</span>
-          Crear sucursal
-        </a>
-      {% elif request.user.is_authenticated and request.user.perfil.rol == 'ADMIN' %}
-        <a class="lx-btn" href="{% url 'sucursal-create' %}">
-          <span aria-hidden="true">＋</span>
-          Crear sucursal
-        </a>
+      <h1>Sucursales</h1>
+      <p class="lx-head-sub">
+        Gestiona tus puntos de venta y revisa su stock total en tiempo real.
+      </p>
+    </div>
+    <div>
+      {% if request.user.is_authenticated %}
+        {% if request.user.is_superuser or request.user.perfil.rol == 'ADMIN' %}
+          <a class="lx-btn" href="{% url 'sucursal-create' %}">
+            <span aria-hidden="true">＋</span>
+            Crear sucursal
+          </a>
+        {% endif %}
       {% endif %}
     </div>
   </div>
@@ -369,6 +404,9 @@
     <button type="button" id="btnScanQ" class="lx-btn ghost" title="Escanear código">
       📷
     </button>
+    <span class="lx-badge chip">
+      {{ total }} sucursales · página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+    </span>
   </form>
 
   <!-- tabla -->
@@ -387,109 +425,151 @@
           <th class="lx-actions">Acciones</th>
         </tr>
       </thead>
-      <tbody id="rows-suc">
-        {% for s in sucursales %}
-        <tr>
-          <td data-label="Código"><span class="mono">{{ s.codigo }}</span></td>
-          <td data-label="Nombre"><strong>{{ s.nombre }}</strong></td>
-          <td data-label="Ciudad">{{ s.ciudad|default:"—" }}</td>
-          <td data-label="Bodega">
-            {% if s.bodega %}
-              {{ s.bodega.codigo }} — {{ s.bodega.nombre }}
-            {% else %}
-              —
-            {% endif %}
-          </td>
-          <td data-label="Ubicaciones">{{ s.ubicaciones_count|default:0 }}</td>
-          <td data-label="Productos">{{ s.productos_count|default:0 }}</td>
-          <td data-label="Stock total"><strong>{{ s.total_stock|default:0 }}</strong></td>
-          <td data-label="Activo">
-            {% if s.activo %}
-              <span class="lx-badge ok">Sí</span>
-            {% else %}
-              <span class="lx-badge no">No</span>
-            {% endif %}
-          </td>
-          <td class="lx-actions" data-label="Acciones">
-            <div class="lx-acts">
-              <button type="button"
-                      class="lx-act pri"
-                      data-target="s{{ s.pk }}"
-                      aria-controls="s{{ s.pk }}"
-                      aria-expanded="false">
-                <svg aria-hidden="true"><use href="#icon-eye"></use></svg>
-                <span>Ver</span>
-              </button>
-              <button type="button"
-                      class="lx-act"
-                      onclick="showOnMap('{{ s.direccion|default:'' }} {{ s.ciudad|default:'' }} {{ s.region|default:'' }}')">
-                Ver en mapa
-              </button>
-              <a class="lx-act" href="{% url 'sucursal-edit' s.pk %}">Editar</a>
-            </div>
-          </td>
-        </tr>
+<tbody id="rows-suc">
+  {% for s in sucursales %}
+  <tr>
+    <td data-label="Código"><span class="mono">{{ s.codigo }}</span></td>
+    <td data-label="Nombre"><strong>{{ s.nombre }}</strong></td>
+    <td data-label="Ciudad">{{ s.ciudad|default:"—" }}</td>
+    <td data-label="Bodega">
+      {% if s.bodega %}
+        {{ s.bodega.codigo }} — {{ s.bodega.nombre }}
+      {% else %}
+        — 
+      {% endif %}
+    </td>
+    <td data-label="Ubicaciones">{{ s.ubicaciones_count|default:0 }}</td>
+    <td data-label="Productos">{{ s.productos_count|default:0 }}</td>
+    <td data-label="Stock total"><strong>{{ s.total_stock|default:0|floatformat:0 }}</strong></td>
+    <td data-label="Activo">
+      {% if s.activo %}
+        <span class="lx-badge ok">Sí</span>
+      {% else %}
+        <span class="lx-badge no">No</span>
+      {% endif %}
+    </td>
+    <td class="lx-actions" data-label="Acciones">
+      <div class="lx-acts">
 
-        <!-- fila de detalle -->
-        <tr id="s{{ s.pk }}" class="lx-expand-row">
-          <td colspan="9">
-            <div class="lx-expand" data-expand>
-              <div class="lx-expand__inner">
-                <div class="lx-kv">
-                  <small>Ubicaciones de la sucursal</small>
-                  {% if s.ubicaciones.all %}
-                    <ul style="margin:0; padding-left:1rem">
-                      {% for u in s.ubicaciones.all %}
+        <!-- Ver (detalle expandible) -->
+        <button type="button"
+                class="lx-act lx-act-main"
+                data-target="s{{ s.pk }}"
+                aria-controls="s{{ s.pk }}"
+                aria-expanded="false">
+          <span class="lx-act-icon">👁️</span>
+          <span>Ver</span>
+        </button>
+
+        <!-- Ver productos -->
+        <a class="lx-act" href="{% url 'sucursal-productos' s.pk %}">
+          <span class="lx-act-icon">📄</span>
+          <span>Ver productos</span>
+        </a>
+
+        <!-- Agregar sucursal (lleva al create general) -->
+        <a class="lx-act" href="{% url 'sucursal-create' %}">
+          <span class="lx-act-icon">📅</span>
+          <span>Agregar sucursal</span>
+        </a>
+
+        <!-- Ver en mapa -->
+        <button type="button"
+                class="lx-act"
+                onclick="showOnMap('{{ s.direccion|default:'' }} {{ s.ciudad|default:'' }} {{ s.region|default:'' }}')">
+          <span class="lx-act-icon">📍</span>
+          <span>Ver en mapa</span>
+        </button>
+
+        <!-- Agregar ubicación -->
+        <a class="lx-act" href="{% url 'sucursal-ubicacion-add' s.pk %}">
+          <span class="lx-act-icon">📍</span>
+          <span>Agregar ubicación</span>
+        </a>
+
+        <!-- Editar -->
+        <a class="lx-act" href="{% url 'sucursal-edit' s.pk %}">
+          <span class="lx-act-icon">✏️</span>
+          <span>Editar</span>
+        </a>
+
+        <!-- Eliminar con SweetAlert -->
+        <a class="lx-act lx-act-danger btn-del-suc"
+           href="{% url 'sucursal-delete' s.pk %}"
+           data-suc="{{ s.nombre }}"
+           data-code="{{ s.codigo }}">
+          <span class="lx-act-icon">🗑️</span>
+          <span>Eliminar</span>
+        </a>
+
+      </div>
+    </td>
+  </tr>
+
+  <!-- fila de detalle -->
+  <tr id="s{{ s.pk }}" class="lx-expand-row">
+    <td colspan="9">
+      <div class="lx-expand" data-expand>
+        <div class="lx-expand__inner">
+          <div class="lx-kv">
+            <small>Ubicaciones de la sucursal</small>
+            {% with ubicaciones_list=s.ubicaciones.all %}
+              {% if ubicaciones_list %}
+                <ul style="margin:0; padding-left:1rem">
+                  {% for u in ubicaciones_list %}
+                    <li>
+                      {{ u.codigo }}
+                      {% if u.area %} ({{ u.area }}){% endif %}
+                      {% if u.tipo %} — {{ u.tipo.codigo }}{% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <span class="muted">No hay ubicaciones para esta sucursal.</span>
+              {% endif %}
+            {% endwith %}
+          </div>
+
+          <div class="lx-kv">
+            <small>Productos con stock aquí</small>
+            {% with ubicaciones_list=s.ubicaciones.all %}
+              {% if s.productos_count > 0 %}
+                <ul style="margin:0; padding-left:1rem; max-height:220px; overflow:auto;">
+                  {% for u in ubicaciones_list %}
+                    {% for st in u.stocks.all %}
+                      {% if st.cantidad_disponible|default:0 > 0 %}
                         <li>
-                          {{ u.codigo }}
-                          {% if u.area %} ({{ u.area }}){% endif %}
-                          {% if u.tipo %} — {{ u.tipo.codigo }}{% endif %}
+                          {{ st.producto.sku }} — {{ st.producto.nombre }}:
+                          <strong>{{ st.cantidad_disponible|default:0|floatformat:0 }}</strong>
                         </li>
-                      {% endfor %}
-                    </ul>
-                  {% else %}
-                    <span class="muted">No hay ubicaciones para esta sucursal.</span>
-                  {% endif %}
-                </div>
+                      {% endif %}
+                    {% endfor %}
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <span class="muted">No hay productos con stock en esta sucursal.</span>
+              {% endif %}
+            {% endwith %}
+          </div>
 
-                <div class="lx-kv">
-                  <small>Productos con stock aquí</small>
-                  {% with ubicaciones=s.ubicaciones.all %}
-                    {% if ubicaciones %}
-                      <ul style="margin:0; padding-left:1rem">
-                        {% for u in ubicaciones %}
-                          {% for st in u.stocks.all %}
-                            <li>
-                              {{ st.producto.sku }} — {{ st.producto.nombre }}:
-                              <strong>{{ st.cantidad_disponible }}</strong>
-                            </li>
-                          {% empty %}
-                          {% endfor %}
-                        {% endfor %}
-                      </ul>
-                    {% else %}
-                      <span class="muted">No hay stock asignado a ubicaciones de esta sucursal.</span>
-                    {% endif %}
-                  {% endwith %}
-                </div>
+          <div class="lx-kv">
+            <small>Nota</small>
+            <span class="muted">
+              El stock total se calcula desde las filas de
+              <code>Stock</code> asociadas a las ubicaciones de esta sucursal.
+            </span>
+          </div>
+        </div>
+      </div>
+    </td>
+  </tr>
+  {% empty %}
+  <tr>
+    <td colspan="9">No hay sucursales.</td>
+  </tr>
+  {% endfor %}
+</tbody>
 
-                <div class="lx-kv">
-                  <small>Nota</small>
-                  <span class="muted">
-                    El stock total se calcula desde las filas de <code>Stock</code>
-                    asociadas a las ubicaciones de esta sucursal.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="9">No hay sucursales.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
     </table>
   </div>
 
@@ -501,7 +581,7 @@
       <span class="lx-btn ghost" aria-disabled="true">← Anterior</span>
     {% endif %}
 
-    <span class="lx-btn" style="pointer-events:none">
+    <span class="lx-btn lx-btn-outline" style="pointer-events:none">
       Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
     </span>
 
@@ -512,6 +592,7 @@
     {% endif %}
   </div>
   {% endif %}
+</div>
 </div>
 
 {# ===== MODAL DEL MAPA ===== #}
@@ -527,10 +608,13 @@
   </div>
 </div>
 
-<!-- Leaflet CSS (sin integrity) -->
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script src="{% static 'core/js/barcode_scanner.js' %}"></script>
 <script>
@@ -577,7 +661,7 @@
     if (!tbody) return;
 
     function closeAll() {
-      tbody.querySelectorAll('.lx-act.pri[aria-expanded="true"]').forEach(btn => {
+      tbody.querySelectorAll('.lx-act-main[aria-expanded="true"]').forEach(btn => {
         btn.setAttribute('aria-expanded', 'false');
       });
       tbody.querySelectorAll('.lx-expand').forEach(wrap => {
@@ -591,7 +675,7 @@
     }
 
     tbody.addEventListener('click', (e)=>{
-      const btn = e.target.closest('.lx-act.pri');
+      const btn = e.target.closest('.lx-act-main');
       if(!btn) return;
 
       const id = btn.getAttribute('data-target');
@@ -610,6 +694,41 @@
         inner.style.maxHeight = inner.scrollHeight + 'px';
         inner.style.opacity = '1';
       }
+    });
+  })();
+
+  // ===== SweetAlert para eliminar sucursal =====
+  (function(){
+    const delButtons = document.querySelectorAll('.btn-del-suc');
+    if(!delButtons.length) return;
+
+    delButtons.forEach(btn => {
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        const url   = this.getAttribute('href');
+        const name  = this.dataset.suc || '';
+        const code  = this.dataset.code || '';
+
+        const label = (code || name)
+          ? `${code ? code + ' — ' : ''}${name}`
+          : 'esta sucursal';
+
+        Swal.fire({
+          title: '¿Eliminar sucursal?',
+          text: `Se eliminará ${label}. Esta acción no se puede deshacer.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#dc2626',
+          reverseButtons: true
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // redirigimos a la vista de eliminación
+            window.location.href = url;
+          }
+        });
+      });
     });
   })();
 
@@ -634,7 +753,6 @@
     openMapModal();
     document.getElementById('mapAddr').textContent = addr;
 
-    // usamos tu endpoint de Django
     const url = `/api/geocode/?q=${encodeURIComponent(addr)}`;
     try {
       const resp = await fetch(url);

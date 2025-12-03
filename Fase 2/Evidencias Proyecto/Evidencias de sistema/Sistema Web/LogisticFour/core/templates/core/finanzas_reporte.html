@@ -1,135 +1,551 @@
 {% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Finanzas — LogisticFour{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <h2>Finanzas</h2>
+<style>
+  :root{
+    --fin-ink:#0f172a;
+    --fin-muted:#64748b;
+    --fin-line:#e2e8f0;
+    --fin-card:#ffffff;
+    --fin-head:#f9fafb;
+    --fin-pri:#0f172a;
+    --fin-pri-ink:#ffffff;
+    --fin-ok:#16a34a;
+    --fin-warn:#f97316;
+  }
 
-  <form method="get" class="row g-3 mb-2">
-    <div class="col-md-3">{{ form.bodega.label_tag }} {{ form.bodega }}</div>
-    <div class="col-md-3">{{ form.proveedor.label_tag }} {{ form.proveedor }}</div>
-    <div class="col-md-2">{{ form.fecha_desde.label_tag }} {{ form.fecha_desde }}</div>
-    <div class="col-md-2">{{ form.fecha_hasta.label_tag }} {{ form.fecha_hasta }}</div>
-    <div class="col-md-2 d-flex align-items-end">
-      <button class="btn btn-primary w-100" type="submit">Ver</button>
+  /* 🔒 evita que la página tenga scroll horizontal */
+  html, body{
+    max-width:100%;
+    overflow-x:hidden;
+  }
+
+  /* ===== Layout general ===== */
+  .fin-shell{
+    max-width:1160px;
+    margin-inline:auto;
+    padding:24px 18px 32px;
+    animation:finFade .28s ease-out both;
+    box-sizing:border-box;
+  }
+  @keyframes finFade{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  .fin-card{
+    background:var(--fin-card);
+    border-radius:18px;
+    border:1px solid var(--fin-line);
+    padding:16px 18px 18px;
+    box-shadow:0 14px 40px rgba(15,23,42,.05);
+    margin-bottom:16px;
+    transition:.2s ease box-shadow,.2s ease transform;
+  }
+  .fin-card:hover{
+    box-shadow:0 20px 55px rgba(15,23,42,.08);
+    transform:translateY(-2px);
+  }
+
+  /* ===== Header ===== */
+  .fin-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .fin-title{
+    margin:0;
+    font-size:clamp(1.2rem,1.4rem,1.6rem);
+    font-weight:800;
+    color:var(--fin-ink);
+  }
+  .fin-sub{
+    margin:2px 0 0;
+    font-size:.86rem;
+    color:var(--fin-muted);
+  }
+
+  .fin-quick-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .fin-btn-pill{
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.08);
+    padding:7px 14px 8px;
+    font-size:.8rem;
+    font-weight:600;
+    background:#ffffff;
+    color:var(--fin-ink);
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    box-shadow:0 3px 10px rgba(15,23,42,.04);
+    transition:.15s ease transform,.15s ease box-shadow,.15s ease background;
+  }
+  .fin-btn-pill span{
+    font-size:1rem;
+  }
+  .fin-btn-pill:hover{
+    transform:translateY(-1px);
+    box-shadow:0 10px 24px rgba(15,23,42,.12);
+    background:#f9fafb;
+  }
+  .fin-btn-pill.pri{
+    background:var(--fin-pri);
+    color:var(--fin-pri-ink);
+    border-color:var(--fin-pri);
+  }
+  .fin-btn-pill.pri:hover{
+    background:#020617;
+  }
+
+  /* ===== Filtros ===== */
+  .fin-filters-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:12px;
+    align-items:flex-end;
+  }
+  .fin-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--fin-muted);
+    font-weight:600;
+    margin-bottom:4px;
+  }
+  .fin-control{
+    position:relative;
+  }
+  .fin-control select,
+  .fin-control input[type="date"]{
+    width:100%;
+    border-radius:999px;
+    border:1px solid var(--fin-line);
+    padding:7px 12px;
+    font-size:13px;
+    background:#f9fafb;
+    color:var(--fin-ink);
+    outline:none;
+    transition:.15s ease border-color,.15s ease box-shadow,.15s ease background;
+  }
+  .fin-control select:focus,
+  .fin-control input[type="date"]:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 1px rgba(37,99,235,.22);
+    background:#ffffff;
+  }
+  .fin-control.fin-select select{
+    appearance:none;
+    padding-right:32px;
+  }
+  .fin-control.fin-select::after{
+    content:"▾";
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:11px;
+    opacity:.6;
+    pointer-events:none;
+  }
+
+  .fin-filters-grid .fin-submit{
+    display:flex;
+    align-items:flex-end;
+  }
+  .fin-submit button{
+    width:100%;
+    border-radius:999px;
+    border:1px solid var(--fin-pri);
+    background:var(--fin-pri);
+    color:#fff;
+    font-size:.86rem;
+    font-weight:600;
+    padding:9px 14px 8px;
+    box-shadow:0 8px 22px rgba(15,23,42,.18);
+    transition:.15s ease transform,.15s ease box-shadow,.15s ease background;
+  }
+  .fin-submit button:hover{
+    background:#020617;
+    transform:translateY(-1px);
+    box-shadow:0 12px 30px rgba(15,23,42,.25);
+  }
+
+  /* ===== Chips filtros ===== */
+  .fin-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin:10px 0 6px;
+  }
+  .fin-chip{
+    border-radius:999px;
+    background:#e5edff;
+    border:1px solid rgba(129,140,248,.5);
+    padding:4px 10px;
+    font-size:.78rem;
+    color:#1e293b;
+  }
+
+  /* ===== Export ===== */
+  .fin-export{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:10px;
+  }
+
+  /* ===== Resumen ===== */
+  .fin-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .fin-summary-card{
+    border-radius:16px;
+    padding:12px 14px;
+    background:linear-gradient(135deg,#ffffff, #f1f5f9);
+    border:1px solid rgba(148,163,184,.45);
+    position:relative;
+    overflow:hidden;
+  }
+  .fin-summary-label{
+    font-size:.78rem;
+    color:var(--fin-muted);
+  }
+  .fin-summary-value{
+    font-size:1.4rem;
+    font-weight:800;
+    color:var(--fin-ink);
+  }
+  .fin-summary-pill{
+    position:absolute;
+    right:10px;
+    top:10px;
+    font-size:.7rem;
+    padding:3px 8px;
+    border-radius:999px;
+    background:#e0f2fe;
+    color:#0369a1;
+  }
+
+  /* ===== Tablas ===== */
+  .fin-section-title{
+    margin:20px 0 8px;
+    font-size:1rem;
+    font-weight:700;
+    color:var(--fin-ink);
+  }
+
+  .fin-table-card{
+    border-radius:16px;
+    border:1px solid var(--fin-line);
+    background:var(--fin-card);
+    padding:6px 0 0;
+    margin-bottom:16px;
+    box-shadow:0 8px 26px rgba(15,23,42,.04);
+
+    /* el scroll horizontal vive aquí, no en toda la página */
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .fin-table-wrapper{
+    min-width:100%;
+  }
+  .table-finanzas{
+    width:100%;
+    min-width:640px;   /* ancho mínimo para que las columnas respiren */
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:.86rem;
+  }
+  .table-finanzas thead th{
+    background:var(--fin-head);
+    padding:8px 12px;
+    border-bottom:1px solid var(--fin-line);
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .table-finanzas tbody td{
+    padding:8px 12px;
+    border-bottom:1px solid var(--fin-line);
+    white-space:nowrap;
+  }
+  .table-finanzas tbody tr:hover{
+    background:#f9fafb;
+  }
+  .table-finanzas tfoot th{
+    padding:8px 12px;
+    border-top:1px solid var(--fin-line);
+    background:#f9fafb;
+  }
+  .text-end{ text-align:right; }
+
+  /* ===== Responsive ===== */
+  @media (max-width:768px){
+    .fin-shell{ padding:18px 10px 28px; }
+    .fin-header{ flex-direction:column; align-items:flex-start; }
+    .fin-quick-actions{ width:100%; }
+    .fin-btn-pill{ flex:1 1 auto; justify-content:center; }
+  }
+</style>
+
+<div class="fin-shell">
+
+  <!-- Header + acciones rápidas -->
+  <div class="fin-card">
+    <div class="fin-header">
+      <div>
+        <h1 class="fin-title">Finanzas</h1>
+        <p class="fin-sub">
+          Visualiza órdenes de compra, facturas, recepciones y stock según filtros seleccionados.
+        </p>
+      </div>
+      <div class="fin-quick-actions">
+        <a href="{% url 'crear_orden_compra' %}" class="fin-btn-pill pri">
+          <span>📄</span> Orden de Compra
+        </a>
+        <a href="{% url 'crear_factura_proveedor' %}" class="fin-btn-pill">
+          <span>🧾</span> Factura Proveedor
+        </a>
+        <a href="{% url 'crear_recepcion' %}" class="fin-btn-pill">
+          <span>📦</span> Recepción
+        </a>
+      </div>
     </div>
-  </form>
 
-  {% if has_filters == False %}
-    <div class="alert alert-info">Selecciona al menos un criterio (Bodega, Proveedor o Fechas) y presiona “Ver”.</div>
+    <!-- Filtros -->
+    <form method="get" class="fin-filters-grid">
+      <div>
+        <label class="fin-label">{{ form.bodega.label }}</label>
+        <div class="fin-control fin-select">
+          {{ form.bodega }}
+        </div>
+      </div>
+
+      <div>
+        <label class="fin-label">{{ form.proveedor.label }}</label>
+        <div class="fin-control fin-select">
+          {{ form.proveedor }}
+        </div>
+      </div>
+
+      <div>
+        <label class="fin-label">{{ form.fecha_desde.label }}</label>
+        <div class="fin-control">
+          {{ form.fecha_desde }}
+        </div>
+      </div>
+
+      <div>
+        <label class="fin-label">{{ form.fecha_hasta.label }}</label>
+        <div class="fin-control">
+          {{ form.fecha_hasta }}
+        </div>
+      </div>
+
+      <div class="fin-submit">
+        <button type="submit">Ver resumen</button>
+      </div>
+    </form>
+  </div>
+
+  {% if not has_filters %}
+    <div class="fin-card" style="margin-top:4px;">
+      <p class="fin-sub" style="margin:0;">
+        Selecciona al menos un criterio (<strong>Bodega</strong>, <strong>Proveedor</strong> o <strong>rango de fechas</strong>) y presiona
+        <strong>“Ver resumen”</strong> para cargar los datos financieros.
+      </p>
+    </div>
   {% endif %}
 
   {% if has_filters %}
-    <div class="d-flex gap-2 mb-3">
-      {% if form.cleaned_data.bodega %}<span class="badge bg-secondary">Bodega: {{ form.cleaned_data.bodega.codigo }}</span>{% endif %}
-      {% if form.cleaned_data.proveedor %}<span class="badge bg-secondary">Proveedor: {{ form.cleaned_data.proveedor.username }}</span>{% endif %}
-      {% if form.cleaned_data.fecha_desde %}<span class="badge bg-secondary">Desde: {{ form.cleaned_data.fecha_desde }}</span>{% endif %}
-      {% if form.cleaned_data.fecha_hasta %}<span class="badge bg-secondary">Hasta: {{ form.cleaned_data.fecha_hasta }}</span>{% endif %}
+
+    <!-- Chips filtros activos -->
+    <div class="fin-chips">
+      {% if form.cleaned_data.bodega %}
+        <span class="fin-chip">Bodega: {{ form.cleaned_data.bodega.codigo }}</span>
+      {% endif %}
+      {% if form.cleaned_data.proveedor %}
+        <span class="fin-chip">Proveedor: {{ form.cleaned_data.proveedor.username }}</span>
+      {% endif %}
+      {% if form.cleaned_data.fecha_desde %}
+        <span class="fin-chip">Desde: {{ form.cleaned_data.fecha_desde }}</span>
+      {% endif %}
+      {% if form.cleaned_data.fecha_hasta %}
+        <span class="fin-chip">Hasta: {{ form.cleaned_data.fecha_hasta }}</span>
+      {% endif %}
     </div>
 
-    <div class="mb-3">
+    <!-- Exportar -->
+    <div class="fin-export">
       <a class="btn btn-success btn-sm" href="{% url 'finanzas_export_excel' %}?{{ request.GET.urlencode }}">Exportar Excel</a>
       <a class="btn btn-danger btn-sm" href="{% url 'finanzas_export_pdf' %}?{{ request.GET.urlencode }}">Exportar PDF</a>
     </div>
 
-    <div class="row g-3">
-      <div class="col-md-3">
-        <div class="card"><div class="card-body">
-          <div class="text-muted small">Órdenes</div>
-          <div class="h4 mb-0">{{ resumen.ordenes_count }}</div>
-        </div></div>
+    <!-- Resumen numérico -->
+    <div class="fin-summary-grid">
+      <div class="fin-summary-card">
+        <div class="fin-summary-pill">OC</div>
+        <div class="fin-summary-label">Órdenes de compra</div>
+        <div class="fin-summary-value">{{ resumen.ordenes_count }}</div>
       </div>
-      <div class="col-md-3">
-        <div class="card"><div class="card-body">
-          <div class="text-muted small">Facturas</div>
-          <div class="h4 mb-0">{{ resumen.facturas_count }}</div>
-        </div></div>
+      <div class="fin-summary-card">
+        <div class="fin-summary-pill">🧾</div>
+        <div class="fin-summary-label">Facturas proveedor</div>
+        <div class="fin-summary-value">{{ resumen.facturas_count }}</div>
       </div>
-      <div class="col-md-3">
-        <div class="card"><div class="card-body">
-          <div class="text-muted small">Recepciones</div>
-          <div class="h4 mb-0">{{ resumen.recepciones_count }}</div>
-        </div></div>
+      <div class="fin-summary-card">
+        <div class="fin-summary-pill">📦</div>
+        <div class="fin-summary-label">Recepciones</div>
+        <div class="fin-summary-value">{{ resumen.recepciones_count }}</div>
       </div>
-      <div class="col-md-3">
-        <div class="card"><div class="card-body">
-          <div class="text-muted small">Stock total (prod.)</div>
-          <div class="h4 mb-0">{{ resumen.stock_total|floatformat:0 }}</div>
-        </div></div>
+      <div class="fin-summary-card">
+        <div class="fin-summary-pill">📊</div>
+        <div class="fin-summary-label">Stock total (productos)</div>
+        <div class="fin-summary-value">{{ resumen.stock_total|floatformat:0 }}</div>
       </div>
     </div>
+
+    <!-- Órdenes de compra -->
+    <h3 class="fin-section-title">Órdenes de compra</h3>
+    <div class="fin-table-card">
+      <div class="fin-table-wrapper">
+        <table class="table-finanzas">
+          <thead>
+            <tr>
+              <th>OC</th>
+              <th>Proveedor</th>
+              <th>Bodega</th>
+              <th>Estado</th>
+              <th>Fecha esperada</th>
+              <th>Creada</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for oc in ordenes %}
+            <tr>
+              <td>{{ oc.numero_orden }}</td>
+              <td>{{ oc.proveedor.get_full_name|default:oc.proveedor.username }}</td>
+              <td>{{ oc.bodega.codigo }} - {{ oc.bodega.nombre }}</td>
+              <td>{{ oc.estado }}</td>
+              <td>{{ oc.fecha_esperada|date:"Y-m-d" }}</td>
+              <td>{{ oc.creado_en|date:"Y-m-d H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6">Sin datos.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Facturas -->
+    <h3 class="fin-section-title">Facturas de proveedor</h3>
+    <div class="fin-table-card">
+      <div class="fin-table-wrapper">
+        <table class="table-finanzas">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Proveedor</th>
+              <th>Monto</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for f in facturas %}
+            <tr>
+              <td>{{ f.numero_factura }}</td>
+              <td>{{ f.proveedor.get_full_name|default:f.proveedor.username }}</td>
+              <td>{{ f.monto_total }}</td>
+              <td>{{ f.fecha_factura|date:"Y-m-d" }}</td>
+              <td>{{ f.estado }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5">Sin datos.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recepciones -->
+    <h3 class="fin-section-title">Recepciones</h3>
+    <div class="fin-table-card">
+      <div class="fin-table-wrapper">
+        <table class="table-finanzas">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Bodega</th>
+              <th>Estado</th>
+              <th>Recibido en</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for r in recepciones %}
+            <tr>
+              <td>{{ r.numero_recepcion }}</td>
+              <td>{{ r.bodega.codigo }} - {{ r.bodega.nombre }}</td>
+              <td>{{ r.estado }}</td>
+              <td>{{ r.recibido_en|date:"Y-m-d H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4">Sin datos.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Productos -->
+    <h3 class="fin-section-title">Productos (según filtros)</h3>
+    <div class="fin-table-card">
+      <div class="fin-table-wrapper">
+        <table class="table-finanzas">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Nombre</th>
+              <th class="text-end">Stock</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for p in productos %}
+            <tr>
+              <td>{{ p.sku }}</td>
+              <td>{{ p.nombre }}</td>
+              <td class="text-end">{{ p.stock_filtrado|default:0|floatformat:0 }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3">Sin datos.</td></tr>
+          {% endfor %}
+          </tbody>
+          {% if productos %}
+          <tfoot>
+            <tr>
+              <th></th>
+              <th class="text-end">Total</th>
+              <th class="text-end">{{ resumen.stock_total|floatformat:0 }}</th>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
   {% endif %}
-
-  <h4 class="mt-4">Órdenes de compra</h4>
-  <table class="table table-sm table-striped">
-    <thead><tr>
-      <th>OC</th><th>Proveedor</th><th>Bodega</th><th>Estado</th><th>Fecha esperada</th><th>Creada</th>
-    </tr></thead>
-    <tbody>
-    {% for oc in ordenes %}
-      <tr>
-        <td>{{ oc.numero_orden }}</td>
-        <td>{{ oc.proveedor.get_full_name|default:oc.proveedor.username }}</td>
-        <td>{{ oc.bodega.codigo }} - {{ oc.bodega.nombre }}</td>
-        <td>{{ oc.estado }}</td>
-        <td>{{ oc.fecha_esperada|date:"Y-m-d" }}</td>
-        <td>{{ oc.creado_en|date:"Y-m-d H:i" }}</td>
-      </tr>
-    {% empty %}<tr><td colspan="6">Sin datos.</td></tr>{% endfor %}
-    </tbody>
-  </table>
-
-  <h4>Facturas proveedor</h4>
-  <table class="table table-sm table-striped">
-    <thead><tr>
-      <th>N°</th><th>Proveedor</th><th>Monto</th><th>Fecha</th><th>Estado</th>
-    </tr></thead>
-    <tbody>
-    {% for f in facturas %}
-      <tr>
-        <td>{{ f.numero_factura }}</td>
-        <td>{{ f.proveedor.get_full_name|default:f.proveedor.username }}</td>
-        <td>{{ f.monto_total }}</td>
-        <td>{{ f.fecha_factura|date:"Y-m-d" }}</td>
-        <td>{{ f.estado }}</td>
-      </tr>
-    {% empty %}<tr><td colspan="5">Sin datos.</td></tr>{% endfor %}
-    </tbody>
-  </table>
-
-  <h4>Recepciones</h4>
-  <table class="table table-sm table-striped">
-    <thead><tr>
-      <th>N°</th><th>Bodega</th><th>Estado</th><th>Recibido en</th>
-    </tr></thead>
-    <tbody>
-    {% for r in recepciones %}
-      <tr>
-        <td>{{ r.numero_recepcion }}</td>
-        <td>{{ r.bodega.codigo }} - {{ r.bodega.nombre }}</td>
-        <td>{{ r.estado }}</td>
-        <td>{{ r.recibido_en|date:"Y-m-d H:i" }}</td>
-      </tr>
-    {% empty %}<tr><td colspan="4">Sin datos.</td></tr>{% endfor %}
-    </tbody>
-  </table>
-
-  <h4>Productos (según filtros)</h4>
-  <table class="table table-sm table-striped">
-    <thead><tr><th>SKU</th><th>Nombre</th><th class="text-end">Stock</th></tr></thead>
-    <tbody>
-    {% for p in productos %}
-      <tr>
-        <td>{{ p.sku }}</td>
-        <td>{{ p.nombre }}</td>
-        <td class="text-end">{{ p.stock_filtrado|default:0|floatformat:0 }}</td>
-      </tr>
-    {% empty %}<tr><td colspan="3">Sin datos.</td></tr>{% endfor %}
-    </tbody>
-    {% if productos %}
-    <tfoot>
-      <tr><th></th><th class="text-end">Total</th><th class="text-end">{{ resumen.stock_total|floatformat:0 }}</th></tr>
-    </tfoot>
-    {% endif %}
-  </table>
 </div>
 {% endblock %}

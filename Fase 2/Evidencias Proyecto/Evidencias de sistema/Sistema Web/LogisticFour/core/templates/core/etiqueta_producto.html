@@ -1,43 +1,196 @@
 {% extends "core/base.html" %}
+{% load static %}
+
 {% block title %}Etiqueta {{ producto.sku }}{% endblock %}
 
 {% block content %}
 <style>
-  .label-wrap{
-    max-width: 360px; margin:auto; background:#fff; border:1px solid #e5e7eb;
-    border-radius:12px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,.06);
+  :root{
+    --ink:#0f172a;
+    --muted:#6b7280;
+    --line:#e5e7eb;
+    --card:#ffffff;
+    --accent:#111827;
   }
-  .sku { font:600 18px/1.1 ui-sans-serif,system-ui; color:#0f172a; letter-spacing:.5px }
-  .name{ color:#475569; margin:.25rem 0 .75rem }
-  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:center }
-  .qr, .bar{ background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:8px; text-align:center }
-  .meta{ font-size:12px; color:#64748b; margin-top:.5rem }
+
+  *{
+    box-sizing:border-box;
+  }
+
+  .page-wrap{
+    width:100%;
+    min-height:calc(100vh - 80px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:16px;
+    background:#ffffff; /* fondo blanco como tu app */
+  }
+
+  .label-wrap{
+    background:var(--card);
+    border-radius:18px;
+    padding:18px 18px 16px;
+    width:100%;
+    max-width:320px;
+    border:1px solid var(--line);
+    box-shadow:0 18px 40px rgba(15,23,42,.08);
+    position:relative;
+    animation:popIn .3s ease-out;
+  }
+
+  .label-inner{
+    position:relative;
+    z-index:1;
+  }
+
+  .label-head{
+    text-align:center;
+    margin-bottom:10px;
+  }
+
+  .prod-name{
+    margin:0;
+    font-size:1rem;
+    font-weight:700;
+    color:var(--ink);
+    letter-spacing:.02em;
+    word-break:break-word;
+  }
+
+  .qr-zone{
+    display:flex;
+    justify-content:center;
+    margin-top:6px;
+  }
+
+  .qr-zone img{
+    display:block;
+    width:260px;      /* QR grande */
+    height:260px;
+    max-width:none;
+    max-height:none;
+    border-radius:12px;
+    box-shadow:0 10px 26px rgba(15,23,42,.18);
+  }
+
+  .actions{
+    margin-top:14px;
+    display:flex;
+    justify-content:center;
+    gap:8px;
+  }
+
+  .btn{
+    padding:7px 14px;
+    border-radius:999px;
+    font-size:.8rem;
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    border:1px solid transparent;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease, border-color .15s ease;
+  }
+
+  .btn-print{
+    background:var(--accent);
+    color:#fff;
+    border-color:rgba(15,23,42,.1);
+    box-shadow:0 12px 30px rgba(15,23,42,.35);
+  }
+  .btn-print:hover{
+    background:#020617;
+    transform:translateY(-1px);
+    box-shadow:0 16px 40px rgba(15,23,42,.45);
+  }
+
+  .btn-back{
+    background:#ffffff;
+    color:var(--ink);
+    border-color:var(--line);
+  }
+  .btn-back:hover{
+    background:#f3f4f6;
+    transform:translateY(-1px);
+    box-shadow:0 10px 24px rgba(15,23,42,.12);
+  }
+
+  @keyframes popIn{
+    from{opacity:0;transform:translateY(8px) scale(.98);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+
+  @media (max-width:480px){
+    .page-wrap{
+      padding:12px;
+    }
+    .label-wrap{
+      max-width:300px;
+      padding:16px 14px 14px;
+    }
+  }
+
+  /* === ESTILOS SOLO PARA IMPRESIÓN === */
   @media print{
-    body{ background:#fff }
-    .label-wrap{ box-shadow:none; border:0; margin:0; max-width:none; width:62mm; }
+    /* Ocultar TODO lo demás del layout de base.html */
+    body *{
+      visibility:hidden;
+    }
+
+    /* Mostrar solo la etiqueta */
+    .page-wrap, .page-wrap *{
+      visibility:visible;
+    }
+
+    /* Posicionar la etiqueta arriba/centrada en la hoja */
+    .page-wrap{
+      position:absolute;
+      inset:0;
+      margin:0;
+      padding:10mm;
+      display:flex;
+      justify-content:flex-start;  /* o center si quieres centrado vertical */
+      align-items:flex-start;
+      background:#ffffff !important;
+    }
+
+    .label-wrap{
+      box-shadow:none;
+      border:1px solid #000;
+      border-radius:0;
+      max-width:none;
+      width:auto;
+    }
+
+    .actions{
+      display:none; /* ocultar botones al imprimir */
+    }
   }
 </style>
 
-<div class="label-wrap">
-  <div class="sku">SKU: {{ producto.sku }}</div>
-  <div class="name">{{ producto.nombre }}</div>
+<div class="page-wrap">
+  <div class="label-wrap">
+    <div class="label-inner">
+      <div class="label-head">
+        <!-- Solo el nombre del producto -->
+        <p class="prod-name">{{ producto.nombre }}</p>
+      </div>
 
-  <div class="grid">
-    <div class="qr">
-      <img src="{{ qr }}" alt="QR {{ producto.sku }}" width="220" height="220" loading="eager">
-      <div class="meta">Escanéame para abrir</div>
+      <div class="qr-zone">
+        <!-- QR del SKU -->
+        <img src="{{ qr }}" alt="QR {{ producto.nombre }}">
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-back" type="button" onclick="window.history.back()">
+          Volver
+        </button>
+        <button class="btn btn-print" type="button" onclick="window.print()">
+          Imprimir etiqueta
+        </button>
+      </div>
     </div>
-
-    <div class="bar">
-      <img src="{{ barcode }}" alt="Code128 {{ producto.sku }}" loading="eager">
-      <div class="meta">CODE128 / {{ producto.sku }}</div>
-    </div>
-  </div>
-
-  <div style="margin-top:12px; display:flex; gap:8px">
-    <a class="btn btn-sm btn-primary" href="{{ qr }}" download="QR_{{ producto.sku }}.png">Descargar QR</a>
-    <a class="btn btn-sm btn-outline-secondary" href="{{ barcode }}" download="BAR_{{ producto.sku }}.png">Descargar Barra</a>
-    <button class="btn btn-sm btn-dark" onclick="window.print()">Imprimir</button>
   </div>
 </div>
 {% endblock %}

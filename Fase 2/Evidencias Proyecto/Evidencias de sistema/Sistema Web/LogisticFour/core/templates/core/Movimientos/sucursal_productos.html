@@ -1,0 +1,551 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Productos de {{ sucursal.nombre }}{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--card:#fff;--bg:#f1f5f9;--accent:#111827;
+    --shadow:0 18px 45px rgba(15,23,42,.09);
+  }
+  .wrap{max-width:1080px;margin-inline:auto;display:grid;gap:14px;padding-bottom:18px;}
+  .head{display:flex;justify-content:space-between;gap:10px;align-items:center}
+  .title{margin:0;font-weight:800;font-size:clamp(1.2rem,2.2vw,1.5rem)}
+  .sub{margin:0;color:var(--muted);font-size:.86rem}
+  .metrics{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .metric{background:#f8fafc;border:1px solid rgba(148,163,184,.35);border-radius:12px;padding:8px 12px}
+  .metric small{color:var(--muted);display:block}
+  .metric strong{font-size:1.15rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);animation:fade .3s ease}
+  .card-body{padding:14px}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .input{flex:1 1 280px;min-width:220px;border:1px solid #cbd5e1;border-radius:10px;padding:9px 10px;background:#f8fafc}
+  .input:focus{outline:none;border-color:#111827;box-shadow:0 0 0 2px rgba(15,23,42,.12);background:#fff}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:.85rem}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:#0f172a;border-radius:10px;padding:9px 13px;font-weight:600;text-decoration:none;font-size:.85rem}
+  .btn-sm{padding:6px 10px;font-size:.78rem;border-radius:999px}
+  .btn-outline{background:#f8fafc;border:1px solid #cbd5e1;color:#111827}
+
+  /* botón general de QR */
+  .btn-qr-main{
+    background:#047857;
+    border:1px solid #059669;
+    color:#ecfdf5;
+    border-radius:999px;
+    padding:9px 15px;
+    font-size:.85rem;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-weight:700;
+  }
+  .btn-qr-main:hover{
+    background:#059669;
+  }
+  .btn-qr-icon{
+    font-size:1rem;
+  }
+
+  .btn-validate{
+    background:#ecfdf5;
+    border:1px solid #22c55e;
+    color:#15803d;
+  }
+  .btn-validate:hover{
+    background:#bbf7d0;
+  }
+
+  table{width:100%;border-collapse:separate;border-spacing:0}
+  thead th{position:sticky;top:0;background:#eef2ff;border-bottom:1px solid var(--line);text-align:left;padding:9px 10px;font-size:.76rem}
+  tbody td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:hover{background:#f8fafc}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .pill{display:inline-block;border-radius:999px;padding:2px 8px;font-size:.72rem;margin:2px 6px 2px 0;}
+  .pill-default{border:1px solid #f97316;background:#fff7ed;color:#9a3412;}
+  .pill-real{border:1px solid #38bdf8;background:#e0f2fe;color:#075985;}
+  .muted{color:#64748b;font-size:.85rem}
+  .actions-cell{white-space:nowrap}
+  .actions-stack{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @media(max-width:760px){
+    .head{flex-direction:column;align-items:flex-start}
+    thead{display:none}
+    table{display:block}
+    tbody{display:grid;gap:12px}
+    tr{display:grid;gap:6px;border:1px solid var(--line);border-radius:12px;padding:6px 8px}
+    td{border:none;padding:4px 8px}
+    td[data-label]::before{content:attr(data-label) ": ";font-weight:600;color:#64748b;margin-right:4px}
+    .actions-cell{margin-top:4px}
+    .actions-stack{flex-direction:row;flex-wrap:wrap;}
+  }
+
+  .row-no-ubicacion{
+    background:#fff8e1 !important;
+  }
+  .row-con-ubicacion{
+    background:#ffffff;
+  }
+
+  .ubi-filters-secondary{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:8px;
+  }
+  .tag-filter{
+    border-radius:999px;
+    border:1px solid #cbd5e1;
+    padding:4px 10px;
+    font-size:.76rem;
+    background:#f8fafc;
+    color:#0f172a;
+    cursor:pointer;
+  }
+  .tag-filter.tag-active{
+    background:#111827;
+    color:#ffffff;
+    border-color:#111827;
+  }
+
+  .asig-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:4000;
+  }
+  .asig-backdrop.open{display:flex;}
+
+  .asig-modal{
+    width:min(420px,96vw);
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 22px 60px rgba(15,23,42,.5);
+    overflow:hidden;
+    animation:pop .22s ease-out;
+    display:block;
+  }
+  .asig-head{
+    padding:12px 16px;
+    border-bottom:1px solid #e5e7eb;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .asig-head h2{margin:0;font-size:1rem;font-weight:700}
+  .asig-body{padding:12px 16px;display:grid;gap:10px}
+  .asig-footer{
+    padding:12px 16px;
+    border-top:1px solid #e5e7eb;
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+  }
+  .field{display:grid;gap:4px}
+  .field label{font-size:.8rem;font-weight:600;color:#374151}
+  .field select,.field input{
+    width:100%;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    padding:8px 10px;
+    font-size:.9rem;
+    background:#f9fafb;
+  }
+  .field select:focus,.field input:focus{
+    outline:none;
+    border-color:#111827;
+    box-shadow:0 0 0 2px rgba(15,23,42,.12);
+    background:#fff;
+  }
+  @keyframes pop{
+    from{opacity:0;transform:scale(.96) translateY(6px)}
+    to{opacity:1;transform:scale(1) translateY(0)}
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1 class="title">Productos de sucursal {{ sucursal.nombre }}</h1>
+      <p class="sub">
+        Se muestran los productos con stock registrado en ubicaciones de esta sucursal.
+      </p>
+    </div>
+    <div class="metrics">
+      <div class="metric">
+        <small>Total ítems</small><strong>{{ total_items }}</strong>
+      </div>
+      <div class="metric">
+        <small>Suma stock</small><strong>{{ suma_stock|floatformat:0 }}</strong>
+      </div>
+
+      {# Botón general, llamativo, para escanear productos por QR #}
+      <a href="{% url 'escanear_qr_sucursal' sucursal.id %}" class="btn-qr-main">
+        <span class="btn-qr-icon">📷</span>
+        Validar producto
+      </a>
+
+      <a href="{% url 'sucursal-list' %}" class="btn-ghost">← Volver</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="get" class="filters">
+        <input class="input" type="text" name="q" value="{{ q }}" placeholder="Buscar por SKU o nombre…">
+        <button class="btn" type="submit">Buscar</button>
+        {% if q %}
+          <a class="btn-ghost" href="{% url 'sucursal-productos' sucursal.id %}">Limpiar</a>
+        {% endif %}
+      </form>
+
+      <div class="ubi-filters-secondary">
+        <button type="button" class="tag-filter tag-active" data-filter="all">Todos</button>
+        <button type="button" class="tag-filter" data-filter="no-ubi">Solo sin ubicación real</button>
+        <button type="button" class="tag-filter" data-filter="con-ubi">Solo con ubicación real</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Nombre</th>
+              <th class="mono">Stock en sucursal</th>
+              <th class="mono">Stock validado p/mov.</th>
+              <th>Productos recepcionado</th>
+              <th>Ubicaciones internas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="prodBody">
+            {% for p in productos %}
+              <tr>
+                <td class="mono" data-label="SKU">{{ p.sku }}</td>
+                <td data-label="Nombre"><strong>{{ p.nombre }}</strong></td>
+
+                {# stock total en la sucursal #}
+                <td class="mono" data-label="Stock">{{ p.stock_sucursal|floatformat:0 }}</td>
+
+                <td class="mono" data-label="Stock validado p/mov.">
+                  {% if p.stock_validado %}
+                    {{ p.stock_validado|floatformat:0 }}
+                  {% else %}
+                    – 
+                  {% endif %}
+                </td>
+
+                <td data-label="Sin ubicación">
+                  <div class="ubi-default" data-producto="{{ p.id }}">
+                  </div>
+                </td>
+
+                <td data-label="Ubicaciones internas">
+                  <div class="ubi-real" data-producto="{{ p.id }}">
+                    <span class="muted">Cargando…</span>
+                  </div>
+                </td>
+
+                <td class="actions-cell" data-label="Acciones">
+                  <div class="actions-stack">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline"
+                      onclick="openAsignarModal({{ p.id }}, '{{ p.sku|escapejs }}', '{{ p.nombre|escapejs }}')">
+                      ➕ Asignar ubicación
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" style="text-align:center;color:#64748b;padding:18px">
+                  No hay productos encontrados.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# === MODAL para asignar producto a una ubicación de la sucursal === #}
+<div id="asig-backdrop" class="asig-backdrop" aria-hidden="true">
+  <div class="asig-modal" role="dialog" aria-modal="true" aria-labelledby="asig-title">
+    <div class="asig-head">
+      <div>
+        <h2 id="asig-title">Asignar producto a ubicación</h2>
+        <small id="asig-sub" class="muted"></small>
+      </div>
+      <button type="button" onclick="closeAsignarModal()" style="border:0;background:transparent;font-size:18px;cursor:pointer;">×</button>
+    </div>
+    <div class="asig-body">
+      <input type="hidden" id="asig-producto-id" value="">
+      <input type="hidden" id="asig-sucursal-id" value="{{ sucursal.id }}">
+
+      <div class="field">
+        <label for="asig-ubicacion">Ubicación en sucursal</label>
+        <select id="asig-ubicacion">
+          {% for u in ubicaciones %}
+            <option value="{{ u.id }}">{{ u.codigo }}{% if u.area %} — {{ u.area }}{% endif %}</option>
+          {% empty %}
+            <option value="">No hay ubicaciones activas</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="asig-cantidad">Cantidad a asignar</label>
+        <input id="asig-cantidad" type="number" step="1" min="0" value="0">
+      </div>
+
+      <p class="muted" style="font-size:.78rem;">
+        Se creará o actualizará el registro de stock para esta ubicación de sucursal.  
+        Si la cantidad es 0, solo se asociará la ubicación (según cómo manejes tu modelo de stock).
+      </p>
+    </div>
+    <div class="asig-footer">
+      <button type="button" class="btn-ghost btn-sm" onclick="closeAsignarModal()">Cancelar</button>
+      <button type="button" class="btn btn-sm" onclick="submitAsignacion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const sucursalId = {{ sucursal.id }};
+    const defaultCells = document.querySelectorAll('.ubi-default');
+    const realCells    = document.querySelectorAll('.ubi-real');
+    const cache = new Map();
+    let currentFilter = "all";
+
+    function swalMsg({icon="info", title="", text=""}){
+      if (window.Swal){
+        Swal.fire({icon, title, text, confirmButtonColor:"#111827"});
+      }else{
+        alert(title ? (title + "\n" + text) : text);
+      }
+    }
+
+    function applyRowFilter(mode){
+      const rows = document.querySelectorAll("#prodBody tr");
+      rows.forEach(function(tr){
+        const noUbi  = tr.classList.contains("row-no-ubicacion");
+        const conUbi = tr.classList.contains("row-con-ubicacion");
+        tr.style.display = "";
+        if (mode === "no-ubi" && !noUbi)  tr.style.display = "none";
+        if (mode === "con-ubi" && !conUbi) tr.style.display = "none";
+      });
+    }
+
+    async function loadUbicacionesForProduct(productId){
+      const defCell  = document.querySelector('.ubi-default[data-producto="'+productId+'"]');
+      const realCell = document.querySelector('.ubi-real[data-producto="'+productId+'"]');
+      const tr       = defCell ? defCell.closest("tr") : null;
+      if (!defCell || !realCell || !tr) return;
+
+      if (cache.has(productId)){
+        const cached = cache.get(productId);
+        defCell.innerHTML  = cached.htmlDefault;
+        realCell.innerHTML = cached.htmlReal;
+        tr.classList.remove("row-no-ubicacion","row-con-ubicacion");
+        tr.classList.add(cached.className);
+        applyRowFilter(currentFilter);
+        return;
+      }
+
+      try{
+        const baseUrl = "{% url 'ajax-ubicaciones-sucursal-por-producto' %}";
+        const res  = await fetch(`${baseUrl}?sucursal_id=${sucursalId}&producto_id=${productId}`);
+        const data = await res.json();
+
+        if (!data.ok){
+          throw new Error(data.error || "Error al cargar ubicaciones");
+        }
+
+        let defaultHtml = "";
+        let realHtml    = "";
+        let className   = "row-con-ubicacion";
+
+        if (!data.ubicaciones || data.ubicaciones.length === 0){
+          defaultHtml = '<span class="muted">Sin stock por ubicación</span>';
+          realHtml    = '<span class="muted">Sin ubicaciones internas</span>';
+          className   = "row-no-ubicacion";
+        }else{
+          const defaultUbis = [];
+          const realUbis    = [];
+
+          data.ubicaciones.forEach(function(u){
+            const nombreU = (u.area || "").toUpperCase();
+            const isDefault =
+              (u.codigo && u.codigo.endsWith("-000-000")) ||
+              nombreU.includes("SIN UBICACIÓN");
+
+            if (isDefault){
+              defaultUbis.push(u);
+            }else{
+              realUbis.push(u);
+            }
+          });
+
+          if (defaultUbis.length === 0){
+            defaultHtml = '<span class="muted">Sin stock en ubicación default</span>';
+          }else{
+            defaultHtml = defaultUbis.map(function(u){
+              return `<span class="pill pill-default">Productos en recepción: <strong>${u.cantidad}</strong></span>`;
+            }).join(" ");
+          }
+
+          if (realUbis.length === 0){
+            realHtml = '<span class="muted">Sin ubicaciones internas</span>';
+            className = "row-no-ubicacion";
+          }else{
+            realHtml = realUbis.map(function(u){
+              return `<span class="pill pill-real">${u.codigo}${u.area ? ' — '+u.area : ''} · <strong>${u.cantidad}</strong></span>`;
+            }).join(" ");
+            className = "row-con-ubicacion";
+          }
+        }
+
+        defCell.innerHTML  = defaultHtml;
+        realCell.innerHTML = realHtml;
+
+        tr.classList.remove("row-no-ubicacion","row-con-ubicacion");
+        tr.classList.add(className);
+
+        cache.set(productId, {
+          htmlDefault: defaultHtml,
+          htmlReal: realHtml,
+          className: className
+        });
+
+        applyRowFilter(currentFilter);
+      }catch(e){
+        console.error(e);
+        if (defCell)  defCell.innerHTML  = '<span class="muted" style="color:#b91c1c;">Error al cargar</span>';
+        if (realCell) realCell.innerHTML = '<span class="muted" style="color:#b91c1c;">Error al cargar</span>';
+      }
+    }
+
+    const productIds = new Set();
+    defaultCells.forEach(c => productIds.add(c.getAttribute("data-producto")));
+    realCells.forEach(c => productIds.add(c.getAttribute("data-producto")));
+    productIds.forEach(pid => loadUbicacionesForProduct(pid));
+
+    const backdrop  = document.getElementById('asig-backdrop');
+    const prodInput = document.getElementById('asig-producto-id');
+    const subLabel  = document.getElementById('asig-sub');
+    const cantInput = document.getElementById('asig-cantidad');
+    const csrfToken = "{{ csrf_token }}";
+
+    window.openAsignarModal = function(productoId, sku, nombre){
+      prodInput.value = productoId;
+      subLabel.textContent = sku + " — " + nombre;
+      cantInput.value = 0;
+      backdrop.classList.add('open');
+    };
+
+    window.closeAsignarModal = function(){
+      backdrop.classList.remove('open');
+    };
+
+    // 🔹 Siempre cerrar el modal al presionar Guardar, incluso con errores
+    window.submitAsignacion = async function(){
+      // se cierra SIEMPRE al iniciar
+      closeAsignarModal();
+
+      const productoId  = prodInput.value;
+      const ubicacionId = document.getElementById('asig-ubicacion').value;
+      const cantidad    = cantInput.value || 0;
+
+      if(!ubicacionId){
+        swalMsg({
+          icon:"warning",
+          title:"Ubicación requerida",
+          text:"Selecciona una ubicación antes de guardar."
+        });
+        return;
+      }
+
+      if(cantidad < 0){
+        swalMsg({
+          icon:"warning",
+          title:"Cantidad inválida",
+          text:"La cantidad no puede ser negativa."
+        });
+        return;
+      }
+
+      try{
+        const res = await fetch("{% url 'ajax-asignar-producto-ubicacion-sucursal' %}", {
+          method: "POST",
+          headers:{
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken
+          },
+          body: JSON.stringify({
+            sucursal_id: {{ sucursal.id }},
+            producto_id: productoId,
+            ubicacion_id: ubicacionId,
+            cantidad: cantidad
+          })
+        });
+
+        const data = await res.json();
+
+        if(!data.ok){
+          swalMsg({
+            icon:"error",
+            title:"No se pudo guardar",
+            text: data.error || "Ocurrió un error al asignar el stock."
+          });
+          return;
+        }
+
+        swalMsg({
+          icon:"success",
+          title:"Stock actualizado",
+          text: data.message || "Asignación guardada correctamente."
+        });
+
+        cache.delete(String(productoId));
+        await loadUbicacionesForProduct(String(productoId));
+      }catch(e){
+        console.error(e);
+        swalMsg({
+          icon:"error",
+          title:"Error de red",
+          text:"No fue posible contactar al servidor."
+        });
+      }
+    };
+
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && backdrop.classList.contains('open')){
+        closeAsignarModal();
+      }
+    });
+
+    const filterButtons = document.querySelectorAll(".tag-filter");
+    filterButtons.forEach(function(btn){
+      btn.addEventListener("click", function(){
+        filterButtons.forEach(b => b.classList.remove("tag-active"));
+        btn.classList.add("tag-active");
+        currentFilter = btn.getAttribute("data-filter");
+        applyRowFilter(currentFilter);
+      });
+    });
+  })();
+</script>
+
+{% endblock %}

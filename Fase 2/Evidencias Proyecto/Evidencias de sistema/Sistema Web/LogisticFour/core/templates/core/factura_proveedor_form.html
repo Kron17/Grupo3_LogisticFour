@@ -1,0 +1,50 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 640px;">
+  <h2 class="mb-4">Crear Factura de Proveedor</h2>
+
+  <form method="post">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="mb-3">
+      {{ form.numero_factura.label_tag }}
+      {{ form.numero_factura }}
+      {{ form.numero_factura.errors }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.proveedor.label_tag }}
+      {{ form.proveedor }}
+      {{ form.proveedor.errors }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.monto_total.label_tag }}
+      {{ form.monto_total }}
+      {{ form.monto_total.errors }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.fecha_factura.label_tag }}
+      {{ form.fecha_factura }}
+      {{ form.fecha_factura.errors }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.estado.label_tag }}
+      {{ form.estado }}
+      {{ form.estado.errors }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{% url 'finanzas_reporte' %}" class="btn btn-outline-secondary ms-2">Volver</a>
+  </form>
+</div>
+{% endblock %}

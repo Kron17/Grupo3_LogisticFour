@@ -1,5 +1,6 @@
-{% extends "core/base.html" %}
+{% extends "core/base.html" %} 
 {% load static %}
+{% load humanize %}
 {% block title %}{{ producto.sku }} — Detalle{% endblock %}
 
 {% block content %}
@@ -38,37 +39,43 @@
           <a class="btn btn-outline-secondary" href="{% url 'stock-por-producto' %}?sku={{ producto.sku }}">Ver stock por producto</a>
           <a class="btn btn-outline-secondary" href="{% url 'products' %}">Volver</a>
           <a class="btn btn-primary" href="{% url 'product_add' %}">Agregar otro</a>
-          {# Ajusta esta ruta a tu vista de edición si existe #}
           <a class="btn btn-warning" href="{% url 'producto-update' producto.id %}">Editar</a>
           <a class="btn btn-xs btn-outline-primary"
-          href="{% url 'etiqueta_producto' pk=producto.pk %}">
-          Etiqueta
-        </a>
-
+             href="{% url 'etiqueta_producto' pk=producto.pk %}">
+            Etiqueta
+          </a>
         </div>
       </div>
     </div>
 
-    <!-- Métricas -->
     <div class="row g-3 mb-4">
+      <!-- Disponible total -->
       <div class="col-12 col-md-4">
         <div class="metric h-100">
           <div class="label">Disponible total</div>
-          <div class="value text-success">{{ totales.total_disponible|default_if_none:0|floatformat:0 }}</div>
-        </div>
-      </div>
-      <div class="col-12 col-md-4">
-        <div class="metric h-100">
-          <div class="label">Neto total</div>
-          <div class="value {% if totales.total_neto|default:0 > 0 %}text-primary{% else %}text-body{% endif %}">
-            {{ totales.total_neto|default_if_none:0|floatformat:0 }}
+          <div class="value text-success">
+            {{ totales.total_disponible|default_if_none:0|floatformat:0 }}
           </div>
         </div>
       </div>
+
+      <!-- Precio unitario -->
       <div class="col-12 col-md-4">
         <div class="metric h-100">
-          <div class="label">Precio</div>
-          <div class="value">${{ producto.precio|default:0|floatformat:0 }}</div>
+          <div class="label">Precio unitario</div>
+          <div class="value {% if totales.precio_unitario|default:0 > 0 %}text-primary{% else %}text-body{% endif %}">
+            ${{ totales.precio_unitario|default_if_none:0|floatformat:0|intcomma }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Valor total (precio × stock) -->
+      <div class="col-12 col-md-4">
+        <div class="metric h-100">
+          <div class="label">Valor total</div>
+          <div class="value {% if totales.valor_total|default:0 > 0 %}text-primary{% else %}text-body{% endif %}">
+            ${{ totales.valor_total|default_if_none:0|floatformat:0|intcomma }}
+          </div>
         </div>
       </div>
     </div>
@@ -98,39 +105,41 @@
               </thead>
               <tbody>
                 {% for r in resumen_sucursales %}
-                <tr>
-                  <td>
-                    {% if r.sucursal_codigo %}
-                      <span class="fw-semibold">{{ r.sucursal_codigo }}</span>
-                      <span class="text-secondary">— {{ r.sucursal_nombre }}</span>
-                    {% else %}<span class="text-secondary">—</span>{% endif %}
-                  </td>
-                  <td>
-                    {% if r.bodega_codigo %}
-                      <span class="fw-semibold">{{ r.bodega_codigo }}</span>
-                      <span class="text-secondary">— {{ r.bodega_nombre }}</span>
-                    {% else %}<span class="text-secondary">—</span>{% endif %}
-                  </td>
-                  <td>
-                    {% if r.sucursal_ubi_codigo or r.sucursal_ubi_nombre or r.bodega_ubi_codigo or r.bodega_ubi_nombre %}
-                      <span class="pill">
-                        {% if r.sucursal_ubi_codigo or r.sucursal_ubi_nombre %}
-                          <span class="fw-semibold">{{ r.sucursal_ubi_codigo|default:r.sucursal_ubi_nombre }}</span>
-                          {% if r.sucursal_ubi_codigo and r.sucursal_ubi_nombre %}
-                            <span class="text-secondary">· {{ r.sucursal_ubi_nombre }}</span>
+                  {% if r.total_disponible|default:0 >= 1 %}
+                  <tr>
+                    <td>
+                      {% if r.sucursal_codigo %}
+                        <span class="fw-semibold">{{ r.sucursal_codigo }}</span>
+                        <span class="text-secondary">— {{ r.sucursal_nombre }}</span>
+                      {% else %}<span class="text-secondary">—</span>{% endif %}
+                    </td>
+                    <td>
+                      {% if r.bodega_codigo %}
+                        <span class="fw-semibold">{{ r.bodega_codigo }}</span>
+                        <span class="text-secondary">— {{ r.bodega_nombre }}</span>
+                      {% else %}<span class="text-secondary">—</span>{% endif %}
+                    </td>
+                    <td>
+                      {% if r.sucursal_ubi_codigo or r.sucursal_ubi_nombre or r.bodega_ubi_codigo or r.bodega_ubi_nombre %}
+                        <span class="pill">
+                          {% if r.sucursal_ubi_codigo or r.sucursal_ubi_nombre %}
+                            <span class="fw-semibold">{{ r.sucursal_ubi_codigo|default:r.sucursal_ubi_nombre }}</span>
+                            {% if r.sucursal_ubi_codigo and r.sucursal_ubi_nombre %}
+                              <span class="text-secondary">· {{ r.sucursal_ubi_nombre }}</span>
+                            {% endif %}
+                          {% else %}
+                            <span class="fw-semibold">{{ r.bodega_ubi_codigo|default:r.bodega_ubi_nombre }}</span>
+                            {% if r.bodega_ubi_codigo and r.bodega_ubi_nombre %}
+                              <span class="text-secondary">· {{ r.bodega_ubi_nombre }}</span>
+                            {% endif %}
                           {% endif %}
-                        {% else %}
-                          <span class="fw-semibold">{{ r.bodega_ubi_codigo|default:r.bodega_ubi_nombre }}</span>
-                          {% if r.bodega_ubi_codigo and r.bodega_ubi_nombre %}
-                            <span class="text-secondary">· {{ r.bodega_ubi_nombre }}</span>
-                          {% endif %}
-                        {% endif %}
-                      </span>
-                    {% else %}<span class="text-secondary">—</span>{% endif %}
-                  </td>
-                  <td class="td-num">{{ r.total_disponible|default:0|floatformat:0 }}</td>
-                  <td class="td-num fw-semibold">{{ r.total_neto|default:0|floatformat:0 }}</td>
-                </tr>
+                        </span>
+                      {% else %}<span class="text-secondary">—</span>{% endif %}
+                    </td>
+                    <td class="td-num">{{ r.total_disponible|default:0|floatformat:0 }}</td>
+                    <td class="td-num fw-semibold">{{ r.total_neto|default:0|floatformat:0 }}</td>
+                  </tr>
+                  {% endif %}
                 {% endfor %}
               </tbody>
             </table>
@@ -156,7 +165,9 @@
           </div>
           <div class="col-md-4">
             <div class="text-secondary small">Precio</div>
-            <div class="fw-semibold">${{ producto.precio|floatformat:0 }}</div>
+            <div class="fw-semibold">
+              ${{ producto.precio|default_if_none:0|floatformat:0|intcomma }}
+            </div>
           </div>
           <div class="col-md-4">
             <div class="text-secondary small">Marca</div>
@@ -192,7 +203,6 @@
   </div>
 </div>
 
-{# quita estas líneas si Bootstrap ya está en base.html #}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

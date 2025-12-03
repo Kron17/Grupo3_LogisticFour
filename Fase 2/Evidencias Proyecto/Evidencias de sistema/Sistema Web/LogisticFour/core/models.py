@@ -151,15 +151,6 @@ class CategoriaProducto(MarcaTiempo):
         return self.nombre
 
 
-class TipoUbicacion(models.Model):
-    codigo = models.CharField(max_length=30, unique=True)  # BIN, RACK, FLOOR...
-    descripcion = models.CharField(max_length=200, blank=True)
-
-    class Meta:
-        db_table = "tipos_ubicacion"
-
-    def __str__(self):
-        return f"{self.codigo} — {self.descripcion or ''}".strip(" —")
 
 
 class BitacoraAuditoria(MarcaTiempo):
@@ -172,26 +163,143 @@ class BitacoraAuditoria(MarcaTiempo):
     class Meta:
         db_table = "bitacora_auditoria"
 
+# ============================================================
+# UBICACIONES (SEPARADAS)
+# ============================================================
+class TipoUbicacion(models.Model):
+    codigo = models.CharField(max_length=30, unique=True)  
+    descripcion = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        db_table = "tipos_ubicacion"
+
+    def __str__(self):
+        return f"{self.codigo} — {self.descripcion or ''}".strip(" —")
+
+
+
+class UbicacionBodega(models.Model):
+    bodega = models.ForeignKey(
+        'Bodega',
+        on_delete=models.CASCADE,
+        related_name="ubicaciones",
+    )
+    codigo = models.CharField(max_length=60)  # "031-003-001"
+    area_codigo = models.CharField(max_length=20, blank=True)
+    estante_codigo = models.CharField(max_length=20, blank=True)
+
+    area = models.CharField(max_length=150, null=True, blank=True)
+    tipo = models.ForeignKey(TipoUbicacion, on_delete=models.SET_NULL, null=True, blank=True)
+
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "ubicaciones_bodega"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bodega", "codigo"],
+                name="uq_ubi_bodega_codigo",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.bodega.codigo} / {self.codigo}"
+
+    # 👇 AHORA SOLO RECIBE area_cod y estante_cod
+    def set_codigo(self, area_cod, estante_cod):
+        """Arma el código usando el código de la bodega como prefijo."""
+        prefijo = (self.bodega.codigo or "").strip().upper()
+        area_cod = (area_cod or "").strip().upper()
+        estante_cod = (estante_cod or "").strip().upper()
+
+        self.codigo = f"{prefijo}-{area_cod}-{estante_cod}"
+        self.area_codigo = area_cod
+        self.estante_codigo = estante_cod
+
+    def get_codigo_separado(self):
+        return {
+            "bodega_codigo": (self.bodega.codigo or "").strip().upper(),
+            "area_codigo": self.area_codigo,
+            "estante_codigo": self.estante_codigo,
+        }
+
+class UbicacionSucursal(models.Model):
+    sucursal = models.ForeignKey(
+        "Sucursal",
+        on_delete=models.CASCADE,
+        related_name="ubicaciones",
+    )
+    codigo = models.CharField(max_length=60)  # "SUC01-003-001"
+    area_codigo = models.CharField(max_length=20, blank=True)
+    estante_codigo = models.CharField(max_length=20, blank=True)
+
+    area = models.CharField(max_length=150, null=True, blank=True)
+    tipo = models.ForeignKey(TipoUbicacion, on_delete=models.SET_NULL, null=True, blank=True)
+
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "ubicaciones_sucursal"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["sucursal", "codigo"],
+                name="uq_ubi_sucursal_codigo",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.sucursal.codigo} / {self.codigo}"
+
+    def set_codigo(self, area_codigo: str, estante_codigo: str, prefijo: str | None = None):
+        """
+        Construye `codigo` con:
+        - prefijo: código de la sucursal (por defecto self.sucursal.codigo)
+        - area_codigo
+        - estante_codigo
+        """
+        area_codigo = (area_codigo or "").strip().upper()
+        estante_codigo = (estante_codigo or "").strip().upper()
+        if prefijo is None:
+            prefijo = (self.sucursal.codigo or "").strip().upper()
+
+        self.area_codigo = area_codigo
+        self.estante_codigo = estante_codigo
+        self.codigo = f"{prefijo}-{area_codigo}-{estante_codigo}"
+
+    def get_codigo_separado(self) -> dict:
+        partes = (self.codigo or "").split("-")
+        prefijo = partes[0] if len(partes) > 0 else ""
+        area = partes[1] if len(partes) > 1 else ""
+        estante = partes[2] if len(partes) > 2 else ""
+
+        return {
+            "sucursal_codigo": prefijo,
+            "area_codigo": area,
+            "estante_codigo": estante,
+        }
 
 # ============================================================
-#  PRODUCTOS
+# PRODUCTOS
 # ============================================================
-class Producto(MarcaTiempo):
+class Producto(models.Model):
     sku = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=200)
 
-    marca = models.ForeignKey(Marca, on_delete=models.SET_NULL, null=True, blank=True)
-    categoria = models.ForeignKey(CategoriaProducto, on_delete=models.SET_NULL, null=True, blank=True)
-    unidad_base = models.ForeignKey(UnidadMedida, on_delete=models.CASCADE)
-    tasa_impuesto = models.ForeignKey(TasaImpuesto, on_delete=models.SET_NULL, null=True, blank=True)
+    marca = models.ForeignKey('Marca', on_delete=models.SET_NULL, null=True, blank=True)
+    categoria = models.ForeignKey('CategoriaProducto', on_delete=models.SET_NULL, null=True, blank=True)
+    unidad_base = models.ForeignKey('UnidadMedida', on_delete=models.CASCADE)
+    tasa_impuesto = models.ForeignKey('TasaImpuesto', on_delete=models.SET_NULL, null=True, blank=True)
 
     activo = models.BooleanField(default=True)
     es_serializado = models.BooleanField(default=False)
     tiene_vencimiento = models.BooleanField(default=False)
 
     precio = models.PositiveIntegerField(default=0)
-    # stock global (se recalcula con la suma de stock por ubicaciones)
     stock = models.PositiveIntegerField(default=0)
+
+    # Relación muchos a muchos con UbicacionBodega y UbicacionSucursal
+    ubicaciones_bodega = models.ManyToManyField(UbicacionBodega, related_name="productos_bodega", blank=True)
+    ubicaciones_sucursal = models.ManyToManyField(UbicacionSucursal, related_name="productos_sucursal", blank=True)
 
     class Meta:
         db_table = "productos"
@@ -200,8 +308,9 @@ class Producto(MarcaTiempo):
         return f"{self.sku} - {self.nombre}"
 
 
+
 # ============================================================
-#  BODEGA / SUCURSAL
+# BODEGA / SUCURSAL
 # ============================================================
 class Bodega(MarcaTiempo):
     codigo = models.CharField(max_length=30)
@@ -210,7 +319,6 @@ class Bodega(MarcaTiempo):
     descripcion = models.TextField(blank=True)
     activo = models.BooleanField(default=True)
 
-    # solo para “qué productos maneja”
     productos = models.ManyToManyField(Producto, blank=True, related_name="bodegas")
 
     class Meta:
@@ -245,74 +353,11 @@ class Sucursal(MarcaTiempo):
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
 
-
-# ============================================================
-#  UBICACIONES (SEPARADAS)
-# ============================================================
-class UbicacionBodega(models.Model):
-    bodega = models.ForeignKey(
-        Bodega,
-        on_delete=models.CASCADE,
-        related_name="ubicaciones",
-    )
-    codigo = models.CharField(max_length=60)
-    nombre = models.CharField(max_length=150, blank=True)
-    area = models.CharField(max_length=150, null=True, blank=True)
-    tipo = models.ForeignKey(TipoUbicacion, on_delete=models.SET_NULL, null=True, blank=True)
-    pickeable = models.BooleanField(default=True)
-    almacenable = models.BooleanField(default=True)
-    activo = models.BooleanField(default=True)
-
-    class Meta:
-        db_table = "ubicaciones_bodega"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["bodega", "codigo"],
-                name="uq_ubi_bodega_codigo",
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.bodega.codigo} / {self.codigo}"
-
-
-class UbicacionSucursal(models.Model):
-    sucursal = models.ForeignKey(
-        Sucursal,
-        on_delete=models.CASCADE,
-        related_name="ubicaciones",
-    )
-    codigo = models.CharField(max_length=60)
-    nombre = models.CharField(max_length=150, blank=True)
-    area = models.CharField(max_length=150, null=True, blank=True)
-    tipo = models.ForeignKey(TipoUbicacion, on_delete=models.SET_NULL, null=True, blank=True)
-    pickeable = models.BooleanField(default=True)
-    almacenable = models.BooleanField(default=True)
-    activo = models.BooleanField(default=True)
-
-    class Meta:
-        db_table = "ubicaciones_sucursal"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["sucursal", "codigo"],
-                name="uq_ubi_sucursal_codigo",
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.sucursal.codigo} / {self.codigo}"
-
-
 # ============================================================
 #  STOCK
-# ============================================================
+# ============================================================ubicaciones_sucursal
 class Stock(models.Model):
-    """
-    Stock del producto en una ubicación de bodega O en una de sucursal.
-    (nunca en las dos a la vez)
-    """
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="stocks")
-
     ubicacion_bodega = models.ForeignKey(
         UbicacionBodega,
         on_delete=models.CASCADE,
@@ -330,6 +375,14 @@ class Stock(models.Model):
 
     cantidad_disponible = models.DecimalField(max_digits=20, decimal_places=6, default=0)
 
+    # NUEVO: cupo de stock validado para movimientos
+    cantidad_validada = models.DecimalField(
+        max_digits=20,
+        decimal_places=6,
+        default=0,
+        help_text="Cantidad validada para movimientos desde esta ubicación."
+    )
+
     class Meta:
         db_table = "stock"
         constraints = [
@@ -342,14 +395,6 @@ class Stock(models.Model):
                 name="uq_stock_prod_ubi_sucursal",
             ),
         ]
-
-    def __str__(self):
-        if self.ubicacion_bodega_id:
-            return f"{self.producto.sku} → BOD {self.ubicacion_bodega} = {self.cantidad_disponible}"
-        if self.ubicacion_sucursal_id:
-            return f"{self.producto.sku} → SUC {self.ubicacion_sucursal} = {self.cantidad_disponible}"
-        return f"{self.producto.sku} → (sin ubicación) = {self.cantidad_disponible}"
-
 
 # ============================================================
 #  PROVEEDORES / LOTES / SERIES
@@ -585,6 +630,19 @@ class PoliticaReabastecimiento(models.Model):
 #  TRANSFERENCIAS / DEVOLUCIONES
 # ============================================================
 class Transferencia(MarcaTiempo):
+    TIPO_CHOICES = [
+        ("BOD_BOD", "Bodega → Bodega"),
+        ("BOD_SUC", "Bodega → Sucursal"),
+        ("SUC_BOD", "Sucursal → Bodega"),
+        ("SUC_SUC", "Sucursal ↔ Sucursal"),
+    ]
+
+    tipo_movimiento = models.CharField(
+        max_length=20,
+        choices=TIPO_CHOICES,
+        default="BOD_BOD",
+    )
+
     bodega_origen = models.ForeignKey(
         Bodega,
         on_delete=models.CASCADE,
@@ -592,18 +650,49 @@ class Transferencia(MarcaTiempo):
         null=True,
         blank=True,
     )
-    sucursal_destino = models.ForeignKey(
-        Sucursal,
+
+    bodega_destino = models.ForeignKey(
+        Bodega,
         on_delete=models.CASCADE,
         related_name="transferencias_destino",
         null=True,
         blank=True,
     )
+
+    # NUEVO: sucursal origen
+    sucursal_origen = models.ForeignKey(
+        Sucursal,
+        on_delete=models.CASCADE,
+        related_name="transferencias_sucursal_origen",
+        null=True,
+        blank=True,
+    )
+
+    # ya la tenías:
+    sucursal_destino = models.ForeignKey(
+        Sucursal,
+        on_delete=models.CASCADE,
+        related_name="transferencias_sucursal_destino",
+        null=True,
+        blank=True,
+    )
+
+    numero_guia = models.CharField(max_length=20, null=True, blank=True)
+    fecha_emision = models.DateField(null=True, blank=True)
+
     estado = models.CharField(max_length=30, default="DRAFT")
-    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    creado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         db_table = "transferencias"
+
+
+
 
 
 class LineaTransferencia(models.Model):
@@ -650,13 +739,42 @@ class LineaDevolucionProveedor(models.Model):
 #  COMPRAS
 # ============================================================
 class OrdenCompra(MarcaTiempo):
-    proveedor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="ordenes_compra_proveedor")
-    tasa_impuesto = models.ForeignKey(TasaImpuesto, on_delete=models.SET_NULL, null=True, blank=True)
+    class EstadoOC(models.TextChoices):
+        DRAFT = "DRAFT", "Borrador"
+        APROBADA = "APROBADA", "Aprobada"
+        CERRADA = "CERRADA", "Cerrada"
+        PARTIAL = "PARTIAL", "Recepción parcial"
+        RECEIVED = "RECEIVED", "Recepcionada"
+        CANCELLED = "CANCELLED", "Cancelada"
+
+    proveedor = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="ordenes_compra_proveedor",
+    )
+    tasa_impuesto = models.ForeignKey(
+        TasaImpuesto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE)
     numero_orden = models.CharField(max_length=60, unique=True)
-    estado = models.CharField(max_length=30, default="DRAFT")
+
+    # ⬇️ ahora con choices y default usando la clase interna
+    estado = models.CharField(
+        max_length=30,
+        choices=EstadoOC.choices,
+        default=EstadoOC.DRAFT,
+    )
+
     fecha_esperada = models.DateField(null=True, blank=True)
-    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    creado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         db_table = "ordenes_compra"
@@ -709,13 +827,22 @@ class LineaRecepcionMercaderia(models.Model):
 
 
 class FacturaProveedor(models.Model):
+    class EstadoFactura(models.TextChoices):
+        OPEN = "OPEN", "Abierta"
+        PAGADA = "PAGADA", "Pagada"
+        ANULADA = "ANULADA", "Anulada"
     proveedor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="facturas_emitidas")
     numero_factura = models.CharField(max_length=80)
     tasa_impuesto = models.ForeignKey(TasaImpuesto, on_delete=models.SET_NULL, null=True, blank=True)
     monto_total = models.DecimalField(max_digits=14, decimal_places=4)
     fecha_factura = models.DateField()
     fecha_vencimiento = models.DateField(null=True, blank=True)
-    estado = models.CharField(max_length=30, default="OPEN")
+    # 🔹 Ahora usa choices, pero mantiene max_length y default que ya tenías
+    estado = models.CharField(
+        max_length=30,
+        choices=EstadoFactura.choices,
+        default=EstadoFactura.OPEN,
+    )
 
     class Meta:
         db_table = "facturas_proveedor"

@@ -1,0 +1,79 @@
+{% extends "core/base.html" %}
+{% block title %}Agregar sucursales{% endblock %}
+
+{% block content %}
+<style>
+  .shell {max-width: 760px; margin: 1.8rem auto;}
+  .card-box {background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.03);}
+  .card-head {padding:14px 16px 0;}
+  .card-body {padding:10px 16px 16px;display:grid;gap:1rem;}
+  .suc-list {max-height:340px;overflow:auto;display:grid;gap:.45rem;}
+  .suc-item {display:flex;gap:.55rem;align-items:flex-start;border:1px solid rgba(148,163,184,.28);border-radius:10px;padding:.4rem .6rem;background:#f8fafc;}
+  .suc-item.disabled {background:#f1f5f9;opacity:.75;}
+  .suc-name {font-weight:600;}
+  .badge {font-size:.65rem;padding:2px 7px 3px;border-radius:999px;}
+  .badge-this {background:#dcfce7;color:#166534;}
+  .badge-other {background:#fee2e2;color:#b91c1c;}
+  .actions {display:flex;gap:.6rem;}
+  .btn-dark {background:#111827;color:#fff;border:none;border-radius:.6rem;padding:.5rem 1rem;font-weight:600;}
+  .btn-ghost {background:#fff;border:1px solid #e2e8f0;border-radius:.6rem;padding:.45rem .9rem;}
+  .muted {color:#64748b;font-size:.78rem;}
+</style>
+
+<div class="shell">
+  <div class="card-box">
+    <div class="card-head">
+      <h4 class="mb-0">Agregar sucursal a <strong>{{ bodega.nombre }}</strong></h4>
+      <p class="muted mb-2">Marca una o varias sucursales y guárdalas. Si una estaba en otra bodega, se moverá a esta.</p>
+      {% if error %}
+        <div class="alert alert-danger py-2 mb-2">{{ error }}</div>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="suc-list">
+          {% for s in sucursales %}
+            {# estados: en esta bodega / en otra / libre #}
+            {% if s.bodega_id == bodega.id %}
+              <label class="suc-item">
+                <input type="checkbox" name="sucursales" value="{{ s.id }}" checked>
+                <div>
+                  <div class="suc-name">{{ s.codigo }} — {{ s.nombre }}</div>
+                  <div class="muted">Ya pertenece a esta bodega.</div>
+                  <span class="badge badge-this">actual</span>
+                </div>
+              </label>
+            {% elif s.bodega_id %}
+              <label class="suc-item">
+                <input type="checkbox" name="sucursales" value="{{ s.id }}">
+                <div>
+                  <div class="suc-name">{{ s.codigo }} — {{ s.nombre }}</div>
+                  <div class="muted">Pertenece a: {{ s.bodega.nombre }}</div>
+                  <span class="badge badge-other">se moverá</span>
+                </div>
+              </label>
+            {% else %}
+              <label class="suc-item">
+                <input type="checkbox" name="sucursales" value="{{ s.id }}">
+                <div>
+                  <div class="suc-name">{{ s.codigo }} — {{ s.nombre }}</div>
+                  <div class="muted">Sin bodega asignada.</div>
+                </div>
+              </label>
+            {% endif %}
+          {% empty %}
+            <p class="muted">No hay sucursales creadas.</p>
+          {% endfor %}
+        </div>
+
+        <div class="actions mt-2">
+          <button type="submit" class="btn-dark">Guardar cambios</button>
+          <a href="{% url 'bodega-list' %}" class="btn-ghost">Volver</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,12 +1,15 @@
 {% extends "core/base.html" %}
 {% load static %}
 {% block title %}Ver stock por producto{% endblock %}
+{% load humanize %}
+
 
 {% block content %}
 <style>
   .page-wrap { max-width: 1400px; margin-inline: auto; }
   .fade-in { animation: fadeIn .35s ease both; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
   .empty {
     border:1px dashed var(--bs-border-color);
     border-radius:1rem;
@@ -63,8 +66,22 @@
     padding: .25rem .6rem;
     font-size:.85rem;
   }
+
   .table thead th { position: sticky; top: 0; background: var(--bs-body-bg); z-index: 1; }
   .td-num { text-align: right; white-space: nowrap; }
+
+  /* ===== sección gráfico ===== */
+  .chart-card .card-body{
+    padding: 1rem 1.25rem 1.5rem;
+  }
+  .chart-wrapper{
+    position:relative;
+    width:100%;
+    min-height:260px;
+  }
+  @media (max-width: 767.98px){
+    .chart-wrapper{ min-height:220px; }
+  }
 </style>
 
 <div class="container-fluid py-4">
@@ -114,11 +131,14 @@
         <div class="card-body d-flex flex-wrap gap-3 justify-content-between align-items-start">
           <div>
             <h4 class="mb-1">{{ producto.nombre }}</h4>
-            <div class="d-flex flex-wrap gap-2 small">
+            <div class="d-flex flex-wrap gap-2 small mb-1">
               <span class="sku-chip">SKU: <strong>{{ producto.sku }}</strong></span>
               <span class="sku-chip">Marca: <strong>{{ producto.marca|default:"—" }}</strong></span>
               <span class="sku-chip">Categoría: <strong>{{ producto.categoria|default:"—" }}</strong></span>
             </div>
+            {% if producto.descripcion %}
+              <p class="text-secondary small mb-0">{{ producto.descripcion|truncatechars:160 }}</p>
+            {% endif %}
           </div>
           <div class="d-flex gap-2">
             <button id="copySku" class="btn btn-outline-secondary">Copiar SKU</button>
@@ -128,34 +148,122 @@
       </div>
 
       <!-- Métricas -->
-      <div class="row g-3 mb-4 fade-in">
-        <div class="col-12 col-md-4">
-          <div class="metric h-100">
-            <div class="label">Disponible total</div>
-            <div class="value text-success">{{ totales.total_disponible|default_if_none:0|floatformat:0 }}</div>
-          </div>
-        </div>
-        <div class="col-12 col-md-4">
-          <div class="metric h-100">
-            <div class="label">Neto total</div>
-            <div class="value {% if totales.total_neto|default:0 > 0 %}text-primary{% else %}text-body{% endif %}">
-              {{ totales.total_neto|default_if_none:0|floatformat:0 }}
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-md-4">
-          <div class="metric h-100">
-            <div class="label">Stock en ficha del producto</div>
-            <div class="value">{{ producto.stock|default:0 }}</div>
+    <div class="row g-3 mb-4">
+      <!-- Disponible total -->
+      <div class="col-12 col-md-4">
+        <div class="metric h-100">
+          <div class="label">Disponible total</div>
+          <div class="value text-success">
+            {{ totales.total_disponible|default_if_none:0|floatformat:0 }}
           </div>
         </div>
       </div>
 
-      <!-- Resumen por ubicación (sucursal/bodega) -->
+      <!-- Precio unitario -->
+      <div class="col-12 col-md-4">
+        <div class="metric h-100">
+          <div class="label">Precio unitario</div>
+          <div class="value {% if totales.precio_unitario|default:0 > 0 %}text-primary{% else %}text-body{% endif %}">
+            ${{ totales.precio_unitario|default_if_none:0|floatformat:0|intcomma }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Valor total (precio × stock) -->
+      <div class="col-12 col-md-4">
+        <div class="metric h-100">
+          <div class="label">Valor total</div>
+          <div class="value {% if totales.valor_total|default:0 > 0 %}text-primary{% else %}text-body{% endif %}">
+            ${{ totales.valor_total|default_if_none:0|floatformat:0|intcomma }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+      {# === NUEVO: gráfico + tabla por ubicación interna === #}
+      {% if ubicaciones_detalle %}
+      <div class="row g-3 mb-4 fade-in">
+        <div class="col-12 col-xl-6">
+          <div class="card card-soft chart-card h-100">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+              <strong>Comparación por ubicación</strong>
+              <small class="text-secondary">Disponible por ubicación interna</small>
+            </div>
+            <div class="card-body">
+              <div class="chart-wrapper">
+                <canvas id="ubicacionesChart" aria-label="Gráfico de stock por ubicación" role="img"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+          <div class="card card-soft h-100">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+              <strong>Stock por ubicación</strong>
+              <span class="text-secondary small">{{ ubicaciones_detalle|length }} ubicación(es)</span>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead class="border-bottom">
+                    <tr>
+                      <th>Sucursal</th>
+                      <th>Bodega</th>
+                      <th>Ubicación</th>
+                      <th class="td-num">Disponible</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for u in ubicaciones_detalle %}
+                      <tr>
+                        <td>
+                          {% if u.sucursal_codigo %}
+                            <span class="fw-semibold">{{ u.sucursal_codigo }}</span>
+                            <span class="text-secondary"> — {{ u.sucursal_nombre }}</span>
+                          {% else %}
+                            <span class="text-secondary">—</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if u.bodega_codigo %}
+                            <span class="fw-semibold">{{ u.bodega_codigo }}</span>
+                            <span class="text-secondary"> — {{ u.bodega_nombre }}</span>
+                          {% else %}
+                            <span class="text-secondary">—</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if u.ubicacion_codigo %}
+                            <span class="badge rounded-pill bg-light border text-body fw-medium">
+                              {{ u.ubicacion_codigo }}
+                              {% if u.ubicacion_area %}
+                                <span class="text-secondary"> · {{ u.ubicacion_area }}</span>
+                              {% endif %}
+                            </span>
+                          {% else %}
+                            <span class="text-secondary">—</span>
+                          {% endif %}
+                        </td>
+                        <td class="td-num">
+                          {{ u.total_disponible|default:0|floatformat:0 }}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Resumen por sucursal/bodega -->
       <div class="card card-soft mb-4 fade-in">
         <div class="card-header bg-transparent">
           <div class="d-flex align-items-center justify-content-between">
-            <strong>Stock por ubicación</strong>
+            <strong>Resumen por sucursal / bodega</strong>
             <span class="text-secondary small">{{ resumen_sucursales|length }} registro(s)</span>
           </div>
         </div>
@@ -207,7 +315,7 @@
         </div>
       </div>
 
-      <!-- Acordeón agrupado por sucursal (opcional) -->
+      <!-- Acordeón agrupado por sucursal -->
       <div class="card card-soft fade-in">
         <div class="card-header bg-transparent">
           <div class="d-flex align-items-center justify-content-between">
@@ -295,8 +403,80 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+{# Chart.js para el gráfico (blanco y negro) #}
+{% if producto and ubicaciones_detalle %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-/* ===== Escáner minimal (el mismo que ya usas) ===== */
+  (function(){
+    const labels = {{ chart_labels_json|safe }};
+    const data   = {{ chart_values_json|safe }};
+
+    if (!labels.length) return;
+    const canvas = document.getElementById('ubicacionesChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Disponible',
+          data: data,
+          backgroundColor: 'rgba(0,0,0,0.85)',   // negro semi-opaco
+          borderColor: '#000000',                // negro
+          borderWidth: 1,
+          borderRadius: 6,
+          maxBarThickness: 36,
+        }]
+      },
+      options: {
+        indexAxis: 'y', // barras horizontales
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { top: 10, right: 20, bottom: 10, left: 10 }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#000000',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: '#00000015', borderColor: '#000000' },
+            ticks: { color: '#000000' },
+          },
+          y: {
+            grid: { display: false, borderColor: '#00000020' },
+            ticks: {
+              color: '#000000',
+              autoSkip: false,
+              maxRotation: 0,
+              minRotation: 0,
+            }
+          }
+        },
+        animation: {
+          duration: 650,
+          easing: 'easeOutCubic'
+        }
+      }
+    });
+  })();
+</script>
+
+{% endif %}
+
+<script>
+/* ===== Escáner minimal (igual que antes) ===== */
 (function(){
   const ZXING_URL="https://unpkg.com/@zxing/library@0.21.3";
   const QUAGGA_URL="https://unpkg.com/quagga2@1.8.4/dist/quagga.js";
@@ -484,55 +664,53 @@
 
   window.BarcodeScanner = { open };
 })();
-</script>
 
-<script>
+(function(){
   // abrir scanner y autocompletar SKU
-  (function(){
-    const form  = document.getElementById('searchForm');
-    const input = document.getElementById('skuInput');
-    const btn   = document.getElementById('btnOpenScanner');
-    const btnSubmit = document.getElementById('btnSubmit');
+  const form  = document.getElementById('searchForm');
+  const input = document.getElementById('skuInput');
+  const btn   = document.getElementById('btnOpenScanner');
+  const btnSubmit = document.getElementById('btnSubmit');
 
-    form.addEventListener('submit', () => {
-      if (btnSubmit.dataset.loading) return;
-      btnSubmit.dataset.loading = "1";
-      btnSubmit.disabled = true;
-      const old = btnSubmit.textContent;
-      btnSubmit.dataset.old = old;
-      btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Buscando…';
-      setTimeout(()=>{ btnSubmit.disabled = false; btnSubmit.textContent = old; btnSubmit.removeAttribute('data-loading'); }, 3000);
+  form.addEventListener('submit', () => {
+    if (btnSubmit.dataset.loading) return;
+    btnSubmit.dataset.loading = "1";
+    btnSubmit.disabled = true;
+    const old = btnSubmit.textContent;
+    btnSubmit.dataset.old = old;
+    btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Buscando…';
+    setTimeout(()=>{ btnSubmit.disabled = false; btnSubmit.textContent = old; btnSubmit.removeAttribute('data-loading'); }, 3000);
+  });
+
+  btn.addEventListener('click', () => {
+    if (!window.BarcodeScanner) { alert('Escáner no cargado.'); return; }
+    BarcodeScanner.open({
+      title: 'Escanear SKU',
+      continuous: false,
+      preferFacing: 'environment',
+      onScan: (code) => {
+        input.value = code;
+        input.blur();
+        setTimeout(() => form.requestSubmit(), 0);
+      }
     });
+  });
 
-    btn.addEventListener('click', () => {
-      if (!window.BarcodeScanner) { alert('Escáner no cargado.'); return; }
-      BarcodeScanner.open({
-        title: 'Escanear SKU',
-        continuous: false,
-        preferFacing: 'environment',
-        onScan: (code) => {
-          input.value = code;
-          input.blur();
-          setTimeout(() => form.requestSubmit(), 0);
-        }
-      });
+  const btnCopy = document.getElementById('copySku');
+  if (btnCopy){
+    btnCopy.addEventListener('click', async () => {
+      try{
+        await navigator.clipboard.writeText('{{ producto.sku|default_if_none:"" }}');
+        btnCopy.classList.remove('btn-outline-secondary');
+        btnCopy.classList.add('btn-success'); btnCopy.textContent = 'SKU copiado';
+        setTimeout(()=>{
+          btnCopy.classList.remove('btn-success');
+          btnCopy.classList.add('btn-outline-secondary');
+          btnCopy.textContent='Copiar SKU';
+        }, 1400);
+      }catch(e){ console.warn(e); }
     });
-
-    const btnCopy = document.getElementById('copySku');
-    if (btnCopy){
-      btnCopy.addEventListener('click', async () => {
-        try{
-          await navigator.clipboard.writeText('{{ producto.sku|default_if_none:"" }}');
-          btnCopy.classList.remove('btn-outline-secondary');
-          btnCopy.classList.add('btn-success'); btnCopy.textContent = 'SKU copiado';
-          setTimeout(()=>{
-            btnCopy.classList.remove('btn-success');
-            btnCopy.classList.add('btn-outline-secondary');
-            btnCopy.textContent='Copiar SKU';
-          }, 1400);
-        }catch(e){ console.warn(e); }
-      });
-    }
-  })();
+  }
+})();
 </script>
 {% endblock %}

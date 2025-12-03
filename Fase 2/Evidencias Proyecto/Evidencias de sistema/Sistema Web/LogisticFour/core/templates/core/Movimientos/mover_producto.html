@@ -1,0 +1,10 @@
+<form method="POST">
+  {% csrf_token %}
+  <label for="ubicacion_id">Seleccionar nueva ubicación:</label>
+  <select name="ubicacion_id" id="ubicacion_id">
+    {% for ubicacion in ubicaciones %}
+      <option value="{{ ubicacion.id }}">{{ ubicacion.codigo }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Mover Producto</button>
+</form>

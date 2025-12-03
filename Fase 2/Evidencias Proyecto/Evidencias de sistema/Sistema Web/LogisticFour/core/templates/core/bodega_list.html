@@ -4,386 +4,731 @@
 
 {% block content %}
 <style>
-  :root {
-    --ink: #0f172a;
-    --muted: #64748b;
-    --line: #e2e8f0;
-    --head: #eef2ff;
-    --bg: #f3f4f6;
-    --card: #ffffff;
-    --pri: #111827;
-    --pri-ink: #ffffff;
-    --danger: #dc2626;
+  :root{
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --head:#eef2ff; --card:#fff; --bg:#f3f4f6;
+    --pri:#111827; --pri-ink:#fff; --soft:#f8fafc; --shadow:0 8px 22px rgba(15,23,42,.08);
+    --danger:#dc2626; --danger-50:#fee2e2; --success:#16a34a; --success-50:#ecfdf5;
+  }
+  body.modal-open{ overflow:hidden; }
+
+  /* Layout general */
+  .bodega-page{
+    display:grid;
+    gap:16px;
+    max-width:1180px;
+    margin:8px auto 24px;
+    padding:8px 12px 24px;
   }
 
-  .bodega-page {
-    display: grid;
-    gap: 16px;
+  .page-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .page-title{
+    margin:0;
+    font-weight:800;
+    letter-spacing:.2px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    font-size:clamp(1.25rem,2.2vw,1.5rem);
+  }
+  .page-title-icon{
+    width:28px;height:28px;border-radius:999px;
+    display:inline-flex;align-items:center;justify-content:center;
+    background:#e5edff;font-size:1.1rem;
+  }
+  .page-sub{
+    margin:2px 0 0;
+    color:var(--muted);
+    font-size:.82rem;
+  }
+  .page-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
   }
 
-  .page-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+  .btn-primary{
+    background:var(--pri);
+    color:var(--pri-ink);
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.08);
+    padding:9px 14px;
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+    font-size:.84rem;
+    white-space:nowrap;
+  }
+  .btn-primary:hover{
+    transform:translateY(-1px);
+    box-shadow:var(--shadow);
   }
 
-  .page-title {
-    margin: 0;
-    font-weight: 800;
-    letter-spacing: .2px;
-    display: flex;
-    gap: 6px;
-    align-items: center;
+  /* Filtros */
+  .filter-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px 12px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+    animation:fadeIn .25s ease;
+  }
+  .filter-input{
+    flex:1 1 280px;
+    min-width:220px;
+    padding:8.5px 11px;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    background:#f8fafc;
+    transition:border .12s ease, box-shadow .12s ease;
+    font-size:.9rem;
+  }
+  .filter-input:focus{
+    border:1px solid rgba(15,23,42,.58);
+    box-shadow:0 0 0 3px rgba(15,23,42,.08);
+    background:#fff;
+    outline:none;
+  }
+  .btn-filter{
+    background:var(--pri);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:9px 13px;
+    display:inline-flex;
+    gap:6px;
+    align-items:center;
+    cursor:pointer;
+    font-weight:600;
+    font-size:.82rem;
+    white-space:nowrap;
+  }
+  .btn-ghost{
+    background:#fff;
+    color:#0f172a;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 13px;
+    display:inline-flex;
+    gap:6px;
+    align-items:center;
+    text-decoration:none;
+    font-weight:600;
+    font-size:.82rem;
+    white-space:nowrap;
+  }
+  .filter-pill{
+    font-size:.78rem;
+    padding:4px 8px;
+    border-radius:999px;
+    border:1px solid #cbd5e1;
+    background:#f9fafb;
+    color:var(--muted);
   }
 
-  .page-sub {
-    margin: 2px 0 0;
-    color: var(--muted);
-    font-size: .82rem;
+  /* Tabla */
+  .table-wrap{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    animation:fadeIn .25s ease;
+  }
+  /* scroll horizontal en pantallas medianas */
+  .table-scroller{
+    width:100%;
+    overflow-x:auto;
   }
 
-  .page-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+  .data-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:.92rem;
+    min-width:980px; /* para que respire en desktop sin comprimirse demasiado */
+  }
+  .data-table thead th{
+    position:sticky;
+    top:0;
+    background:var(--head);
+    z-index:1;
+    text-align:left;
+    padding:10px;
+    font-weight:800;
+    border-bottom:1px solid var(--line);
+    color:#0f172a;
+    font-size:.75rem;
+  }
+  .data-table thead th:last-child{
+    text-align:right;
+  }
+  .data-table tbody td{
+    padding:10px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  .data-table tbody tr:hover{
+    background:#f8fafc;
+  }
+  .mono{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .col-actions{
+    text-align:right;
+    white-space:nowrap;
+    min-width:520px;
   }
 
-  .btn-primary {
-    background: var(--pri);
-    color: var(--pri-ink);
-    border-radius: 999px;
-    border: 1px solid rgba(15,23,42,.08);
-    padding: 7.5px 13px 7px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
-    cursor: pointer;
-    transition: transform .12s ease, box-shadow .12s ease;
-    font-size: .78rem;
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 8px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.4);
+    font-size:.72rem;
+    background:#f8fafc;
+  }
+  .badge.ok{
+    background:var(--success-50);
+    border-color:#a7f3d0;
+    color:#166534;
+  }
+  .badge.no{
+    background:var(--danger-50);
+    border-color:#fecaca;
+    color:#b91c1c;
   }
 
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 30px rgba(15,23,42,.18);
+  .acts{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .btnx{
+    --bg:#fff; --bd:rgba(148,163,184,.4); --ink:#0f172a;
+    background:var(--bg);
+    color:var(--ink);
+    border:1px solid var(--bd);
+    border-radius:999px;
+    padding:7px 10px;
+    font-size:.78rem;
+    line-height:1;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    text-decoration:none;
+    cursor:pointer;
+    transition:background .12s ease, transform .12s ease, box-shadow .12s ease;
+  }
+  .btnx:hover{
+    background:#f3f4f6;
+  }
+  .btnx--sm{
+    padding:6.5px 9px;
+    font-size:.76rem;
+  }
+  .btnx--primary{
+    --bg:#0f172a; --bd:#0f172a; --ink:#fff;
+  }
+  .btnx--primary:hover{
+    transform:translateY(-1px);
+    box-shadow:var(--shadow);
+  }
+  .btnx--soft{
+    --bg:#f8fafc;
+  }
+  .btnx--danger{
+    --bg:#fff; --bd:#fecaca; --ink:#dc2626;
+  }
+  .btnx--danger:hover{
+    background:#fef2f2;
+  }
+  .btnx .ico{
+    font-size:.95rem;
+    line-height:1;
   }
 
-  .filter-card {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 10px 12px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-    animation: fadeIn .25s ease;
+  /* Expand (animado como Sucursales) */
+  .expand-row td{
+    padding:0 !important;
+    background:#fbfcff;
+  }
+  .expand{
+    border-top:1px dashed var(--line);
+  }
+  .expand__inner{
+    display:grid;
+    gap:12px;
+    padding:12px 14px;
+    grid-template-columns:1.1fr 0.9fr 1fr;
+    max-height:0;
+    opacity:0;
+    overflow:hidden;
+    transition:max-height .35s ease, opacity .25s ease;
+  }
+  .expand.open .expand__inner{
+    opacity:1;
   }
 
-  .filter-input {
-    flex: 1 1 280px;
-    min-width: 220px;
-    padding: 8px 11px;
-    border: 1px solid rgba(148,163,184,.35);
-    border-radius: 10px;
-    background: #f8fafc;
-    transition: border .12s ease, box-shadow .12s ease;
-    font-size: .8rem;
+  .card-mini{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+  }
+  .card-mini h4{
+    margin:0 0 8px;
+    font-weight:800;
+    font-size:.9rem;
+  }
+  .kv{
+    display:grid;
+    gap:7px;
+  }
+  .kv-row{
+    display:grid;
+    grid-template-columns:150px 1fr;
+    gap:8px;
+    align-items:start;
+  }
+  .kv-row small{
+    color:var(--muted);
+    font-weight:700;
+    font-size:.74rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .metrics{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .metric{
+    background:#f8fafc;
+    border:1px solid #d1d5db;
+    border-radius:12px;
+    padding:8px 12px;
+    min-width:120px;
+  }
+  .metric small{
+    display:block;
+    color:var(--muted);
+    font-size:.74rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .metric strong{
+    font-size:1.05rem;
+  }
+  .muted{
+    color:var(--muted);
   }
 
-  .filter-input:focus {
-    border: 1px solid rgba(15,23,42,.58);
-    box-shadow: 0 0 0 3px rgba(15,23,42,.07);
-    background: #fff;
-    outline: none;
+  @keyframes fadeIn{
+    from{opacity:0;transform:translateY(3px)}
+    to{opacity:1;transform:translateY(0)}
   }
 
-  .btn-filter {
-    background: var(--pri);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 8px 12px 7px;
-    display: inline-flex;
-    gap: 5px;
-    align-items: center;
-    cursor: pointer;
-    font-size: .78rem;
+  /* Responsive */
+  @media (max-width:870px){
+    .page-head{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+    .page-actions{
+      justify-content:flex-start;
+    }
   }
 
-  .btn-ghost {
-    background: #fff;
-    color: #0f172a;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 7.5px 11px;
-    display: inline-flex;
-    gap: 4px;
-    align-items: center;
-    text-decoration: none;
-    font-size: .78rem;
+  @media (max-width:760px){
+    .table-wrap{
+      border:0;
+      background:transparent;
+    }
+    .table-scroller{
+      overflow-x:visible;
+    }
+    .data-table{
+      display:block;
+      min-width:0;
+    }
+    .data-table thead{
+      display:none;
+    }
+    .data-table tbody{
+      display:grid;
+      gap:12px;
+    }
+    .data-table tr{
+      display:grid;
+      gap:8px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:12px;
+      margin:0 0 4px;
+    }
+    .data-table td{
+      border:none;
+      padding:6px 12px;
+    }
+    .data-table td[data-label]::before{
+      content:attr(data-label) ": ";
+      font-weight:700;
+      color:#64748b;
+      margin-right:6px;
+      font-size:.78rem;
+    }
+    .col-actions{
+      min-width:0;
+      text-align:left;
+    }
+    .acts{
+      justify-content:flex-start;
+    }
+    .expand__inner{
+      grid-template-columns:1fr;
+    }
+    .kv-row{
+      grid-template-columns:1fr;
+    }
   }
 
-  .table-wrap {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    overflow: hidden;
-    animation: fadeIn .25s ease;
+  @media (prefers-reduced-motion:reduce){
+    .data-table tbody tr,
+    .btn-primary,
+    .btnx,
+    .expand__inner{
+      transition:none !important;
+    }
   }
 
-  .data-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: .9rem;
+  /* MODAL PAYPAL */
+  #paypalBackdrop.pp-backdrop{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(15,23,42,.45);
+    z-index:5000;
   }
-
-  .data-table thead th {
-    position: sticky;
-    top: 0;
-    background: var(--head);
-    z-index: 1;
-    text-align: left;
-    padding: 9px 10px;
-    font-weight: 700;
-    border-bottom: 1px solid var(--line);
-    color: #0f172a;
-    font-size: .75rem;
+  #paypalBackdrop.pp-backdrop.open{
+    display:flex;
   }
-
-  .data-table tbody td {
-    padding: 10px 10px;
-    border-bottom: 1px solid var(--line);
+  .pp-modal{
+    background:#fff;
+    border-radius:14px;
+    width:min(520px,95vw);
+    max-height:85vh;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(15,23,42,.25);
+    display:flex;
+    flex-direction:column;
+    position:relative;
   }
-
-  .data-table tbody tr:hover {
-    background: #f8fafc;
+  .pp-head{
+    padding:12px 16px;
+    border-bottom:1px solid #e5e7eb;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
   }
-
-  .mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+  .pp-body{
+    padding:14px 16px;
+    overflow:auto;
+    display:grid;
+    gap:10px;
   }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 7px 3px;
-    font-size: .68rem;
-    border-radius: 999px;
-    border: 1px solid rgba(148,163,184,.4);
-    background: #f8fafc;
+  .pp-footer{
+    padding:12px 16px;
+    border-top:1px solid #e5e7eb;
   }
-
-  .badge.ok {
-    background: #ecfdf3;
-    border-color: #bbf7d0;
-    color: #166534;
+  .pp-field{
+    display:grid;
+    gap:4px;
   }
-
-  .badge.no {
-    background: #fff1f2;
-    border-color: #fecdd3;
-    color: #be123c;
-  }
-
-  .col-actions {
-    text-align: right;
-    min-width: 210px;
-    white-space: nowrap;
-  }
-
-  .acts {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .act {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 5.5px 9px 5px;
-    border-radius: 999px;
-    border: 1px solid rgba(148,163,184,.4);
-    background: #fff;
-    color: #0f172a;
-    text-decoration: none;
-    font-size: .7rem;
-    line-height: 1;
-    transition: background .1s ease;
-  }
-
-  .act.primary {
-    background: #0f172a;
-    color: #fff;
-    border-color: #0f172a;
-  }
-
-  .act.danger {
-    background: #fff;
-    color: #dc2626;
-    border-color: rgba(252,165,165,.8);
-  }
-
-  .act.danger:hover {
-    background: #fef2f2;
-  }
-
-  /* paypal modal */
-  .pp-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15,23,42,.35);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-  }
-  .pp-modal {
-    background: #fff;
-    border-radius: 14px;
-    width: min(460px, 95vw);
-    box-shadow: 0 20px 40px rgba(15,23,42,.14);
-    overflow: hidden;
-  }
-  .pp-head {
-    padding: 12px 15px;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .pp-body {
-    padding: 12px 15px 10px;
-    display: grid;
-    gap: 10px;
-  }
-  .pp-field {
-    display: grid;
-    gap: 3px;
-  }
-  .pp-field label {
-    font-size: .72rem;
-    color: #475569;
+  .pp-field label{
+    font-size:.82rem;
+    color:#475569;
+    font-weight:600;
   }
   .pp-field input,
-  .pp-field select {
-    border: 1px solid #e2e8f0;
-    border-radius: 9px;
-    padding: 6px 8px;
-    font-size: .78rem;
-  }
-  .pp-footer {
-    padding: 10px 15px 12px;
-    border-top: 1px solid #e2e8f0;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(3px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @media (max-width: 870px) {
-    .page-head { flex-direction: column; align-items: flex-start; }
-    .col-actions { text-align: left; }
-  }
-
-  @media (max-width: 760px) {
-    .data-table thead { display: none; }
-    .data-table { display: block; }
-    .data-table tbody { display: grid; gap: 12px; }
-    .data-table tr {
-      display: grid;
-      gap: 8px;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      margin: 0 10px 4px;
-    }
-    .data-table td {
-      border: none;
-      padding: 5px 12px 5px;
-    }
-    .data-table td[data-label]::before {
-      content: attr(data-label) ": ";
-      font-weight: 600;
-      color: var(--muted);
-      margin-right: 5px;
-    }
-    .acts { justify-content: flex-start; }
-    .filter-card { flex-direction: column; align-items: stretch; }
+  .pp-field select{
+    border:1px solid #e2e8f0;
+    border-radius:9px;
+    padding:8px 10px;
+    font-size:.92rem;
+    background:#f8fafc;
   }
 </style>
 
 <div class="bodega-page">
   <header class="page-head">
     <div>
-      <h1 class="page-title">Bodegas</h1>
-      <p class="page-sub">Listado general de bodegas con sus sucursales, ubicaciones y stock agregado.</p>
+      <h1 class="page-title">
+        <span class="page-title-icon">🏭</span>
+        <span>Bodegas</span>
+      </h1>
+      <p class="page-sub">
+        Listado general de bodegas con sus sucursales, ubicaciones y stock agregado.
+      </p>
+      <p class="page-sub" style="margin-top:4px;font-size:.78rem;">
+        Total bodegas: <strong>{{ bodegas|length }}</strong>
+      </p>
     </div>
     <div class="page-actions">
       {% if request.user.is_superuser or request.user.perfil.rol == 'ADMIN' %}
         <a class="btn-primary" href="{% url 'bodega-create' %}">
-          ＋ Crear bodega
+          <span>＋</span> Crear bodega
         </a>
       {% endif %}
     </div>
   </header>
 
-  <form method="get" class="filter-card">
-    <input type="text" name="q" class="filter-input" value="{{ q }}" placeholder="Buscar por código, nombre, descripción o sucursal…">
-    <button class="btn-filter" type="submit">🔍 Buscar</button>
+  <form method="get" class="filter-card" id="bodegaSearchForm">
+    <input
+      type="search"
+      name="q"
+      id="qBodega"
+      class="filter-input"
+      value="{{ q }}"
+      placeholder="Buscar por código, nombre, descripción o sucursal…">
+    <button class="btn-filter" type="submit">🔎 Buscar</button>
     <a class="btn-ghost" href="{% url 'bodega-list' %}">Limpiar</a>
+    {% if q %}
+      <span class="filter-pill">
+        Filtro aplicado: «{{ q }}»
+      </span>
+    {% endif %}
   </form>
 
   <div class="table-wrap">
-    <table class="data-table">
-      <thead>
-      <tr>
-        <th>Código</th><th>Nombre</th><th>Descripción</th><th>Sucursales</th>
-        <th>Ubicaciones</th><th>Productos</th><th>Stock total</th><th>Activo</th><th>Acciones</th>
-      </tr>
-      </thead>
-      <tbody>
-      {% for b in bodegas %}
-      <tr>
-        <td class="mono">{{ b.codigo }}</td>
-        <td><strong>{{ b.nombre }}</strong></td>
-        <td>{{ b.descripcion|default:"—"|truncatechars:55 }}</td>
-        <td>{{ b.sucursales_count|default:0 }}</td>
-        <td>{{ b.ubicaciones_count|default:0 }}</td>
-        <td>{{ b.productos_count|default:0 }}</td>
-        <td><strong>{{ b.total_stock|default:0 }}</strong></td>
-        <td>
-          {% if b.activo %}<span class="badge ok">Sí</span>{% else %}<span class="badge no">No</span>{% endif %}
-        </td>
-        <td class="col-actions">
-          <div class="acts">
-            <button type="button" class="act primary" data-target="b{{ b.pk }}">👁 Ver</button>
-            <button type="button" class="act" onclick="openPaypalModal({{ b.id }}, '{{ b.nombre|escapejs }}')">💳 Stock</button>
-            <a href="{% url 'bodega-edit' b.pk %}" class="act">✎</a>
-            <a href="{% url 'bodega-delete' b.pk %}" class="act danger" onclick="return confirm('¿Eliminar esta bodega?')">🗑</a>
-          </div>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="9" style="text-align:center;color:var(--muted);padding:20px;">No hay bodegas aún.</td>
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-scroller">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Sucursales</th>
+            <th>Ubicaciones</th>
+            <th>Productos</th>
+            <th>Stock total</th>
+            <th>Activo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="rows-bod">
+          {% for b in bodegas %}
+          <tr id="row-{{ b.pk }}">
+            <td class="mono" data-label="Código">{{ b.codigo }}</td>
+            <td data-label="Nombre"><strong>{{ b.nombre }}</strong></td>
+            <td data-label="Descripción">{{ b.descripcion|default:"—"|truncatechars:55 }}</td>
+            <td data-label="Sucursales">{{ b.sucursales_count|floatformat:0 }}</td>
+            <td data-label="Ubicaciones">{{ b.ubicaciones_count|floatformat:0 }}</td>
+            <td data-label="Productos">{{ b.productos_count|floatformat:0 }}</td>
+            <td class="mono" data-label="Stock total">
+              <strong>{{ b.total_stock|floatformat:0 }}</strong>
+            </td>
+            <td data-label="Activo">
+              {% if b.activo %}
+                <span class="badge ok">Sí</span>
+              {% else %}
+                <span class="badge no">No</span>
+              {% endif %}
+            </td>
+
+            <td class="col-actions" data-label="Acciones">
+              <div class="acts" style="flex-direction:column;align-items:flex-end;gap:6px;">
+
+                <!-- Fila superior: 4 botones -->
+                <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;">
+                  <button type="button"
+                          class="btnx btnx--primary btnx--sm"
+                          data-target="b{{ b.pk }}"
+                          aria-controls="b{{ b.pk }}"
+                          aria-expanded="false">
+                    <span class="ico">👁</span> Ver
+                  </button>
+
+                  <a href="{% url 'bodega-productos' b.pk %}"
+                     class="btnx btnx--soft btnx--sm">
+                    <span class="ico">📋</span> Ver productos
+                  </a>
+
+                  <a href="{% url 'bodega-agregar-sucursal' b.id %}"
+                     class="btnx btnx--soft btnx--sm">
+                    <span class="ico">🏢</span> Agregar sucursal
+                  </a>
+
+                  <a href="{% url 'ubicacion-bodega-create-bodega' b.id %}"
+                     class="btnx btnx--soft btnx--sm">
+                    <span class="ico">📍</span> Agregar ubicación
+                  </a>
+                </div>
+
+                <!-- Fila inferior: 3 botones -->
+                <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;">
+                  <button type="button"
+                          class="btnx btnx--soft btnx--sm"
+                          onclick="openPaypalModal({{ b.id }}, '{{ b.nombre|escapejs }}')">
+                    <span class="ico">💳</span> Agregar Stock
+                  </button>
+
+                  <a href="{% url 'bodega-edit' b.pk %}"
+                     class="btnx btnx--soft btnx--sm">
+                    <span class="ico">✎</span> Editar
+                  </a>
+
+                  <button type="button"
+                          class="btnx btnx--danger btnx--sm"
+                          data-url="{% url 'bodega-delete' b.pk %}"
+                          data-nombre="{{ b.nombre|escapejs }}">
+                    <span class="ico">🗑</span> Eliminar
+                  </button>
+                </div>
+
+              </div>
+            </td>
+          </tr>
+
+          <!-- Expand animado con ficha -->
+          <tr id="b{{ b.pk }}" class="expand-row">
+            <td colspan="9">
+              <div class="expand" data-expand>
+                <div class="expand__inner">
+                  <div class="card-mini">
+                    <h4>Información de la bodega</h4>
+                    <div class="kv">
+                      <div class="kv-row">
+                        <small>Código</small>
+                        <span class="mono">{{ b.codigo }}</span>
+                      </div>
+                      <div class="kv-row">
+                        <small>Nombre</small>
+                        <span>{{ b.nombre }}</span>
+                      </div>
+                      <div class="kv-row">
+                        <small>Descripción</small>
+                        <span>{{ b.descripcion|default:"—" }}</span>
+                      </div>
+                      <div class="kv-row">
+                        <small>Estado</small>
+                        <span>
+                          {% if b.activo %}
+                            <span class="badge ok">Activa</span>
+                          {% else %}
+                            <span class="badge no">Inactiva</span>
+                          {% endif %}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card-mini">
+                    <h4>Resumen</h4>
+                    <div class="metrics">
+                      <div class="metric">
+                        <small>Sucursales</small>
+                        <strong>{{ b.sucursales_count|floatformat:0 }}</strong>
+                      </div>
+                      <div class="metric">
+                        <small>Ubicaciones</small>
+                        <strong>{{ b.ubicaciones_count|floatformat:0 }}</strong>
+                      </div>
+                      <div class="metric">
+                        <small>Productos</small>
+                        <strong>{{ b.productos_count|floatformat:0 }}</strong>
+                      </div>
+                      <div class="metric">
+                        <small>Stock total</small>
+                        <strong>{{ b.total_stock|floatformat:0 }}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card-mini">
+                    <h4>Sucursales, ubicaciones y stock</h4>
+
+                    <div class="kv">
+                      <small>Sucursales</small>
+                      {% with sucs=b.sucursales.all %}
+                        {% if sucs %}
+                          <ul style="margin:0;padding-left:1rem">
+                            {% for s in sucs %}
+                              <li>{{ s.codigo }} — {{ s.nombre }}</li>
+                            {% endfor %}
+                          </ul>
+                        {% else %}
+                          <span class="muted">No hay sucursales asociadas.</span>
+                        {% endif %}
+                      {% endwith %}
+                    </div>
+
+                    <div class="kv" style="margin-top:8px">
+                      <small>Stock por ubicación</small>
+                      {% with sucs=b.sucursales.all %}
+                        {% if sucs %}
+                          <ul style="margin:0;padding-left:1rem;max-height:220px;overflow:auto;">
+                            {% for s in sucs %}
+                              {% for u in s.ubicaciones.all %}
+                                {% for st in u.stocks.all %}
+                                  {% if st.cantidad_disponible|default:0 > 0 %}
+                                    <li>
+                                      <strong class="mono">{{ st.producto.sku }}</strong>
+                                      — {{ st.producto.nombre }}
+                                      <span class="muted">({{ s.nombre }} / {{ u.codigo }})</span>:
+                                      <strong>{{ st.cantidad_disponible|default:0|floatformat:0 }}</strong>
+                                    </li>
+                                  {% endif %}
+                                {% endfor %}
+                              {% endfor %}
+                            {% endfor %}
+                          </ul>
+                        {% else %}
+                          <span class="muted">Sin stock en ubicaciones de esta bodega.</span>
+                        {% endif %}
+                      {% endwith %}
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          {% empty %}
+            <tr>
+              <td colspan="9" style="text-align:center;color:var(--muted);padding:20px;">
+                No hay bodegas aún.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <!-- MODAL PAYPAL -->
-<div id="paypalBackdrop" class="pp-backdrop">
-  <div class="pp-modal">
+<div id="paypalBackdrop" class="pp-backdrop" aria-hidden="true">
+  <div class="pp-modal" role="dialog" aria-modal="true" aria-labelledby="pp-title">
     <div class="pp-head">
       <strong id="pp-title">Comprar stock</strong>
       <button type="button" onclick="closePaypalModal()" style="border:0;background:transparent;font-size:18px;cursor:pointer">×</button>
@@ -406,7 +751,7 @@
         <label>Monto (USD)</label>
         <input id="pp-monto" type="number" min="1" step="0.01" value="5.00">
       </div>
-      <small class="muted">Al aprobar el pago se registrará en el sistema y se sumará el stock a la bodega.</small>
+      <small class="muted">Al aprobar el pago se registrará y se sumará el stock a la bodega.</small>
     </div>
     <div class="pp-footer">
       <div id="paypal-button-container"></div>
@@ -414,74 +759,188 @@
   </div>
 </div>
 
-{# SDK PayPal #}
+<!-- libs -->
 <script src="https://www.paypal.com/sdk/js?client-id=AcJh5Q-9moAqbK1_ri8GBhkmOjloGpEXxlfb_IC6MCRGzUyrh5p5IyGqS9GPUhVg7UlO63FQiSeDm2uN&currency=USD"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-  const csrfToken   = "{{ csrf_token }}";
-  const ppBackdrop  = document.getElementById('paypalBackdrop');
+  // Buscar con Enter
+  (function(){
+    const form  = document.getElementById('bodegaSearchForm');
+    const input = document.getElementById('qBodega');
+    if(!form || !input) return;
+    input.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+  })();
+
+  /* ===== Acordeón "Ver" con animación ===== */
+  (function(){
+    const tbody = document.getElementById('rows-bod');
+    if(!tbody) return;
+
+    function closeAll(){
+      tbody.querySelectorAll('.btnx--primary[aria-expanded="true"]')
+        .forEach(btn => btn.setAttribute('aria-expanded','false'));
+      tbody.querySelectorAll('.expand').forEach(wrap=>{
+        const inner = wrap.querySelector('.expand__inner');
+        if(inner){
+          inner.style.maxHeight='0px';
+          inner.style.opacity='0';
+        }
+        wrap.classList.remove('open');
+      });
+    }
+
+    tbody.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.btnx--primary[data-target]');
+      if(!btn) return;
+      const id = btn.getAttribute('data-target');
+      const row = document.getElementById(id);
+      if(!row) return;
+
+      const wrap = row.querySelector('[data-expand]');
+      const inner = wrap ? wrap.querySelector('.expand__inner') : null;
+      const isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+      closeAll();
+
+      if(!isOpen && wrap && inner){
+        btn.setAttribute('aria-expanded','true');
+        wrap.classList.add('open');
+        inner.style.maxHeight = inner.scrollHeight + 'px';
+        inner.style.opacity = '1';
+      }
+    });
+  })();
+
+  /* ===== PayPal modal ===== */
+  const csrfToken = "{{ csrf_token }}";
+  const ppBackdrop = document.getElementById('paypalBackdrop');
   const bodegaInput = document.getElementById('pp-bodega-id');
   const ppTitle     = document.getElementById('pp-title');
 
   function openPaypalModal(bodegaId, nombre){
     bodegaInput.value = bodegaId;
     ppTitle.textContent = "Comprar stock para: " + nombre;
-    ppBackdrop.style.display = "flex";
+    ppBackdrop.classList.add('open');
+    document.body.classList.add('modal-open');
+
+    const cont = document.getElementById('paypal-button-container');
+    cont.innerHTML = '';
+    renderPaypal();
   }
   function closePaypalModal(){
-    ppBackdrop.style.display = "none";
+    ppBackdrop.classList.remove('open');
+    document.body.classList.remove('modal-open');
   }
 
-  paypal.Buttons({
-    style:{layout:'vertical',color:'gold',shape:'rect',label:'paypal'},
-    createOrder:(data,actions)=>{
-      const monto = document.getElementById('pp-monto').value || "1.00";
-      return actions.order.create({
-        purchase_units:[{ amount:{ value:monto } }]
-      });
-    },
-    onApprove:(data,actions)=>{
-      return actions.order.capture().then(()=>{
-        const bodegaId   = bodegaInput.value;
-        const productoId = document.getElementById('pp-producto').value;
-        const cantidad   = document.getElementById('pp-cantidad').value;
-        const monto      = document.getElementById('pp-monto').value;
-
-        fetch("{% url 'paypal-stock-in' %}", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken,
-          },
-          body: JSON.stringify({
-            bodega_id: bodegaId,
-            producto_id: productoId,
-            cantidad: cantidad,
-            paypal_id: data.orderID,
-            monto_usd: monto,
-          }),
-        })
-        .then(r => r.json())
-        .then(resp => {
-          if (resp.ok) {
-            alert("Pago aprobado y stock registrado.");
-            closePaypalModal();
-            window.location.reload();
-          } else {
-            // 🔥 ahora sí muestra el error que viene del backend
-            alert(resp.error || "Pago aprobado en PayPal pero no se pudo registrar en Django.");
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          alert("Error al registrar en Django: " + err);
-        });
-      });
-    },
-    onCancel:()=>alert("Pago cancelado."),
-    onError:(err)=>{
-      console.error(err);
-      alert("Error con PayPal.");
+  // Cerrar haciendo click sólo fuera del modal
+  ppBackdrop.addEventListener('click', (e)=>{
+    if (!e.target.closest('.pp-modal')) {
+      closePaypalModal();
     }
-  }).render('#paypal-button-container');
+  });
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.key==='Escape' && ppBackdrop.classList.contains('open')) closePaypalModal();
+  });
+
+  function renderPaypal(){
+    paypal.Buttons({
+      style:{layout:'vertical',color:'gold',shape:'rect',label:'paypal'},
+      createOrder:(data,actions)=>{
+        const monto=document.getElementById('pp-monto').value||"1.00";
+        return actions.order.create({purchase_units:[{amount:{value:monto}}]});
+      },
+      onApprove:(data,actions)=>{
+        return actions.order.capture().then(()=>{
+          const body={
+            bodega_id:bodegaInput.value,
+            producto_id:document.getElementById('pp-producto').value,
+            cantidad:document.getElementById('pp-cantidad').value,
+            paypal_id:data.orderID,
+            monto_usd:document.getElementById('pp-monto').value
+          };
+          fetch("{% url 'paypal-stock-in' %}",{
+            method:"POST",
+            headers:{
+              "Content-Type":"application/json",
+              "X-CSRFToken":csrfToken
+            },
+            body:JSON.stringify(body)
+          }).then(r=>r.json()).then(resp=>{
+            if(resp.ok){
+              closePaypalModal();
+              Swal.fire({
+                icon:'success',
+                title:'Pago aprobado y stock registrado',
+                timer:1400,
+                showConfirmButton:false
+              });
+              setTimeout(()=>location.reload(), 900);
+            }else{
+              Swal.fire({
+                icon:'warning',
+                title:'Pago aprobado, pero no se registró en Django'
+              });
+            }
+          }).catch(()=>{
+            Swal.fire({icon:'error',title:'Error al registrar en Django'});
+          });
+        });
+      },
+      onCancel:()=>{
+        Swal.fire({
+          icon:'info',
+          title:'Pago cancelado',
+          timer:1200,
+          showConfirmButton:false
+        });
+      },
+      onError:()=>{
+        Swal.fire({icon:'error',title:'Error con PayPal'});
+      }
+    }).render('#paypal-button-container');
+  }
+
+  /* ===== Eliminar con SweetAlert (POST con CSRF) ===== */
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btnx--danger[data-url]');
+    if (!btn) return;
+
+    const url = btn.dataset.url;
+    const nombre = btn.dataset.nombre || 'esta bodega';
+
+    Swal.fire({
+      title: `¿Eliminar ${nombre}?`,
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = url;
+
+      const csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = 'csrfmiddlewaretoken';
+      csrf.value = "{{ csrf_token }}";
+      form.appendChild(csrf);
+
+      document.body.appendChild(form);
+      form.submit();
+    });
+  });
 </script>
 {% endblock %}

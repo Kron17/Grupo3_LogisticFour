@@ -1,5 +1,7 @@
 {% extends "core/base.html" %}
 {% load static %}
+{% load currency %}
+
 {% block title %}Productos{% endblock %}
 
 {% block content %}
@@ -8,278 +10,533 @@
     --ink:#0f172a; --muted:#6b7280; --line:#e5e7eb; --bg:#f6f8fb; --head:#edf2ff;
     --pri:#0f172a; --pri-ink:#fff;
   }
-  .page{display:grid;gap:14px;animation:fadeIn .28s ease both}
+
+  /* Contenedor general (limita ancho y separa de los bordes) */
+  .page-shell{
+    max-width:1180px;
+    margin:0 auto;
+    padding:14px 20px 22px;
+  }
+  @media (min-width:1400px){
+    .page-shell{ max-width:1280px; }
+  }
+  @media (max-width:880px){
+    .page-shell{
+      padding:10px 12px 18px;
+    }
+  }
+
+  .page{
+    display:grid;
+    gap:14px;
+    animation:fadeIn .28s ease both;
+  }
 
   .page-head{
-    position:sticky;top:.35rem;z-index:5;display:grid;gap:14px;padding:1rem;
-    border:1px solid rgba(148,163,184,.25);border-radius:18px;
+    position:sticky;
+    top:.5rem;
+    z-index:5;
+    display:grid;
+    gap:14px;
+    padding:1rem 1.1rem;
+    border:1px solid rgba(148,163,184,.25);
+    border-radius:18px;
     background:radial-gradient(circle at 0% 0%, #ffffff 0%, #edf2ff 60%, #e2e8f0 105%);
     box-shadow:0 14px 45px rgba(15,23,42,.03);
   }
-  .page-head h1{margin:0;font-size:clamp(1.1rem,.6rem + 1.2vw,1.5rem);font-weight:800}
-  .sub{margin:0;color:var(--muted);font-size:.78rem}
+  .page-head h1{
+    margin:0;
+    font-size:clamp(1.1rem,.6rem + 1.2vw,1.5rem);
+    font-weight:800;
+  }
+  .sub{
+    margin:0;
+    color:var(--muted);
+    font-size:.78rem;
+  }
 
-  .actions-grid{display:flex;flex-wrap:wrap;gap:10px}
-  .btnx{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px 1px;
-    border-radius:999px;border:1px solid rgba(15,23,42,.05);background:#fff;
-    color:var(--ink);text-decoration:none;font-weight:500;transition:.15s ease transform,.15s ease box-shadow}
-  .btnx:hover{transform:translateY(-1px);box-shadow:0 8px 26px rgba(15,23,42,.08)}
-  .btnx.primary{background:var(--pri);color:var(--pri-ink)}
+  .actions-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .btnx{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    height:38px;
+    padding:0 15px 1px;
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.05);
+    background:#fff;
+    color:var(--ink);
+    text-decoration:none;
+    font-weight:500;
+    transition:.15s ease transform,.15s ease box-shadow,.15s ease background-color;
+  }
+  .btnx:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 26px rgba(15,23,42,.08);
+    background:#f9fafb;
+  }
+  .btnx.primary{
+    background:var(--pri);
+    color:var(--pri-ink);
+    border-color:rgba(15,23,42,.2);
+  }
+  .btnx.primary:hover{
+    background:#020617;
+  }
 
-  .filter{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-    padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}
-  .filter-left{display:flex;gap:10px;flex:1 1 300px;min-width:230px}
-  .cam-btn{display:inline-grid;place-items:center;width:42px;border:1px solid rgba(148,163,184,.33);
-    border-radius:14px;background:#fff;cursor:pointer;transition:.15s ease}
-  .cam-btn:hover{background:#eef2ff}
-  .filter .input{flex:1 1 auto;padding:11px 13px;border:1px solid rgba(148,163,184,.3);
-    border-radius:14px;background:#f8fafc;transition:.12s ease}
-  .filter .input:focus{outline:none;border:1px solid rgba(15,23,42,.55);
-    box-shadow:0 0 0 3px rgba(15,23,42,.05);background:#fff}
-  .filter-actions{display:flex;gap:10px}
-  .btn{border-radius:14px;padding:10px 15px 9px;border:1px solid rgba(148,163,184,.35);
-    background:#fff;cursor:pointer;transition:.12s ease}
-  .btn.search{background:var(--pri);color:#fff;border-color:rgba(15,23,42,.2)}
-  .btn:hover{transform:translateY(-1px);box-shadow:0 7px 24px rgba(15,23,42,.05)}
+  .filter{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+    padding:12px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+  }
+  .filter-left{
+    display:flex;
+    gap:10px;
+    flex:1 1 300px;
+    min-width:230px;
+  }
+  .cam-btn{
+    display:inline-grid;
+    place-items:center;
+    width:42px;
+    border:1px solid rgba(148,163,184,.33);
+    border-radius:14px;
+    background:#fff;
+    cursor:pointer;
+    transition:.15s ease;
+  }
+  .cam-btn:hover{
+    background:#eef2ff;
+  }
+  .filter .input{
+    flex:1 1 auto;
+    padding:11px 13px;
+    border:1px solid rgba(148,163,184,.3);
+    border-radius:14px;
+    background:#f8fafc;
+    transition:.12s ease;
+  }
+  .filter .input:focus{
+    outline:none;
+    border:1px solid rgba(15,23,42,.55);
+    box-shadow:0 0 0 3px rgba(15,23,42,.05);
+    background:#fff;
+  }
+  .filter-actions{
+    display:flex;
+    gap:10px;
+  }
+  .btn{
+    border-radius:14px;
+    padding:10px 15px 9px;
+    border:1px solid rgba(148,163,184,.35);
+    background:#fff;
+    cursor:pointer;
+    transition:.12s ease;
+  }
+  .btn.search{
+    background:var(--pri);
+    color:#fff;
+    border-color:rgba(15,23,42,.2);
+  }
+  .btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 7px 24px rgba(15,23,42,.05);
+  }
 
-  .table-wrap{background:#fff;border:1px solid rgba(148,163,184,.35);
-    border-radius:16px;overflow:hidden;box-shadow:0 3px 0 rgba(15,23,42,.01)}
-  table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13.6px}
-  .tbl thead th{position:sticky;top:0;background:var(--head);text-align:left;
-    padding:12px;font-weight:700;border-bottom:1px solid var(--line)}
-  .tbl tbody td{padding:11px 12px;border-bottom:1px solid var(--line)}
-  .tbl tbody tr:hover{background:#f8fafc}
+  .table-wrap{
+    background:#fff;
+    border:1px solid rgba(148,163,184,.35);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 3px 0 rgba(15,23,42,.01);
+  }
+  table.tbl{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13.6px;
+  }
+  .tbl thead th{
+    position:sticky;
+    top:0;
+    background:var(--head);
+    text-align:left;
+    padding:12px;
+    font-weight:700;
+    border-bottom:1px solid var(--line);
+  }
+  .tbl tbody td{
+    padding:11px 12px;
+    border-bottom:1px solid var(--line);
+  }
+  .tbl tbody tr:hover{
+    background:#f8fafc;
+  }
 
   /* Alineación numérica y acciones */
-  .tbl thead th.num, .tbl tbody td.num { text-align:right; white-space:nowrap }
-  .tbl td.num .actions { justify-content:flex-end }
-  .tbl td.num .actions .act { white-space:nowrap }
+  .tbl thead th.num,
+  .tbl tbody td.num{
+    text-align:right;
+    white-space:nowrap;
+  }
+  .tbl td.num .actions{
+    justify-content:flex-end;
+  }
+  .tbl td.num .actions .act{
+    white-space:nowrap;
+  }
 
   /* Celdas */
   .sku{
-    display:inline-flex;align-items:center;gap:6px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
     font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-    background:#edf2ff;border:1px solid rgba(148,163,184,.3);
-    border-radius:10px;padding:2px 8px 3px;font-size:.75rem;cursor:pointer;user-select:none;
+    background:#edf2ff;
+    border:1px solid rgba(148,163,184,.3);
+    border-radius:10px;
+    padding:2px 8px 3px;
+    font-size:.75rem;
+    cursor:pointer;
+    user-select:none;
   }
-  .sku:hover{background:#e5ecff}
-  .name{font-weight:700}
-  .truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sku:hover{
+    background:#e5ecff;
+  }
+  .name{
+    font-weight:700;
+  }
+  .truncate{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
 
-  .muted{color:var(--muted)}
-  .chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px 4px;font-size:.7rem;
-    border-radius:999px;border:1px solid rgba(148,163,184,.3);background:#fff}
-  .chip.ok{background:#e8f7ee;color:#166534;border-color:#bfe7cb}
-  .chip.no{background:#fff1f2;color:#b91c1c;border-color:#fecdd3}
+  .muted{ color:var(--muted); }
 
-  .actions{display:flex;gap:7px;justify-content:flex-end}
-  .act{display:inline-flex;align-items:center;gap:6px;padding:7px 10px 6px;border-radius:999px;
-    border:1px solid rgba(148,163,184,.32);background:#fff;color:var(--ink);
-    text-decoration:none;font-size:.72rem}
-  .act:hover{background:#eef2ff}
-  .act.info{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
-  .act.danger{border-color:rgba(252,165,165,.75);background:#fff7f7;color:#b91c1c}
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:4px 9px 4px;
+    font-size:.7rem;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.3);
+    background:#fff;
+  }
+  .chip.ok{
+    background:#e8f7ee;
+    color:#166534;
+    border-color:#bfe7cb;
+  }
+  .chip.no{
+    background:#fff1f2;
+    color:#b91c1c;
+    border-color:#fecdd3;
+  }
+
+  .actions{
+    display:flex;
+    gap:7px;
+    justify-content:flex-end;
+  }
+  .act{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:7px 10px 6px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.32);
+    background:#fff;
+    color:var(--ink);
+    text-decoration:none;
+    font-size:.72rem;
+  }
+  .act:hover{
+    background:#eef2ff;
+  }
+  .act.info{
+    border-color:#bfdbfe;
+    background:#eff6ff;
+    color:#1d4ed8;
+  }
+  .act.danger{
+    border-color:rgba(252,165,165,.75);
+    background:#fff7f7;
+    color:#b91c1c;
+  }
 
   /* Toast copiado */
   .toast-copy{
-    position:fixed;right:18px;bottom:18px;z-index:1000;background:#0ea5e9;color:white;
-    border-radius:12px;padding:.6rem .9rem;box-shadow:0 12px 28px rgba(2,6,23,.25);
-    opacity:0;transform:translateY(10px);transition:.2s ease;pointer-events:none;font-weight:600
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:1000;
+    background:#0ea5e9;
+    color:white;
+    border-radius:12px;
+    padding:.6rem .9rem;
+    box-shadow:0 12px 28px rgba(2,6,23,.25);
+    opacity:0;
+    transform:translateY(10px);
+    transition:.2s ease;
+    pointer-events:none;
+    font-weight:600;
   }
-  .toast-copy.show{opacity:1;transform:none}
+  .toast-copy.show{
+    opacity:1;
+    transform:none;
+  }
 
+  /* Responsive tabla a cards */
   @media (max-width:880px){
-    .table-wrap{background:transparent;border:0;box-shadow:none}
-    .tbl{display:block}
-    .tbl thead{display:none}
-    .tbl tbody{display:grid;gap:12px}
-    .tbl tr{display:grid;gap:10px;background:#fff;border:1px solid rgba(148,163,184,.35);
-      border-radius:14px;padding:12px 12px 10px}
-    .tbl td{border:0;padding:0}
-    .actions{justify-content:flex-start;flex-wrap:wrap}
-    .filter{gap:8px}
-    .filter-left{flex:1 1 100%}
-    .filter-actions{width:100%;justify-content:flex-end}
+    .page-head{
+      position:static;
+      padding:.9rem .85rem;
+    }
+
+    .table-wrap{
+      background:transparent;
+      border:0;
+      box-shadow:none;
+    }
+    .tbl{
+      display:block;
+    }
+    .tbl thead{
+      display:none;
+    }
+    .tbl tbody{
+      display:grid;
+      gap:12px;
+    }
+    .tbl tr{
+      display:grid;
+      gap:10px;
+      background:#fff;
+      border:1px solid rgba(148,163,184,.35);
+      border-radius:14px;
+      padding:12px 12px 10px;
+    }
+    .tbl td{
+      border:0;
+      padding:0;
+    }
+    .actions{
+      justify-content:flex-start;
+      flex-wrap:wrap;
+    }
+    .filter{
+      gap:8px;
+    }
+    .filter-left{
+      flex:1 1 100%;
+    }
+    .filter-actions{
+      width:100%;
+      justify-content:flex-end;
+    }
   }
 
-  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @keyframes fadeIn{
+    from{opacity:0;transform:translateY(4px);}
+    to{opacity:1;transform:none;}
+  }
 </style>
 
-<div class="page">
-  <div class="page-head">
-    <div>
-      <h1>Productos</h1>
-      <p class="sub">Gestión de catálogo. Escanea o filtra para encontrar rápido.</p>
+<div class="page-shell">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1>Productos</h1>
+        <p class="sub">Gestión de catálogo. Escanea o filtra para encontrar rápido.</p>
+      </div>
+      <div class="actions-grid">
+        <a class="btnx primary" href="{% url 'product_add' %}">➕ Agregar producto</a>
+        <a href="{% url 'centro-catalogo' %}" class="btnx">🗂️ Centro de Catálogo</a>
+      </div>
     </div>
+
+    <!-- Buscador -->
+    <form id="prodSearchForm" method="get" action="{% url 'products' %}" class="filter" role="search">
+      <div class="filter-left">
+        <button type="button" id="btnScanQ" class="cam-btn" title="Escanear con cámara" aria-label="Escanear con cámara">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </button>
+        <input id="qInput" type="search" class="input" name="q" value="{{ q|default:'' }}"
+               placeholder="Buscar por SKU, nombre, marca o categoría…">
+      </div>
+      <div class="filter-actions">
+        <button class="btn search" type="submit">Buscar</button>
+        <a class="btn" href="{% url 'products' %}">Limpiar</a>
+      </div>
+    </form>
+
+    <!-- Cambio de moneda -->
     <div class="actions-grid">
-      <a class="btnx primary" href="{% url 'product_add' %}">➕ Agregar producto</a>
-      <a class="btnx" href="{% url 'marca-create' %}?next={{ request.get_full_path|urlencode }}" onclick="return openModal(this.href)">➕ Marca</a>
-      <a class="btnx" href="{% url 'unidad-create' %}?next={{ request.get_full_path|urlencode }}" onclick="return openModal(this.href)">➕ Unidad</a>
-      <a class="btnx" href="{% url 'tasa-create' %}?next={{ request.get_full_path|urlencode }}" onclick="return openModal(this.href)">➕ Tasa</a>
-      <a class="btnx" href="{% url 'categoria-create' %}?next={{ request.get_full_path|urlencode }}" onclick="return openModal(this.href)">➕ Categoría</a>
+      <span class="muted">Moneda:</span>
+      {% for c in currency_supported %}
+        <a class="btnx{% if c == current_currency %} primary{% endif %}"
+           href="{% url 'set_currency' %}?c={{ c }}&next={{ request.get_full_path|urlencode }}">
+          {{ c }}
+        </a>
+      {% endfor %}
     </div>
-  </div>
 
-  <!-- Buscador -->
-  <form id="prodSearchForm" method="get" action="{% url 'products' %}" class="filter" role="search">
-    <div class="filter-left">
-      <button type="button" id="btnScanQ" class="cam-btn" title="Escanear con cámara" aria-label="Escanear con cámara">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z"></path>
-          <circle cx="12" cy="13" r="4"></circle>
-        </svg>
-      </button>
-      <input id="qInput" type="search" class="input" name="q" value="{{ q|default:'' }}"
-             placeholder="Buscar por SKU, nombre, marca o categoría…">
-    </div>
-    <div class="filter-actions">
-      <button class="btn search" type="submit">Buscar</button>
-      <a class="btn" href="{% url 'products' %}">Limpiar</a>
-    </div>
-  </form>
+    <!-- Tabla -->
+    <div class="table-wrap">
+      <table class="tbl" id="tblProductos">
+        <colgroup>
+          <col style="width:180px;">
+          <col style="width:320px;">
+          <col style="width:160px;">
+          <col style="width:160px;">
+          <col style="width:120px;">
+          <col style="width:110px;">
+          <col style="width:120px;">
+          <col style="width:230px;">
+        </colgroup>
 
-  <!-- Cambio de moneda -->
-  <div class="actions-grid">
-    <span class="muted">Moneda:</span>
-    {% for c in currency_supported %}
-      <a class="btnx" href="{% url 'set_currency' %}?c={{ c }}&next={{ request.get_full_path|urlencode }}">
-        {{ c }}
-      </a>
-    {% endfor %}
-  </div>
-  
-  <!-- Tabla -->
-  <div class="table-wrap">
-    <table class="tbl" id="tblProductos">
-      <!-- Anchos controlados: Nombre ya no se separa tanto -->
-      <colgroup>
-        <col style="width:180px;">  <!-- SKU -->
-        <col style="width:320px;">  <!-- Nombre -->
-        <col style="width:160px;">  <!-- Marca -->
-        <col style="width:160px;">  <!-- Categoría -->
-        <col style="width:120px;">  <!-- Estado -->
-        <col style="width:110px;">  <!-- Stock -->
-        <col style="width:120px;">  <!-- Precio -->
-        <col style="width:230px;">  <!-- Acciones -->
-      </colgroup>
-
-      <thead>
-        <tr>
-          <th>SKU</th>
-          <th>Nombre</th>
-          <th>Marca</th>
-          <th>Categoría</th>
-          <th>Estado</th>
-          <th class="num">Stock</th>
-          <th class="num">Precio</th>
-          <th class="num">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in productos %}
-        {% with stock=p.total_stock|default:p.stock|default:0 %}
-        <!-- fila desktop -->
-        <tr class="d-none d-md-table-row">
-          <td>
-            <button type="button" class="sku copy-sku" data-sku="{{ p.sku }}" title="Copiar SKU">{{ p.sku }}</button>
-          </td>
-          <td><div class="name truncate" title="{{ p.nombre }}">{{ p.nombre }}</div></td>
-          <td class="muted truncate" title="{{ p.marca|default:'—' }}">{{ p.marca|default:"—" }}</td>
-          <td class="muted truncate" title="{{ p.categoria|default:'—' }}">{{ p.categoria|default:"—" }}</td>
-          <td>
-            {% if stock %}
-              {% if p.activo %}<span class="chip ok">Activo</span>{% else %}<span class="chip no">Inactivo</span>{% endif %}
-            {% else %}
-              <span class="chip no">Sin stock</span>
-            {% endif %}
-          </td>
-          <td class="num"><strong>{{ stock }}</strong></td>
-          {% load currency %}
-          <td class="num">
-            {% if p.precio is not None %}
-              {% if current_currency == "USD" %}
-                {% price_usd_from_clp p.precio as price_usd %}
-                {{ price_usd|default:"USD no disponible" }}
-              {% else %}
-                {{ p.precio|money_clp }}
-              {% endif %}
-            {% else %}—{% endif %}
-          </td>
-          <td class="num">
-            <div class="actions">
-              <a class="act info" href="{% url 'producto-detail' p.pk %}">Ver</a>
-              <a class="act" href="{% url 'producto-update' p.pk %}">Editar</a>
-              <form method="post" action="{% url 'producto-delete' p.pk %}" onsubmit="return confirm('¿Eliminar este producto?')">
-                {% csrf_token %}
-                <button type="submit" class="act danger">Eliminar</button>
-              </form>
-            </div>
-          </td>
-        </tr>
-
-        <!-- card móvil -->
-        <tr class="d-md-none">
-          <td>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Nombre</th>
+            <th>Marca</th>
+            <th>Categoría</th>
+            <th>Estado</th>
+            <th class="num">Stock</th>
+            <th class="num">Precio</th>
+            <th class="num">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in productos %}
+          {% with stock=p.total_stock|default:p.stock|default:0 %}
+          <!-- fila desktop -->
+          <tr class="d-none d-md-table-row">
+            <td>
               <button type="button" class="sku copy-sku" data-sku="{{ p.sku }}" title="Copiar SKU">{{ p.sku }}</button>
-              <div class="name">{{ p.nombre }}</div>
-            </div>
-            <div class="muted" style="margin-top:4px">
-              Marca: {{ p.marca|default:"—" }} · Cat: {{ p.categoria|default:"—" }}
-            </div>
-            <div style="margin-top:6px">
+            </td>
+            <td><div class="name truncate" title="{{ p.nombre }}">{{ p.nombre }}</div></td>
+            <td class="muted truncate" title="{{ p.marca|default:'—' }}">{{ p.marca|default:"—" }}</td>
+            <td class="muted truncate" title="{{ p.categoria|default:'—' }}">{{ p.categoria|default:"—" }}</td>
+            <td>
               {% if stock %}
-                {% if p.activo %}<span class="chip ok">Activo</span>{% else %}<span class="chip no">Inactivo</span>{% endif %}
+                {% if p.activo %}
+                  <span class="chip ok">Activo</span>
+                {% else %}
+                  <span class="chip no">Inactivo</span>
+                {% endif %}
               {% else %}
                 <span class="chip no">Sin stock</span>
               {% endif %}
-              <span class="chip" style="background:#eef2ff">Stock: {{ stock }}</span>
+            </td>
+            <td class="num"><strong>{{ stock }}</strong></td>
+            <td class="num">
               {% if p.precio is not None %}
-                <span class="chip" style="background:#fffbea">
-                  Precio: {{ p.precio|money_clp }}
-                </span>
-                {% price_usd_from_clp p.precio as price_usd_m %}
-                {% if price_usd_m %}
-                  <span class="chip" style="background:#eef2ff">
-                    {{ price_usd_m }}
-                  </span>
+                {% if current_currency == "USD" %}
+                  {% price_usd_from_clp p.precio as price_usd %}
+                  {{ price_usd|default:"USD no disponible" }}
+                {% else %}
+                  {{ p.precio|money_clp }}
                 {% endif %}
-              {% endif %}
-            </div>
-            <div class="actions" style="margin-top:8px">
-              <a class="act info" href="{% url 'producto-detail' p.pk %}">Ver</a>
-              <a class="act" href="{% url 'producto-update' p.pk %}">Editar</a>
-              <form method="post" action="{% url 'producto-delete' p.pk %}" onsubmit="return confirm('¿Eliminar este producto?')">
-                {% csrf_token %}
-                <button type="submit" class="act danger">Eliminar</button>
-              </form>
-            </div>
-          </td>
-        </tr>
-        {% endwith %}
-        {% empty %}
-        <tr><td colspan="8" class="muted" style="padding:22px">No hay productos.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+              {% else %}—{% endif %}
+            </td>
+            <td class="num">
+              <div class="actions">
+                <a class="act info" href="{% url 'producto-detail' p.pk %}">Ver</a>
+                <a class="act" href="{% url 'producto-update' p.pk %}">Editar</a>
+                <form method="post" action="{% url 'producto-delete' p.pk %}"
+                      onsubmit="return confirm('¿Eliminar este producto?')">
+                  {% csrf_token %}
+                  <button type="submit" class="act danger">Eliminar</button>
+                </form>
+              </div>
+            </td>
+          </tr>
 
-  {% if is_paginated %}
-  <nav style="display:flex;gap:10px;justify-content:center;align-items:center;margin-top:12px">
-    {% if page_obj.has_previous %}
-      <a class="btnx" href="?q={{ q }}&page={{ page_obj.previous_page_number }}">← Anterior</a>
-    {% else %}
-      <span class="btnx" style="opacity:.45;pointer-events:none">← Anterior</span>
+          <!-- card móvil -->
+          <tr class="d-md-none">
+            <td>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <button type="button" class="sku copy-sku" data-sku="{{ p.sku }}" title="Copiar SKU">{{ p.sku }}</button>
+                <div class="name">{{ p.nombre }}</div>
+              </div>
+              <div class="muted" style="margin-top:4px">
+                Marca: {{ p.marca|default:"—" }} · Cat: {{ p.categoria|default:"—" }}
+              </div>
+              <div style="margin-top:6px">
+                {% if stock %}
+                  {% if p.activo %}
+                    <span class="chip ok">Activo</span>
+                  {% else %}
+                    <span class="chip no">Inactivo</span>
+                  {% endif %}
+                {% else %}
+                  <span class="chip no">Sin stock</span>
+                {% endif %}
+                <span class="chip" style="background:#eef2ff">Stock: {{ stock }}</span>
+                {% if p.precio is not None %}
+                  <span class="chip" style="background:#fffbea">
+                    Precio: {{ p.precio|money_clp }}
+                  </span>
+                  {% price_usd_from_clp p.precio as price_usd_m %}
+                  {% if price_usd_m %}
+                    <span class="chip" style="background:#eef2ff">
+                      {{ price_usd_m }}
+                    </span>
+                  {% endif %}
+                {% endif %}
+              </div>
+              <div class="actions" style="margin-top:8px">
+                <a class="act info" href="{% url 'producto-detail' p.pk %}">Ver</a>
+                <a class="act" href="{% url 'producto-update' p.pk %}">Editar</a>
+                <form method="post" action="{% url 'producto-delete' p.pk %}"
+                      onsubmit="return confirm('¿Eliminar este producto?')">
+                  {% csrf_token %}
+                  <button type="submit" class="act danger">Eliminar</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr><td colspan="8" class="muted" style="padding:22px">No hay productos.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+    <nav style="display:flex;gap:10px;justify-content:center;align-items:center;margin-top:12px">
+      {% if page_obj.has_previous %}
+        <a class="btnx" href="?q={{ q }}&page={{ page_obj.previous_page_number }}">← Anterior</a>
+      {% else %}
+        <span class="btnx" style="opacity:.45;pointer-events:none">← Anterior</span>
+      {% endif %}
+      <span class="muted">Página <strong>{{ page_obj.number }}</strong> de {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a class="btnx" href="?q={{ q }}&page={{ page_obj.next_page_number }}">Siguiente →</a>
+      {% else %}
+        <span class="btnx" style="opacity:.45;pointer-events:none">Siguiente →</span>
+      {% endif %}
+    </nav>
     {% endif %}
-    <span class="muted">Página <strong>{{ page_obj.number }}</strong> de {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}
-      <a class="btnx" href="?q={{ q }}&page={{ page_obj.next_page_number }}">Siguiente →</a>
-    {% else %}
-      <span class="btnx" style="opacity:.45;pointer-events:none">Siguiente →</span>
-    {% endif %}
-  </nav>
-  {% endif %}
+  </div>
 </div>
 
 <!-- Toast de copiado -->
@@ -306,7 +563,9 @@
     btn.addEventListener('click', ()=>{
       if(!window.BarcodeScanner){ alert('Escáner no disponible.'); return; }
       BarcodeScanner.open({
-        title: 'Escanear SKU', continuous: false, preferFacing: 'environment',
+        title: 'Escanear SKU',
+        continuous: false,
+        preferFacing: 'environment',
         onScan: (code)=>{ input.value = code; setTimeout(()=>form.requestSubmit(), 0); }
       });
     });
@@ -328,7 +587,8 @@
         showToast('SKU copiado');
       }catch(e){
         const ta = document.createElement('textarea');
-        ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); ta.remove();
         showToast('SKU copiado');
       }
     }
@@ -344,10 +604,15 @@
   async function openModal(url){
     const res = await fetch(url, { headers:{'X-Requested-With':'fetch'} });
     const html = await res.text();
-    const wrap = document.createElement('div'); wrap.innerHTML = html; document.body.appendChild(wrap);
-    const dialog = wrap.querySelector('dialog'); if(dialog){ dialog.addEventListener('close', ()=> wrap.remove()); dialog.showModal?.(); }
+    const wrap = document.createElement('div');
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap);
+    const dialog = wrap.querySelector('dialog');
+    if(dialog){
+      dialog.addEventListener('close', ()=> wrap.remove());
+      dialog.showModal?.();
+    }
     return false;
   }
 </script>
 {% endblock %}
-  

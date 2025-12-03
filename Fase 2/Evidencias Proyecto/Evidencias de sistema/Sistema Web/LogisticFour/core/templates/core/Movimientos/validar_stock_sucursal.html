@@ -1,0 +1,686 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Validar stock de {{ sucursal.nombre }}{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ink:#0f172a;
+    --muted:#64748b;
+    --line:#e2e8f0;
+    --card:#ffffff;
+    --bg:#0f172a;
+    --accent:#111827;
+    --shadow:0 18px 45px rgba(15,23,42,.10);
+    --ok:#16a34a;
+    --warn:#f97316;
+    --danger:#dc2626;
+  }
+
+  body{
+    background:radial-gradient(circle at top,#e5edff 0,#f9fafb 55%,#e5e7eb 100%);
+  }
+
+  .v-wrap{
+    max-width:1080px;
+    margin-inline:auto;
+    padding:18px 12px 26px;
+    display:grid;
+    gap:16px;
+    animation:vFadeIn .35s ease-out;
+  }
+
+  @keyframes vFadeIn{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* ========= HEADER ========= */
+  .v-head{
+    border-radius:18px;
+    padding:14px 16px;
+    background:linear-gradient(120deg,#0f172a,#111827 55%,#1e293b);
+    color:#e5e7eb;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    box-shadow:0 18px 40px rgba(15,23,42,.45);
+  }
+
+  .v-title{
+    margin:0;
+    font-weight:800;
+    letter-spacing:.02em;
+    font-size:clamp(1.2rem,2.4vw,1.6rem);
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+
+  .v-title-pill{
+    font-size:.7rem;
+    text-transform:uppercase;
+    padding:3px 9px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.5);
+    background:rgba(15,23,42,.7);
+  }
+
+  .v-sub{
+    margin:4px 0 0;
+    color:#cbd5f5;
+    font-size:.86rem;
+    max-width:600px;
+  }
+
+  .v-metrics{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:flex-end;
+  }
+
+  .v-chip{
+    background:rgba(15,23,42,.7);
+    border-radius:12px;
+    padding:7px 11px;
+    border:1px solid rgba(148,163,184,.55);
+    font-size:.78rem;
+    min-width:130px;
+  }
+
+  .v-chip-label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    opacity:.85;
+  }
+
+  .v-dot{
+    width:7px;
+    height:7px;
+    border-radius:999px;
+    background:#22c55e;
+  }
+  .v-dot-warn{background:#fbbf24;}
+  .v-dot-muted{background:#9ca3af;}
+
+  .v-chip strong{
+    display:block;
+    margin-top:2px;
+    font-size:1.15rem;
+    color:#f9fafb;
+  }
+
+  .v-back{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:7px 11px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.6);
+    background:rgba(15,23,42,.4);
+    font-size:.78rem;
+    color:#e5e7eb;
+    text-decoration:none;
+    transition:background .16s ease,transform .12s ease;
+  }
+  .v-back:hover{
+    background:rgba(15,23,42,.85);
+    transform:translateY(-1px);
+  }
+
+  /* ========= CARD PRINCIPAL ========= */
+  .v-card{
+    background:var(--card);
+    border-radius:18px;
+    border:1px solid rgba(226,232,240,.9);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+
+  .v-body{
+    padding:14px 14px 18px;
+    display:grid;
+    gap:12px;
+  }
+
+  /* ========= FILTROS ========= */
+  .v-filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+  }
+
+  .v-input{
+    flex:1 1 260px;
+    min-width:0;
+    border:1px solid #cbd5e1;
+    border-radius:999px;
+    padding:9px 11px;
+    background:#f8fafc;
+    font-size:.88rem;
+    transition:border .15s ease,box-shadow .15s ease,background .15s ease,transform .08s ease;
+  }
+  .v-input:focus{
+    outline:none;
+    border-color:#111827;
+    background:#ffffff;
+    box-shadow:0 0 0 2px rgba(15,23,42,.14);
+    transform:translateY(-1px);
+  }
+
+  .btn{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:8.5px 14px;
+    font-weight:600;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:.83rem;
+    transition:transform .12s ease,box-shadow .12s ease,background .12s ease;
+  }
+
+  .btn:hover{
+    background:#000;
+    transform:translateY(-1px);
+    box-shadow:0 10px 28px rgba(15,23,42,.18);
+  }
+
+  .btn-ghost{
+    background:#ffffff;
+    border-radius:999px;
+    border:1px solid var(--line);
+    padding:8px 13px;
+    font-weight:600;
+    font-size:.8rem;
+    color:var(--ink);
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  .btn-secondary{
+    background:#f8fafc;
+    border:1px solid #cbd5e1;
+    color:#111827;
+  }
+
+  .btn-sm{
+    padding:6px 11px;
+    font-size:.78rem;
+  }
+
+  .btn-icon{
+    font-size:1rem;
+  }
+
+  /* ========= TABLA ========= */
+  .v-table-wrap{
+    margin-top:6px;
+    border-radius:14px;
+    border:1px solid var(--line);
+    overflow:auto;
+    background:#f9fafb;
+    position:relative;
+  }
+
+  .v-table-hint{
+    font-size:.73rem;
+    color:var(--muted);
+    padding:5px 9px 0;
+  }
+
+  table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:720px;
+  }
+
+  thead th{
+    position:sticky;
+    top:0;
+    z-index:1;
+    background:#eef2ff;
+    border-bottom:1px solid var(--line);
+    text-align:left;
+    padding:8px 10px;
+    font-size:.74rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:#4b5563;
+  }
+
+  tbody td{
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+    font-size:.85rem;
+    background:#ffffff;
+  }
+
+  tbody tr{
+    transition:background .12s ease,transform .08s ease,box-shadow .08s ease;
+  }
+
+  tbody tr:hover{
+    background:#f8fafc;
+    transform:translateY(-1px);
+  }
+
+  tbody tr.v-row-valid{
+    background:#ecfdf5;
+  }
+
+  .mono{
+    font-family:ui-monospace,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  }
+
+  .val-input{
+    width:82px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    padding:4px 6px;
+    font-size:.8rem;
+    text-align:right;
+    transition:border .15s ease,box-shadow .15s ease,background .15s ease,transform .08s ease;
+  }
+
+  .val-input:focus{
+    outline:none;
+    border-color:#111827;
+    background:#ffffff;
+    box-shadow:0 0 0 2px rgba(15,23,42,.14);
+    transform:translateY(-1px);
+  }
+
+  .val-info{
+    font-size:.72rem;
+    color:var(--muted);
+  }
+
+  .val-ok{
+    color:var(--ok);
+    font-weight:600;
+  }
+
+  .val-warn{
+    color:var(--warn);
+    font-weight:600;
+  }
+
+  .val-zero{
+    color:#9ca3af;
+  }
+
+  /* ========= FOOTER BOTONES ========= */
+  .v-actions{
+    margin-top:12px;
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .v-actions .btn-ghost{
+    border-radius:999px;
+  }
+
+  /* ========= RESPONSIVE ========= */
+  @media (max-width:900px){
+    .v-head{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+    .v-metrics{
+      width:100%;
+      justify-content:flex-start;
+    }
+  }
+
+  @media (max-width:640px){
+    .v-wrap{
+      padding-inline:10px;
+    }
+    .v-body{
+      padding:12px 10px 14px;
+    }
+    .v-head{
+      padding:12px 11px;
+    }
+    .v-title{
+      font-size:1.1rem;
+    }
+    .v-metrics{
+      gap:6px;
+    }
+    .v-chip{
+      min-width:0;
+    }
+  }
+</style>
+
+<div class="v-wrap">
+  <!-- HEADER -->
+  <header class="v-head">
+    <div>
+      <h1 class="v-title">
+        <span>Validar stock — {{ sucursal.nombre }}</span>
+        <span class="v-title-pill">Sucursal</span>
+      </h1>
+      <p class="v-sub">
+        Revisa el stock por ubicación interna y define cuántas unidades quedarán
+        <strong>validadas para movimientos</strong> desde esta sucursal.
+      </p>
+    </div>
+    <div class="v-metrics">
+      <div class="v-chip">
+        <div class="v-chip-label">
+          <span class="v-dot"></span>
+          <span>Total disponible</span>
+        </div>
+        <strong>{{ total_disponible|floatformat:0 }}</strong>
+      </div>
+      <div class="v-chip">
+        <div class="v-chip-label">
+          <span class="v-dot-warn"></span>
+          <span>Total validado</span>
+        </div>
+        <strong id="chipTotalValidado">{{ total_validado|floatformat:0 }}</strong>
+      </div>
+      <a href="{% url 'sucursal-productos' sucursal.id %}" class="v-back">
+        <span>←</span>
+        <span>Volver a productos</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- CARD PRINCIPAL -->
+  <section class="v-card">
+    <div class="v-body">
+
+      <!-- FILTROS -->
+      <form method="get" class="v-filters">
+        <input
+          class="v-input"
+          type="text"
+          name="q"
+          value="{{ q }}"
+          placeholder="Buscar por SKU, nombre o código de ubicación…"
+        >
+        <button class="btn" type="submit">
+          <span class="btn-icon">🔍</span> Buscar
+        </button>
+        {% if q %}
+          <a href="{% url 'validar-stock-sucursal' sucursal.id %}" class="btn-ghost">
+            Limpiar
+          </a>
+        {% endif %}
+        {% if filas %}
+          <button type="button" class="btn-secondary btn-sm" id="btn-validar-todo" title="Llenar con todo lo disponible">
+            <span class="btn-icon">✓</span>
+            Validar todo lo disponible
+          </button>
+        {% endif %}
+      </form>
+
+      <!-- TABLA -->
+      <div class="v-table-wrap">
+        <div class="v-table-hint">
+          En escritorio puedes ordenar visualmente; en móvil desplaza horizontalmente la tabla ↔
+        </div>
+        <table id="tabla-validacion">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Nombre</th>
+              <th>Ubicación</th>
+              <th>Disponible</th>
+              <th>Validado actual</th>
+              <th>Validar ahora</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in filas %}
+              <tr data-stock-id="{{ s.id }}">
+                <td class="mono">{{ s.producto.sku }}</td>
+                <td>
+                  <strong>{{ s.producto.nombre }}</strong><br>
+                  <span class="val-info">ID: {{ s.producto.id }}</span>
+                </td>
+                <td>
+                  {% if s.ubicacion_sucursal %}
+                    <div class="mono">{{ s.ubicacion_sucursal.codigo }}</div>
+                    <div class="val-info">
+                      {{ s.ubicacion_sucursal.descripcion|default:"Ubicación interna" }}
+                    </div>
+                  {% else %}
+                    <span class="val-warn">Sin ubicación</span><br>
+                    <span class="val-info">Se recomienda asignar ubicación.</span>
+                  {% endif %}
+                </td>
+                <td class="mono">
+                  {{ s.cantidad_disponible|floatformat:0 }}
+                </td>
+                <td class="mono">
+                  {% if s.cantidad_validada > 0 %}
+                    <span class="val-ok">
+                      {{ s.cantidad_validada|floatformat:0 }}
+                    </span>
+                  {% else %}
+                    <span class="val-zero">
+                      {{ s.cantidad_validada|default:0|floatformat:0 }}
+                    </span>
+                  {% endif %}
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="val-input"
+                    value="{{ s.cantidad_validada|default:0|floatformat:0 }}"
+                    data-disponible="{{ s.cantidad_disponible }}"
+                  >
+                  <div class="val-info">
+                    máx: {{ s.cantidad_disponible|floatformat:0 }}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+            {% if not filas %}
+              <tr>
+                <td colspan="6" style="text-align:center;padding:18px 10px;font-size:.9rem;color:var(--muted);">
+                  No se encontraron registros para validar en esta sucursal.
+                  {% if q %}<br>Prueba ajustar el término de búsqueda o limpiar el filtro.{% endif %}
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if filas %}
+        <div class="v-actions">
+          <button type="button" class="btn-ghost btn-sm" onclick="history.back();">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-sm" id="btn-guardar-validacion">
+            <span class="btn-icon">💾</span> Guardar validación
+          </button>
+        </div>
+      {% endif %}
+
+    </div>
+  </section>
+</div>
+
+<!-- SweetAlert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+(function(){
+
+  // 🔥 Cerrar modal (si existe, por si usas esta pantalla dentro de uno)
+  function cerrarModalValidacion() {
+    const modal = document.getElementById("modalValidarStock");
+    if (!modal) return;
+    const instancia = bootstrap.Modal.getInstance(modal);
+    if (instancia) instancia.hide();
+  }
+
+  const tabla          = document.getElementById("tabla-validacion");
+  const btnGuardar     = document.getElementById("btn-guardar-validacion");
+  const btnValidarTodo = document.getElementById("btn-validar-todo");
+  const chipTotalVal   = document.getElementById("chipTotalValidado");
+  const csrfToken      = "{{ csrf_token }}";
+  const urlGuardar     = "{% url 'validar-stock-sucursal' sucursal.id %}";
+
+  if (!tabla) return;
+
+  // Recalcular total validado (sumando lo digitado en la columna "Validar ahora")
+  function recalcularTotalValidado(){
+    if (!chipTotalVal) return;
+    let suma = 0;
+    tabla.querySelectorAll("tbody .val-input").forEach(input => {
+      const v = parseFloat(input.value || "0");
+      if (!isNaN(v)) suma += v;
+    });
+    chipTotalVal.textContent = suma.toLocaleString("es-CL");
+  }
+
+  // Marcar filas con algo validado
+  function refrescarEstilosFilas(){
+    tabla.querySelectorAll("tbody tr[data-stock-id]").forEach(tr => {
+      const input = tr.querySelector(".val-input");
+      const v = parseFloat(input?.value || "0");
+      if (v > 0){
+        tr.classList.add("v-row-valid");
+      } else {
+        tr.classList.remove("v-row-valid");
+      }
+    });
+  }
+
+  // VALIDAR TODO
+  if (btnValidarTodo) {
+    btnValidarTodo.addEventListener("click", () => {
+      tabla.querySelectorAll("tbody tr[data-stock-id]").forEach(tr => {
+        const input = tr.querySelector(".val-input");
+        if (!input) return;
+        const max = parseFloat(input.dataset.disponible || "0");
+        input.value = isNaN(max) ? 0 : Math.floor(max);
+      });
+      refrescarEstilosFilas();
+      recalcularTotalValidado();
+    });
+  }
+
+  // Reaccionar a cambios en inputs para animar y recalcular resumen
+  tabla.querySelectorAll("tbody .val-input").forEach(input => {
+    input.addEventListener("input", () => {
+      // Limitar visualmente a min/max sin bloquear todavía el envío
+      const max = parseFloat(input.dataset.disponible || "0");
+      let val = parseFloat(input.value || "0");
+      if (val < 0) val = 0;
+      if (!isNaN(max) && val > max) val = max;
+      input.value = val;
+
+      refrescarEstilosFilas();
+      recalcularTotalValidado();
+    });
+  });
+
+  // GUARDAR VALIDACIÓN
+  if (btnGuardar) {
+    btnGuardar.addEventListener("click", async () => {
+
+      const lineas = [];
+      let tieneError = false;
+
+      tabla.querySelectorAll("tbody tr[data-stock-id]").forEach(tr => {
+        if (tieneError) return;
+
+        const stockId = tr.getAttribute("data-stock-id");
+        const input   = tr.querySelector(".val-input");
+
+        const max = parseFloat(input.dataset.disponible || "0");
+        let val   = parseFloat(input.value || "0");
+
+        if (isNaN(val)) val = 0;
+
+        if (val < 0 || val > max) {
+          tieneError = true;
+          Swal.fire(
+            "Cantidad inválida",
+            "La cantidad debe estar entre 0 y el disponible de la ubicación.",
+            "warning"
+          );
+          input.focus();
+          return;
+        }
+
+        lineas.push({ stock_id: stockId, validada: val });
+      });
+
+      if (tieneError) return;
+
+      if (!lineas.length){
+        Swal.fire("Nada que guardar", "No hay filas para validar.", "info");
+        return;
+      }
+
+      try {
+        const res = await fetch(urlGuardar, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          body: JSON.stringify({ lineas })
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          Swal.fire(
+            "Error",
+            data.error || "No se pudo guardar la validación.",
+            "error"
+          );
+          return;
+        }
+
+        Swal.fire("Listo", data.message, "success").then(() => {
+          cerrarModalValidacion();
+          window.location.reload();
+        });
+
+      } catch (e) {
+        console.error(e);
+        Swal.fire(
+          "Error",
+          "Error de red al guardar la validación.",
+          "error"
+        );
+      }
+    });
+  }
+
+  // Estado inicial visual
+  refrescarEstilosFilas();
+  recalcularTotalValidado();
+
+})();
+</script>
+
+{% endblock %}

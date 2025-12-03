@@ -1,0 +1,286 @@
+{% extends "core/base.html" %}
+
+{% block title %}Nueva Orden de Compra{% endblock %}
+
+{% block content %}
+
+<style>
+  :root{
+    --oc-ink:#0f172a;
+    --oc-muted:#6b7280;
+    --oc-line:#e5e7eb;
+    --oc-card:#ffffff;
+    --oc-accent:#111827;
+    --oc-accent-soft:#eef2ff;
+  }
+
+  /* ===========================
+     LAYOUT GENERAL
+  ============================ */
+  .oc-page{
+    width:100%;
+    min-height:calc(100vh - 80px);
+    padding:24px 0 40px;
+    background:radial-gradient(circle at 0% 0%, #ffffff 0%, #eef2ff 55%, #e5edf7 100%);
+    animation:ocFade .3s ease-out both;
+  }
+  @keyframes ocFade{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:none;}
+  }
+
+  .oc-shell{
+    max-width:900px;
+    margin:0 auto;
+    padding:0 22px;
+  }
+  @media(max-width:768px){
+    .oc-shell{ padding:0 14px; }
+  }
+
+  .oc-header{
+    margin-bottom:20px;
+  }
+  .oc-title{
+    margin:0 0 4px;
+    font-size:clamp(1.4rem,1.1rem + 0.9vw,1.9rem);
+    font-weight:800;
+    color:var(--oc-ink);
+  }
+  .oc-sub{
+    margin:0;
+    color:var(--oc-muted);
+    font-size:.9rem;
+  }
+
+  /* ===========================
+     CARD
+  ============================ */
+  .oc-card{
+    background:var(--oc-card);
+    border-radius:22px;
+    box-shadow:0 18px 45px rgba(15,23,42,.06);
+    border:1px solid rgba(148,163,184,.25);
+    padding:22px 22px 20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .oc-card::before{
+    content:"";
+    position:absolute;
+    inset:auto -40px 0 auto;
+    height:70px;
+    background:radial-gradient(circle at 100% 100%, rgba(15,23,42,.08), transparent 60%);
+    opacity:.7;
+    pointer-events:none;
+  }
+
+  /* ===========================
+     FORM
+  ============================ */
+  .oc-form{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  /* grilla de 2 columnas responsive */
+  .oc-grid-2{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:16px;
+  }
+
+  .oc-field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  .oc-label{
+    font-weight:600;
+    font-size:.88rem;
+    color:#111827;
+  }
+
+  /* inputs/select del form (no importa qué widgets tenga) */
+  .oc-form input[type="text"],
+  .oc-form input[type="number"],
+  .oc-form input[type="date"],
+  .oc-form select{
+    width:100%;
+    font-size:.9rem;
+    border-radius:11px;
+    border:1px solid #d1d5db;
+    padding:.48rem .75rem;
+    background:#f9fafb;
+    transition:border-color .16s ease, box-shadow .16s ease, background-color .16s ease, transform .08s ease;
+  }
+  .oc-form input:focus,
+  .oc-form select:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 1px rgba(37,99,235,.28);
+    background:#ffffff;
+    transform:translateY(-1px);
+  }
+
+  .oc-errors,
+  .oc-field .errorlist{
+    margin:0;
+    padding:0;
+    list-style:none;
+    color:#b91c1c;
+    font-size:.78rem;
+  }
+  .oc-errors{
+    border-radius:12px;
+    background:#fef2f2;
+    border:1px solid #fecaca;
+    padding:.55rem .8rem;
+    margin-bottom:4px;
+  }
+
+  /* ===========================
+     BOTONES
+  ============================ */
+  .oc-actions{
+    display:flex;
+    gap:10px;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    margin-top:4px;
+  }
+
+  .oc-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:.55rem 1.2rem .5rem;
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.2);
+    font-size:.9rem;
+    font-weight:600;
+    cursor:pointer;
+    text-decoration:none;
+    transition:background .16s ease,color .16s ease,box-shadow .16s ease,transform .1s ease;
+  }
+  .oc-btn-primary{
+    background:#020617;
+    color:#ffffff;
+    border-color:#020617;
+  }
+  .oc-btn-primary:hover{
+    background:#000000;
+    box-shadow:0 10px 28px rgba(15,23,42,.25);
+    transform:translateY(-1px);
+  }
+  .oc-btn-secondary{
+    background:#ffffff;
+    color:#111827;
+  }
+  .oc-btn-secondary:hover{
+    background:#f3f4f6;
+    box-shadow:0 6px 18px rgba(15,23,42,.1);
+    transform:translateY(-1px);
+  }
+
+  @media(max-width:600px){
+    .oc-actions{
+      flex-direction:column-reverse;
+      align-items:stretch;
+    }
+    .oc-actions .oc-btn{
+      width:100%;
+      justify-content:center;
+    }
+  }
+</style>
+
+
+<div class="oc-page">
+  <div class="oc-shell">
+
+    <header class="oc-header">
+      <h1 class="oc-title">Crear Orden de Compra</h1>
+      <p class="oc-sub">
+        Registra una nueva orden vinculando proveedor y bodega. Luego podrás recepcionarla y facturarla.
+      </p>
+    </header>
+
+    <section class="oc-card">
+      <form method="post" class="oc-form">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="oc-errors">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <!-- Número de orden -->
+        <div class="oc-field">
+          <label class="oc-label" for="{{ form.numero_orden.id_for_label }}">
+            {{ form.numero_orden.label }}
+          </label>
+          {{ form.numero_orden }}
+          {{ form.numero_orden.errors }}
+        </div>
+
+        <!-- Proveedor / Bodega -->
+        <div class="oc-grid-2">
+          <div class="oc-field">
+            <label class="oc-label" for="{{ form.proveedor.id_for_label }}">
+              {{ form.proveedor.label }}
+            </label>
+            {{ form.proveedor }}
+            {{ form.proveedor.errors }}
+          </div>
+
+          <div class="oc-field">
+            <label class="oc-label" for="{{ form.bodega.id_for_label }}">
+              {{ form.bodega.label }}
+            </label>
+            {{ form.bodega }}
+            {{ form.bodega.errors }}
+          </div>
+        </div>
+
+        <!-- Estado / Fecha esperada -->
+        <div class="oc-grid-2">
+          <div class="oc-field">
+            <label class="oc-label" for="{{ form.estado.id_for_label }}">
+              {{ form.estado.label }}
+            </label>
+            {{ form.estado }}
+            {{ form.estado.errors }}
+          </div>
+
+          <div class="oc-field">
+            <label class="oc-label" for="{{ form.fecha_esperada.id_for_label }}">
+              {{ form.fecha_esperada.label }}
+            </label>
+            {{ form.fecha_esperada }}
+            {{ form.fecha_esperada.errors }}
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="oc-actions">
+          <a href="{% url 'finanzas_reporte' %}" class="oc-btn oc-btn-secondary">
+            ← Volver
+          </a>
+          <button type="submit" class="oc-btn oc-btn-primary">
+            Guardar orden
+          </button>
+        </div>
+      </form>
+    </section>
+
+  </div>
+</div>
+
+{% endblock %}

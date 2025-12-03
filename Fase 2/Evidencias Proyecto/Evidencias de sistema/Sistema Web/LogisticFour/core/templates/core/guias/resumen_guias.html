@@ -1,0 +1,703 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Resumen de Guías de Despacho{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ink:#0f172a;
+    --muted:#6b7280;
+    --line:#e5e7eb;
+    --card:#ffffff;
+    --accent:#111827;
+    --accent-soft:#eef2ff;
+    --bg-page:#f3f4f6;
+    --ok:#16a34a;
+  }
+
+  /* 🔒 Evitar scroll horizontal global */
+  html, body{
+    max-width:100%;
+    overflow-x:hidden;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    background:radial-gradient(circle at top,#e0edff 0,#f9fafb 50%,#e5e7eb 100%);
+  }
+
+  /* ===== Layout general ===== */
+  .rg-shell{
+    max-width:1100px;
+    width:100%;
+    margin-inline:auto;
+    padding:18px 12px 26px;
+    display:grid;
+    gap:16px;
+    box-sizing:border-box;
+    animation:fadeInShell .35s ease-out;
+  }
+
+  @keyframes fadeInShell{
+    from{opacity:0;transform:translateY(8px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
+  .rg-head{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .rg-title{
+    font-size:clamp(1.3rem, 2.4vw, 1.7rem);
+    font-weight:800;
+    margin:0;
+    display:flex;
+    gap:.55rem;
+    align-items:center;
+  }
+
+  .rg-badge{
+    font-size:.7rem;
+    padding:3px 9px;
+    border-radius:999px;
+    background:var(--accent-soft);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#4b5563;
+    border:1px solid #c7d2fe;
+  }
+
+  .rg-sub{
+    margin:4px 0 0;
+    color:var(--muted);
+    font-size:.86rem;
+  }
+
+  .rg-meta{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    align-items:flex-end;
+  }
+
+  .rg-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.7);
+    background:#f9fafb;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+
+  .rg-dot{
+    width:7px;
+    height:7px;
+    border-radius:999px;
+    background:var(--ok);
+  }
+
+  .rg-chip-soft{
+    font-size:.74rem;
+    padding:3px 9px;
+    border-radius:999px;
+    background:#0f172a;
+    color:#e5e7eb;
+    border:1px solid rgba(148,163,184,.7);
+  }
+
+  /* ===== Tabs ===== */
+  .rg-tabs{
+    margin-top:10px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    width:100%;
+  }
+
+  .rg-tab{
+    padding:7px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#f9fafb;
+    font-size:.8rem;
+    font-weight:600;
+    color:var(--ink);
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    transition:.16s ease-in-out;
+    white-space:nowrap;
+    position:relative;
+    max-width:100%;
+  }
+
+  .rg-tab::before{
+    content:"";
+    width:6px;
+    height:6px;
+    border-radius:999px;
+    background:transparent;
+    transition:.16s ease-in-out;
+  }
+
+  .rg-tab:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 18px rgba(15,23,42,.10);
+    background:#ffffff;
+  }
+
+  .rg-tab.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+    box-shadow:0 10px 24px rgba(15,23,42,.18);
+  }
+
+  .rg-tab.active::before{
+    background:#22c55e;
+  }
+
+  .rg-tab span.count{
+    font-size:.68rem;
+    padding:2px 6px;
+    border-radius:999px;
+    background:#e5e7eb;
+  }
+  .rg-tab.active span.count{
+    background:#22c55e;
+    color:#052e16;
+  }
+
+  /* ===== Card + tabla ===== */
+  .rg-card{
+    background:var(--card);
+    border-radius:18px;
+    border:1px solid rgba(226,232,240,.95);
+    box-shadow:0 16px 40px rgba(15,23,42,.08);
+    padding:14px 14px 12px;
+    animation:fadeInCard .35s ease-out;
+  }
+
+  @keyframes fadeInCard{
+    from{opacity:0;transform:translateY(6px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
+  .rg-card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .rg-card-head small{
+    font-size:.78rem;
+    color:var(--muted);
+  }
+
+  .rg-card-head .hint{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:.74rem;
+    color:var(--muted);
+  }
+
+  .rg-card-head .hint span.ico{
+    font-size:.9rem;
+  }
+
+  .rg-table-wrap{
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:#fff;
+    position:relative;
+    overflow:hidden;
+    max-width:100%;
+  }
+
+  .rg-table-scroll{
+    width:100%;
+    overflow-x:auto;
+  }
+
+  table.rg-table{
+    width:100%;
+    /* ❌ sin min-width grande para no romper en móvil */
+    min-width:0;
+    border-collapse:collapse;
+    font-size:.86rem;
+    table-layout:auto;
+  }
+
+  .rg-table thead{
+    background:#f3f4f6;
+  }
+
+  .rg-table th,
+  .rg-table td{
+    padding:8px 10px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+    white-space:nowrap;
+  }
+
+  .rg-table th{
+    font-size:.76rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+
+  .rg-table tbody tr{
+    transition:.15s ease-in-out;
+    animation:rowIn .22s ease-out;
+  }
+
+  .rg-table tbody tr:hover{
+    background:#f9fafb;
+  }
+
+  @keyframes rowIn{
+    from{opacity:0;transform:translateY(2px);}
+    to{opacity:1;transform:none;}
+  }
+
+  .rg-id{
+    font-weight:600;
+    color:#111827;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  .rg-pill-tipo{
+    display:inline-flex;
+    align-items:center;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:.72rem;
+    background:#eef2ff;
+    color:#3730a3;
+    gap:4px;
+  }
+
+  .rg-pill-tipo::before{
+    content:"●";
+    font-size:.6rem;
+  }
+
+  .rg-origen,
+  .rg-destino{
+    font-weight:500;
+  }
+
+  .rg-origen small,
+  .rg-destino small{
+    color:var(--muted);
+    font-weight:400;
+  }
+
+  .rg-date-chip{
+    padding:3px 8px;
+    border-radius:999px;
+    background:#f3f4ff;
+    font-size:.78rem;
+  }
+
+  .rg-btn-ver{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:5px 10px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    font-size:.78rem;
+    text-decoration:none;
+    color:var(--ink);
+    background:#fff;
+    transition:.15s ease;
+    white-space:nowrap;
+  }
+
+  .rg-btn-ver span.icon{
+    font-size:.9rem;
+  }
+
+  .rg-btn-ver:hover{
+    background:var(--accent-soft);
+    transform:translateY(-1px);
+    box-shadow:0 6px 16px rgba(15,23,42,.10);
+  }
+
+  .rg-empty{
+    padding:10px 12px;
+    font-size:.86rem;
+    color:var(--muted);
+  }
+
+  /* ===== Paginador ===== */
+  .rg-paginator{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:12px;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .btn-group{
+    display:inline-flex;
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .btn{
+    border-radius:0;
+    border:1px solid var(--line);
+    padding:6px 12px;
+    font-size:.78rem;
+    background:#fff;
+    color:#ink;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    white-space:nowrap;
+    transition:background .15s,box-shadow .15s,transform .08s;
+  }
+  .btn:first-child{
+    border-radius:999px 0 0 999px;
+  }
+  .btn:last-child{
+    border-radius:0 999px 999px 0;
+  }
+  .btn-outline-secondary{
+    border-color:var(--line);
+  }
+  .btn-sm{
+    padding:5px 10px;
+    font-size:.76rem;
+  }
+  .btn:hover:not(:disabled){
+    background:#f9fafb;
+    transform:translateY(-1px);
+    box-shadow:0 6px 14px rgba(15,23,42,.08);
+  }
+  .btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+  }
+
+  .text-muted{
+    color:var(--muted);
+    font-size:.8rem;
+  }
+
+  /* ===== Ajustes móviles ===== */
+  @media(max-width:720px){
+    .rg-shell{
+      max-width:100%;
+      padding:14px 8px 20px;
+    }
+
+    .rg-head{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:6px;
+    }
+
+    .rg-title{
+      font-size:1.15rem;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:4px;
+    }
+
+    .rg-sub{
+      font-size:.8rem;
+    }
+
+    .rg-meta{
+      align-items:flex-start;
+    }
+
+    /* 👉 Tabs en columna, 100% del ancho */
+    .rg-tabs{
+      display:block;
+      max-width:100%;
+    }
+
+    .rg-tab{
+      display:flex;
+      width:100%;
+      max-width:100%;
+      margin-bottom:6px;
+      font-size:.75rem;
+      padding:6px 10px;
+      white-space:normal;      /* permite dos líneas */
+      text-align:center;
+      justify-content:center;
+    }
+
+    .rg-card{
+      padding:10px 8px 10px;
+      border-radius:12px;
+      box-shadow:0 10px 24px rgba(15,23,42,.06);
+    }
+
+    /* Modo "cards" en mobile */
+    .rg-table{
+      min-width:0;
+    }
+    .rg-table thead{
+      display:none;
+    }
+    .rg-table tbody{
+      display:grid;
+      gap:10px;
+    }
+    .rg-table tr{
+      display:grid;
+      gap:6px;
+      border-bottom:0;
+      padding:10px 10px 9px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#ffffff;
+    }
+    .rg-table td{
+      white-space:normal;
+      word-break:break-word;
+      border-bottom:0;
+      padding:0;
+      font-size:.82rem;
+    }
+    .rg-table td[data-label]::before{
+      content:attr(data-label) ": ";
+      font-weight:600;
+      color:var(--muted);
+      margin-right:4px;
+      font-size:.78rem;
+      text-transform:none;
+    }
+
+    .rg-btn-ver{
+      padding:4px 8px;
+      font-size:.72rem;
+    }
+
+    .rg-paginator{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:6px;
+    }
+
+    .text-muted{
+      font-size:.78rem;
+    }
+  }
+</style>
+
+<div class="rg-shell">
+  <header class="rg-head">
+    <div>
+      <h1 class="rg-title">
+        <span>Resumen de Guías de Despacho</span>
+        <span class="rg-badge">Transferencias</span>
+      </h1>
+      <p class="rg-sub">
+        Revisa rápidamente los movimientos entre bodegas y sucursales y accede a la guía detallada.
+      </p>
+
+      <!-- TABS: tipos de movimiento -->
+      <nav class="rg-tabs" aria-label="Filtrar por tipo de movimiento">
+        <a href="{% url 'resumen_guias_despacho' %}"
+           class="rg-tab {% if not tipo_sel or tipo_sel == 'TODOS' %}active{% endif %}">
+          Todos
+          {% if transferencias.paginator %}<span class="count">{{ transferencias.paginator.count }}</span>{% endif %}
+        </a>
+        <a href="{% url 'resumen_guias_despacho' %}?tipo=BOD_BOD"
+           class="rg-tab {% if tipo_sel == 'BOD_BOD' %}active{% endif %}">
+          Bodega → Bodega
+        </a>
+        <a href="{% url 'resumen_guias_despacho' %}?tipo=BOD_SUC"
+           class="rg-tab {% if tipo_sel == 'BOD_SUC' %}active{% endif %}">
+          Bodega → Sucursal
+        </a>
+        <a href="{% url 'resumen_guias_despacho' %}?tipo=SUC_BOD"
+           class="rg-tab {% if tipo_sel == 'SUC_BOD' %}active{% endif %}">
+          Sucursal → Bodega
+        </a>
+        <a href="{% url 'resumen_guias_despacho' %}?tipo=SUC_SUC"
+           class="rg-tab {% if tipo_sel == 'SUC_SUC' %}active{% endif %}">
+          Sucursal ↔ Sucursal
+        </a>
+      </nav>
+    </div>
+
+    <div class="rg-meta">
+      <span class="rg-chip">
+        <span class="rg-dot"></span>
+        Listado actualizado
+      </span>
+      {% if tipo_sel and tipo_sel != 'TODOS' %}
+        <span class="rg-chip-soft">
+          Filtro activo: {{ tipo_sel }}
+        </span>
+      {% else %}
+        <span class="rg-chip-soft">
+          Mostrando todos los tipos
+        </span>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="rg-card">
+    <div class="rg-card-head">
+      <small>
+        Mostrando {{ transferencias|length }} guía{{ transferencias|length|pluralize:"s" }} en esta página.
+      </small>
+      <div class="hint">
+        <span class="ico">💡</span>
+        <span>En pantalla pequeña se muestran como tarjetas por guía.</span>
+      </div>
+    </div>
+
+    <div class="rg-table-wrap">
+      <div class="rg-table-scroll">
+        <table class="rg-table">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Tipo</th>
+              <th>Origen</th>
+              <th>Destino</th>
+              <th>Fecha</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transferencias %}
+              <tr>
+                <td class="rg-id" data-label="N°">#{{ t.numero_guia|default:t.id }}</td>
+
+                <td data-label="Tipo">
+                  <span class="rg-pill-tipo">
+                    {% if t.tipo_movimiento %}
+                      {% if t.tipo_movimiento == "BOD_BOD" %}
+                        Bodega → Bodega
+                      {% elif t.tipo_movimiento == "BOD_SUC" %}
+                        Bodega → Sucursal
+                      {% elif t.tipo_movimiento == "SUC_BOD" %}
+                        Sucursal → Bodega
+                      {% elif t.tipo_movimiento == "SUC_SUC" %}
+                        Sucursal ↔ Sucursal
+                      {% else %}
+                        Otro
+                      {% endif %}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </span>
+                </td>
+
+                <td class="rg-origen" data-label="Origen">
+                  {% if t.bodega_origen %}
+                    {{ t.bodega_origen.nombre }}
+                    <small>(Bodega)</small>
+                  {% elif t.sucursal_origen %}
+                    {{ t.sucursal_origen.nombre }}
+                    <small>(Sucursal)</small>
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+
+                <td class="rg-destino" data-label="Destino">
+                  {% if t.bodega_destino %}
+                    {{ t.bodega_destino.nombre }}
+                    <small>(Bodega)</small>
+                  {% elif t.sucursal_destino %}
+                    {{ t.sucursal_destino.nombre }}
+                    <small>(Sucursal)</small>
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+
+                <td data-label="Fecha">
+                  <span class="rg-date-chip">
+                    {{ t.fecha_emision|default:t.creado_en|date:"d/m/Y" }}
+                  </span>
+                </td>
+
+                <td data-label="Acción">
+                  <a href="{% url 'detalle_transferencia' t.id %}"
+                     class="rg-btn-ver"
+                     rel="noopener">
+                    <span class="icon">📄</span>
+                    <span>Ver guía</span>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="rg-empty">
+                  No hay guías de despacho registradas para este tipo de movimiento.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if transferencias.has_other_pages %}
+      <div class="rg-paginator">
+        <div class="btn-group" role="group">
+          {% if transferencias.has_previous %}
+            <a class="btn btn-outline-secondary btn-sm"
+               href="?page={{ transferencias.previous_page_number }}{% if tipo_sel %}&tipo={{ tipo_sel }}{% endif %}">
+              ← Anterior
+            </a>
+          {% else %}
+            <button class="btn btn-outline-secondary btn-sm" disabled>
+              ← Anterior
+            </button>
+          {% endif %}
+
+          {% if transferencias.has_next %}
+            <a class="btn btn-outline-secondary btn-sm"
+               href="?page={{ transferencias.next_page_number }}{% if tipo_sel %}&tipo={{ tipo_sel }}{% endif %}">
+              Siguiente →
+            </a>
+          {% else %}
+            <button class="btn btn-outline-secondary btn-sm" disabled>
+              Siguiente →
+            </button>
+          {% endif %}
+        </div>
+
+        <span class="text-muted">
+          Página {{ transferencias.number }} de {{ transferencias.paginator.num_pages }}
+        </span>
+      </div>
+    {% endif %}
+  </section>
+</div>
+
+{% endblock %}

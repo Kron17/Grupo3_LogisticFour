@@ -7,7 +7,7 @@ urlpatterns = [
     # App principal
     path("", views.dashboard, name="dashboard"),
     path("productos/", views.product_list, name="products"),
-    path("productos/", views.product_list, name="products"),
+   
     path("category/<slug:slug>/", views.category, name="category"),
     path("products/add/", views.product_add, name="product_add"),
     path("productos/<int:pk>/etiqueta/", views.etiqueta_producto, name="etiqueta_producto"),
@@ -44,7 +44,7 @@ urlpatterns = [
 
     #codigo QR producto
     path("productos/", views.ProductsListView.as_view(), name="products"),
-    path("productos/agregar/", views.ProductCreateView.as_view(), name="product_add"),
+    
     path("productos/<int:pk>/editar/", views.ProductUpdateView.as_view(), name="producto-update"),
     path("productos/<slug:sku>/editar/", views.ProductUpdateView.as_view(), name="producto-update-sku"),
     path("productos/<int:pk>/eliminar/", views.ProductDeleteView.as_view(), name="producto-delete"),
@@ -106,27 +106,14 @@ urlpatterns = [
     path("finanzas/", views.finanzas_reporte, name="finanzas_reporte"),
     path("finanzas/export/excel/", views.finanzas_export_excel, name="finanzas_export_excel"),
     path("finanzas/export/pdf/",   views.finanzas_export_pdf,   name="finanzas_export_pdf"),
-    
-    # Cambio de moneda
+
     path("set-currency/", set_currency, name="set_currency"),
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    path('finanzas/crear/orden-compra/', views.crear_orden_compra, name='crear_orden_compra'),
+    path('finanzas/crear/factura-proveedor/', views.crear_factura_proveedor, name='crear_factura_proveedor'),
+    path('finanzas/crear/recepcion/', views.crear_recepcion, name='crear_recepcion'),
 
 
 
@@ -150,17 +137,18 @@ urlpatterns = [
 
 
 
+    path('bodegas/<int:bodega_id>/agregar-sucursal/', views.bodega_agregar_sucursal, name='bodega-agregar-sucursal'),
 
 
 
 
+    path("bodegas/<int:bodega_id>/productos/", views.bodega_productos, name="bodega-productos"),
+    path("ajax/ubicaciones-por-producto/", views.ajax_ubicaciones_por_producto, name="ajax_ubicaciones_por_producto"),
+    path("guias/transferencia/<int:pk>/",views.guia_transferencia_detalle,name="detalle_transferencia",),    
 
 
 
-
-
-
-
+    path("guias/resumen/",views.resumen_guias_despacho,name="resumen_guias_despacho",),
 
 
 
@@ -168,5 +156,112 @@ urlpatterns = [
     path("api/geocode/", views.geocode, name="geocode"),
     path("api/paypal/stock-in/", views.paypal_stock_in, name="paypal-stock-in"),
     path("paypal/ingresos/", views.paypal_ingresos_view, name="paypal-ingresos"),   
+
+
+    path(
+        "bodegas/ubicaciones/nueva/",
+        views.agregar_ubicacion_bodega,
+        name="ubicacion-bodega-create",
+    ),
+    path(
+    "bodegas/<int:bodega_id>/ubicaciones/nueva/",
+    views.agregar_ubicacion_bodega,
+    name="ubicacion-bodega-create",
+    ),
+
+    path(
+        "productos/<int:producto_id>/mover-ubicacion/",
+        views.mover_producto_ubicacion,
+        name="producto-mover-ubicacion",
+    ),
+    path(
+    "bodegas/<int:bodega_id>/ubicaciones/nueva/",
+    views.agregar_ubicacion_bodega,
+    name="ubicacion-bodega-create-bodega",
+    ),
+    path(
+        "ajax/asignar-producto-ubicacion/",
+        views.ajax_asignar_producto_ubicacion,
+        name="ajax-asignar-producto-ubicacion",
+    ),
+
+
+
+
+
+    path(
+    "ajax/validar-stock-ubicacion/",
+    views.ajax_validar_stock_ubicacion,
+    name="ajax-validar-stock-ubicacion",
+    ),
+
+
+    path(
+        "bodegas/<int:bodega_id>/validar-stock/",
+        views.validar_stock_bodega,
+        name="validar-stock-bodega",
+    ),
+
+
+    
+
+    path(
+        "stock/sucursal/<int:sucursal_id>/",
+        views.ver_stock_sucursal,
+        name="sucursal-productos",
+    ),   
+
+
+    path(
+        "ajax/asignar-producto-ubicacion-sucursal/",
+        views.ajax_asignar_producto_ubicacion_sucursal,
+        name="ajax-asignar-producto-ubicacion-sucursal",
+    ),
+
+    path(
+        "ajax/validar-stock-ubicacion-sucursal/",
+        views.ajax_validar_stock_ubicacion_sucursal,
+        name="ajax-validar-stock-ubicacion-sucursal",
+    ),
+
+    path(
+        "ajax/ubicaciones-sucursal-por-producto/",
+        views.ajax_ubicaciones_sucursal_por_producto,
+        name="ajax-ubicaciones-sucursal-por-producto",
+    ),
+
+
+
+
+    path(
+        "sucursales/<int:sucursal_id>/ubicaciones/agregar/",
+        views.agregar_ubicacion_sucursal,
+        name="sucursal-ubicacion-add",
+    ),
+    path(
+        "stock/sucursal/<int:sucursal_id>/validar/",
+        views.validar_stock_sucursal,
+        name="validar-stock-sucursal",
+    ),    
+    path(
+        "sucursales/<int:sucursal_id>/escanear-qr/",
+        views.escanear_qr_sucursal,
+        name="escanear_qr_sucursal",
+    ),
+    path(
+        "bodegas/<int:bodega_id>/escanear-qr/",
+        views.escanear_qr_bodega,
+        name="escanear-qr-bodega",
+    ),
+
+
+
+
+
+
+    path("paypal/ingresos/", views.paypal_ingresos_view, name="paypal-ingresos"),
+    # urls.py
+    path("catalogo/centro/", views.centro_catalogo, name="centro-catalogo"),
+   
 ]
 

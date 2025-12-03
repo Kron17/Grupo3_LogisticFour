@@ -1,0 +1,523 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Guía de Despacho {{ transferencia.numero_guia|default:transferencia.id }}{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --ink:#0f172a;
+    --muted:#6b7280;
+    --line:#e5e7eb;
+    --card:#ffffff;
+    --accent:#111827;
+    --accent-soft:#f3f4ff;
+    --badge:#111827;
+  }
+
+  html, body{
+    max-width:100%;
+    overflow-x:hidden;
+  }
+
+  *{
+    box-sizing:border-box;
+  }
+
+  .gd-shell{
+    max-width: 820px;          /* ⬅ un poco más angosto que antes */
+    width:100%;
+    margin: 0 auto;
+    padding: 20px 18px 32px;
+    background:#f9fafb;
+  }
+
+  .gd-toolbar{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+
+  .gd-btn{
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#fff;
+    font-size:.8rem;
+    padding:6px 12px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    text-decoration:none;
+    color:var(--ink);
+    transition:.15s ease;
+    white-space:nowrap;
+  }
+
+  .gd-btn:hover{
+    background:#f3f4ff;
+    transform:translateY(-1px);
+    box-shadow:0 8px 18px rgba(15,23,42,.10);
+  }
+
+  .gd-page{
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 18px 45px rgba(15,23,42,.08);
+    padding: 24px 26px 26px;
+    width:100%;
+    max-width:100%;
+  }
+
+  .gd-header{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:14px;
+    margin-bottom:18px;
+  }
+
+  .gd-brand{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+
+  .gd-brand-title{
+    font-size:1.35rem;
+    font-weight:800;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+
+  .gd-brand-sub{
+    font-size:.8rem;
+    color:var(--muted);
+  }
+
+  .gd-doc-meta{
+    text-align:right;
+    font-size:.85rem;
+  }
+
+  .gd-doc-title{
+    font-size:1.3rem;
+    font-weight:700;
+    margin-bottom:4px;
+  }
+
+  .gd-badge{
+    display:inline-flex;
+    padding:2px 10px;
+    border-radius:999px;
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    background:var(--badge);
+    color:#fff;
+  }
+
+  .gd-meta-table{
+    margin-top:6px;
+  }
+
+  .gd-meta-table td{
+    padding:1px 0;
+  }
+
+  .gd-meta-label{
+    color:var(--muted);
+    padding-right:8px;
+    white-space:nowrap;
+  }
+
+  .gd-section{
+    margin-bottom:16px;
+  }
+
+  .gd-section-title{
+    font-size:.9rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+
+  .gd-block{
+    border-radius:10px;
+    border:1px solid var(--line);
+    padding:10px 12px;
+    background:#f9fafb;
+    font-size:.88rem;
+  }
+
+  .gd-block-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px 32px;
+  }
+
+  .gd-block-item{
+    min-width:200px;
+  }
+
+  .gd-block-item label{
+    display:block;
+    font-size:.75rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    margin-bottom:2px;
+  }
+
+  .gd-block-item span{
+    color:var(--ink);
+    font-weight:500;
+  }
+
+  /* ⬇ contenedor y tabla más estrechos en desktop */
+  .gd-table-wrap{
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:#fff;
+    max-width:720px;           /* ⬅ límite para el ancho del detalle */
+    margin:0 auto;             /* centrado */
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .gd-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.87rem;
+    table-layout:auto;
+  }
+
+  .gd-table thead{
+    background:#f3f4f6;
+  }
+
+  .gd-table th,
+  .gd-table td{
+    padding:8px 10px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+    white-space:nowrap;
+  }
+
+  .gd-table th{
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+
+  .gd-table tbody tr:nth-child(even){
+    background:#f9fafb;
+  }
+
+  .gd-table tfoot td{
+    font-weight:600;
+    background:#f3f4f6;
+  }
+
+  .gd-footer{
+    display:flex;
+    justify-content:space-between;
+    gap:24px;
+    margin-top:28px;
+    font-size:.8rem;
+    color:var(--muted);
+    flex-wrap:wrap;
+  }
+
+  .gd-firmas{
+    display:flex;
+    gap:40px;
+    margin-top:20px;
+  }
+
+  .gd-firma-box{
+    flex:1;
+    text-align:center;
+    font-size:.8rem;
+  }
+
+  .gd-firma-line{
+    margin-top:40px;
+    border-top:1px solid var(--line);
+    padding-top:4px;
+  }
+
+  /* ===== IMPRESIÓN ===== */
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  @media print {
+    body { background:#fff !important; }
+    body * { visibility:hidden; }
+
+    .gd-print-area,
+    .gd-print-area * {
+      visibility:visible;
+    }
+
+    .gd-print-area {
+      position:absolute;
+      inset:0;
+      margin:0 !important;
+      padding:0 !important;
+    }
+
+    .gd-page {
+      box-shadow:none !important;
+      border:none !important;
+      padding:8px 10px 10px !important;
+    }
+
+    .gd-toolbar{ display:none !important; }
+
+    .gd-header{
+      margin-bottom:10px !important;
+      padding-bottom:8px !important;
+    }
+
+    .gd-section{ margin-bottom:8px !important; }
+
+    .gd-block{ padding:6px 8px !important; }
+
+    .gd-table th,
+    .gd-table td{
+      padding:4px 6px !important;
+    }
+
+    .gd-firmas{
+      margin-top:12px !important;
+      gap:20px !important;
+    }
+
+    .gd-firma-line{ margin-top:28px !important; }
+
+    .gd-footer{ margin-top:12px !important; }
+  }
+
+  @media(max-width:640px){
+    .gd-shell{
+      padding:16px 10px 24px;
+    }
+
+    .gd-page{
+      padding:18px 14px 20px;
+      border-radius:12px;
+      box-shadow:0 12px 30px rgba(15,23,42,.06);
+    }
+
+    .gd-header{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:10px;
+    }
+
+    .gd-doc-meta{
+      text-align:left;
+    }
+
+    .gd-block-row{
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .gd-block-item{
+      min-width:0;
+    }
+
+    .gd-table-wrap{
+      max-width:100%;   /* en móvil vuelve a usar todo el ancho disponible */
+    }
+
+    .gd-table th,
+    .gd-table td{
+      font-size:.8rem;
+      padding:6px 8px;
+    }
+
+    .gd-firmas{
+      flex-direction:column;
+      gap:20px;
+    }
+
+    .gd-firma-line{
+      margin-top:28px;
+    }
+
+    .gd-toolbar{
+      justify-content:flex-start;
+    }
+  }
+</style>
+
+<div class="gd-shell gd-print-area">
+
+  <div class="gd-toolbar">
+    <button type="button" class="gd-btn" onclick="window.history.back()">
+      ← Volver
+    </button>
+    <button type="button" class="gd-btn" onclick="window.print()">
+      🖨 Imprimir guía
+    </button>
+  </div>
+
+  <div class="gd-page">
+    <!-- ENCABEZADO -->
+    <header class="gd-header">
+      <div class="gd-brand">
+        <div class="gd-brand-title">LOGISTIC FOUR</div>
+        <div class="gd-brand-sub">Sistema de Gestión de Inventario</div>
+        <div class="gd-brand-sub">
+          Emitido por: {{ transferencia.creado_por.get_full_name|default:transferencia.creado_por.username|default:"Usuario sistema" }}
+        </div>
+      </div>
+      <div class="gd-doc-meta">
+        <div class="gd-doc-title">Guía de Despacho</div>
+        <div class="gd-badge">
+          N° {{ transferencia.numero_guia|default:transferencia.id }}
+        </div>
+        <table class="gd-meta-table">
+          <tr>
+            <td class="gd-meta-label">Fecha emisión</td>
+            <td>
+              {{ transferencia.fecha_emision|default:transferencia.creado_en|date:"d/m/Y" }}
+            </td>
+          </tr>
+          <tr>
+            <td class="gd-meta-label">Estado</td>
+            <td>{{ transferencia.estado|default:"CONFIRMADA" }}</td>
+          </tr>
+        </table>
+      </div>
+    </header>
+
+    <!-- ORIGEN / DESTINO -->
+    <section class="gd-section">
+      <h2 class="gd-section-title">Datos de traslado</h2>
+      <div class="gd-block">
+        <div class="gd-block-row">
+          <div class="gd-block-item">
+            <label>Origen</label>
+            <span>
+              {% if transferencia.bodega_origen %}
+                {{ transferencia.bodega_origen.nombre }}
+                {% if transferencia.bodega_origen.codigo %}
+                  ({{ transferencia.bodega_origen.codigo }})
+                {% endif %}
+              {% elif transferencia.sucursal_origen %}
+                {{ transferencia.sucursal_origen.nombre }}
+                {% if transferencia.sucursal_origen.codigo %}
+                  ({{ transferencia.sucursal_origen.codigo }})
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </span>
+          </div>
+
+          <div class="gd-block-item">
+            <label>Destino</label>
+            <span>
+              {% if transferencia.bodega_destino %}
+                {{ transferencia.bodega_destino.nombre }}
+                {% if transferencia.bodega_destino.codigo %}
+                  ({{ transferencia.bodega_destino.codigo }})
+                {% endif %}
+              {% elif transferencia.sucursal_destino %}
+                {{ transferencia.sucursal_destino.nombre }}
+                {% if transferencia.sucursal_destino.codigo %}
+                  ({{ transferencia.sucursal_destino.codigo }})
+                {% endif %}
+              {% else %}
+                — Sin destino registrado —
+              {% endif %}
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- DETALLE PRODUCTOS -->
+    <section class="gd-section">
+      <h2 class="gd-section-title">Detalle de productos</h2>
+      <div class="gd-table-wrap">
+        <table class="gd-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>SKU</th>
+              <th style="text-align:right;">Cantidad</th>
+              <th>Unidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for linea in transferencia.lineas.all %}
+              <tr>
+                <td>{{ linea.producto.nombre }}</td>
+                <td>{{ linea.producto.sku }}</td>
+                <td style="text-align:right;">{{ linea.cantidad|floatformat:0 }}</td>
+                <td>{{ linea.unidad.codigo }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4">No hay líneas asociadas a esta transferencia.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">
+                Total ítems: {{ total_cantidad|floatformat:0 }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- FIRMAS -->
+    <section class="gd-section">
+      <h2 class="gd-section-title">Firmas</h2>
+      <div class="gd-firmas">
+        <div class="gd-firma-box">
+          <div class="gd-firma-line">
+            Firma entrega<br>
+            Nombre / Rut / Cargo
+          </div>
+        </div>
+        <div class="gd-firma-box">
+          <div class="gd-firma-line">
+            Firma recepción<br>
+            Nombre / Rut / Cargo
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PIE -->
+    <footer class="gd-footer">
+      <div>
+        Documento generado por LogisticFour<br>
+        Fecha y hora: {{ transferencia.creado_en|date:"d/m/Y H:i" }}
+      </div>
+      <div>
+        ID interno: {{ transferencia.id }}<br>
+        Uso interno – no válido como documento tributario.
+      </div>
+    </footer>
+  </div>
+</div>
+{% endblock %}

@@ -5,241 +5,856 @@
 
 {% block content %}
 <style>
-  :root{ --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --card:#fff; --head:#f8fafc; --pri:#111827; --pri-ink:#fff; }
-  .auditoria-wrap{display:grid; gap:16px;}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px;}
-  .tabs{display:flex; gap:8px; flex-wrap:wrap}
-  .tab{padding:8px 12px; border:1px solid var(--line); border-radius:999px; cursor:pointer; user-select:none}
-  .tab.active{background:var(--pri); color:var(--pri-ink); border-color:var(--pri)}
-  .table{width:100%; border-collapse:collapse; font-size:14px}
-  .table th,.table td{border-bottom:1px solid var(--line); padding:8px; vertical-align:top}
-  .sub{color:var(--muted); font-size:12px}
-  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-  @media (max-width: 860px){ .grid-2{grid-template-columns:1fr} }
+  :root{
+    --ink:#0f172a;
+    --muted:#64748b;
+    --line:#e2e8f0;
+    --card:#ffffff;
+    --head:#f8fafc;
+    --pri:#111827;
+    --pri-ink:#ffffff;
+    --accent-soft:#eef2ff;
+    --bg-page:#f3f4f6;
+    --ok:#16a34a;
+    --warn:#f97316;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    background:radial-gradient(circle at top,#e0edff 0,#f9fafb 50%,#e5e7eb 100%);
+  }
+
+  /* Contenedor general */
+  .audit-shell{
+    max-width:1180px;
+    margin:0 auto;
+    padding:18px 16px 24px;
+    display:grid;
+    gap:16px;
+    animation:auditFade .28s ease-out both;
+  }
+  @media (max-width:768px){
+    .audit-shell{ padding:14px 10px 20px; }
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid rgba(226,232,240,.95);
+    border-radius:18px;
+    padding:14px 16px 16px;
+    box-shadow:0 18px 42px rgba(15,23,42,.06);
+    animation:cardIn .3s ease-out both;
+  }
+
+  /* ===== Header / filtros ===== */
+  .audit-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .audit-title{
+    margin:0;
+    font-size:clamp(1.2rem,1.05rem + .3vw,1.45rem);
+    font-weight:800;
+    letter-spacing:.03em;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+  }
+  .audit-title-pill{
+    font-size:.68rem;
+    padding:3px 9px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.6);
+    background:var(--accent-soft);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#4b5563;
+  }
+  .audit-sub{
+    margin:2px 0 0;
+    font-size:.8rem;
+    color:var(--muted);
+  }
+
+  .audit-meta{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:6px;
+  }
+
+  .audit-badge{
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.5);
+    background:var(--head);
+    font-size:.7rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    white-space:nowrap;
+    color:var(--muted);
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .audit-dot{
+    width:7px;
+    height:7px;
+    border-radius:999px;
+    background:#22c55e;
+  }
+  .audit-badge-secondary{
+    font-size:.72rem;
+    padding:3px 8px;
+    border-radius:999px;
+    background:#0f172a;
+    color:#e5e7eb;
+    border:1px solid rgba(148,163,184,.6);
+  }
+
+  /* ===== Filtros ===== */
+  .filter-row{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    margin-top:6px;
+  }
+
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:100px;
+    flex:1 1 100px;
+  }
+
+  .field-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    font-weight:600;
+  }
+
+  .field-control{
+    position:relative;
+  }
+
+  .field-input{
+    width:100%;
+    border-radius:999px;
+    border:1px solid var(--line);
+    padding:8px 36px 8px 12px;
+    font-size:13px;
+    background:#f9fafb;
+    outline:none;
+    color:var(--ink);
+    transition:border-color .15s, box-shadow .15s, background .15s, transform .1s;
+  }
+
+  .field-input:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 1px rgba(37,99,235,.18);
+    background:#ffffff;
+    transform:translateY(-1px);
+  }
+
+  .field-control--date::after{
+    content:"📅";
+    position:absolute;
+    right:10px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:13px;
+    opacity:.6;
+    pointer-events:none;
+  }
+
+  .field-control--select::after{
+    content:"▾";
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:11px;
+    opacity:.6;
+    pointer-events:none;
+  }
+
+  .field-control--select select{
+    appearance:none;
+  }
+
+  /* Botones filtros */
+  .btn-filter{
+    border-radius:999px;
+    padding:8px 16px;
+    font-size:13px;
+    border:1px solid var(--line);
+    background:#f9fafb;
+    color:var(--ink);
+    cursor:pointer;
+    font-weight:500;
+    transition:background .15s,border-color .15s,transform .05s,box-shadow .15s;
+    text-decoration:none;
+    display:inline-flex;
+    gap:6px;
+    align-items:center;
+    white-space:nowrap;
+  }
+
+  .btn-filter-primary{
+    background:var(--pri);
+    color:var(--pri-ink);
+    border-color:var(--pri);
+  }
+
+  .btn-filter:hover{
+    transform:translateY(-1px);
+    box-shadow:0 7px 20px rgba(15,23,42,.08);
+    background:#ffffff;
+  }
+  .btn-filter-primary:hover{
+    background:#020617;
+  }
+
+  @media (max-width:720px){
+    .audit-head{ flex-direction:column; align-items:flex-start; }
+    .audit-meta{ align-items:flex-start; }
+    .filter-row{ gap:10px; }
+  }
+
+  /* ===== Tabs superiores ===== */
+  .tabs-wrap{
+    position:sticky;
+    top:0;
+    z-index:5;
+    padding-bottom:4px;
+    margin:-4px -4px 4px;
+    background:linear-gradient(180deg,rgba(248,250,252,.96) 0,#ffffff 30%,transparent 100%);
+    backdrop-filter:blur(5px);
+  }
+
+  .tabs{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    padding:4px 4px 2px;
+  }
+  .tab{
+    position:relative;
+    padding:7px 12px;
+    border-radius:999px;
+    font-size:13px;
+    cursor:pointer;
+    user-select:none;
+    border:1px solid transparent;
+    color:var(--muted);
+    background:transparent;
+    transition:background .15s,color .15s,border-color .15s,transform .08s;
+  }
+  .tab::after{
+    content:"";
+    position:absolute;
+    left:16px;
+    right:16px;
+    bottom:4px;
+    height:2px;
+    border-radius:999px;
+    background:transparent;
+    transform:scaleX(0);
+    transform-origin:center;
+    transition:.18s ease;
+  }
+  .tab span.badge-count{
+    font-size:.7rem;
+    padding:2px 7px;
+    border-radius:999px;
+    background:#e5e7eb;
+    margin-left:4px;
+  }
+  .tab:hover{
+    transform:translateY(-1px);
+    background:var(--head);
+  }
+  .tab.active{
+    background:var(--pri);
+    color:var(--pri-ink);
+    border-color:var(--pri);
+  }
+  .tab.active span.badge-count{
+    background:#22c55e;
+    color:#052e16;
+  }
+  .tab.active::after{
+    background:#22c55e;
+    transform:scaleX(1);
+  }
+
+  /* ===== Tab content & tablas ===== */
+  .tab-pane{
+    margin-top:8px;
+    animation:tabIn .22s ease-out;
+  }
+
+  .table-shell{
+    border-radius:14px;
+    border:1px solid var(--line);
+    overflow:hidden;
+    background:#ffffff;
+    box-shadow:0 10px 28px rgba(15,23,42,.03);
+  }
+
+  .table-shell h4{
+    margin:8px 10px 4px;
+    font-size:.9rem;
+    font-weight:700;
+    color:var(--ink);
+  }
+
+  .table-scroll{
+    width:100%;
+    overflow-x:auto;
+  }
+
+  .table{
+    width:100%;
+    min-width:820px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+  }
+  .table th,.table td{
+    border-bottom:1px solid var(--line);
+    padding:8px 10px;
+    vertical-align:top;
+  }
+  .table thead th{
+    background:var(--head);
+    position:sticky;
+    top:0;
+    z-index:1;
+    font-weight:600;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .table tbody tr{
+    animation:rowIn .2s ease-out both;
+  }
+  .table tbody tr:hover{
+    background:#f9fafb;
+  }
+  .table td.num{
+    text-align:right;
+    white-space:nowrap;
+  }
+
+  .sub{
+    color:var(--muted);
+    font-size:12px;
+  }
+
+  .grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+
+  @media (max-width:960px){
+    .grid-2{
+      grid-template-columns:1fr;
+    }
+  }
+
+  /* Hint de scroll horizontal en mobile */
+  .scroll-hint{
+    font-size:.72rem;
+    color:var(--muted);
+    margin:6px 2px 0;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+
+  /* Paginación (estilizamos Bootstrap-like) */
+  .pagination-container{
+    margin-top:10px;
+    padding-top:8px;
+    border-top:1px dashed var(--line);
+  }
+
+  .d-flex{
+    display:flex;
+  }
+  .justify-content-between{
+    justify-content:space-between;
+  }
+  .align-items-center{
+    align-items:center;
+  }
+  .mt-2{ margin-top:.5rem; }
+  .flex-wrap{ flex-wrap:wrap; }
+  .gap-2{ gap:.5rem; }
+
+  .btn-group{
+    display:inline-flex;
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .btn{
+    border-radius:0;
+    border:1px solid var(--line);
+    padding:6px 12px;
+    font-size:.78rem;
+    background:#fff;
+    color:var(--ink);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    white-space:nowrap;
+    transition:background .15s,box-shadow .15s,transform .08s;
+  }
+  .btn:first-child{
+    border-radius:999px 0 0 999px;
+  }
+  .btn:last-child{
+    border-radius:0 999px 999px 0;
+  }
+  .btn-outline-secondary{
+    border-color:var(--line);
+  }
+  .btn:hover:not(:disabled){
+    background:#f9fafb;
+    transform:translateY(-1px);
+    box-shadow:0 6px 14px rgba(15,23,42,.08);
+  }
+  .btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+  }
+
+  /* Animaciones */
+  @keyframes auditFade{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:none;}
+  }
+  @keyframes cardIn{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:none;}
+  }
+  @keyframes tabIn{
+    from{opacity:0;transform:translateY(4px);}
+    to{opacity:1;transform:none;}
+  }
+  @keyframes rowIn{
+    from{opacity:0;transform:translateY(2px);}
+    to{opacity:1;transform:none;}
+  }
+
+  /* Ajuste calendarios en móvil */
+  @media (max-width:500px){
+    .field-date{
+      flex:1 1 100%;
+      min-width:0;
+    }
+
+    .field-date .field-input{
+      width:min(260px,100%);
+      margin-inline:auto;
+    }
+  }
 </style>
 
-<div class="auditoria-wrap">
+<div class="audit-shell">
+
+  <!-- Filtros / cabecera -->
   <div class="card">
-    <h2 style="margin:0 0 8px">Auditoría de Inventario</h2>
-    <form method="get" style="display:flex; gap:8px; flex-wrap:wrap; align-items:end">
+    <div class="audit-head">
       <div>
-        <label class="sub">Desde</label>
-        <input type="date" name="desde" value="{{ desde|date:'Y-m-d' }}">
+        <h2 class="audit-title">
+          <span>Auditoría de Inventario</span>
+          <span class="audit-title-pill">Inventario</span>
+        </h2>
+        <p class="audit-sub">
+          Revisa movimientos, ajustes, recuentos y reservas en el rango seleccionado.
+        </p>
       </div>
-      <div>
-        <label class="sub">Hasta</label>
-        <input type="date" name="hasta" value="{{ hasta|date:'Y-m-d' }}">
+      <div class="audit-meta">
+        <span class="audit-badge">
+          <span class="audit-dot"></span>
+          Rango activo · {{ desde|date:"Y-m-d" }} → {{ hasta|date:"Y-m-d" }}
+        </span>
+        <span class="audit-badge-secondary">
+          {% if producto_id %}
+            Filtrado por producto ID {{ producto_id }}
+          {% else %}
+            Mostrando todos los productos
+          {% endif %}
+        </span>
       </div>
-      <div>
-        <label class="sub">Producto</label>
-        <select name="producto_id">
-          <option value="">— Todos —</option>
-          {% for p in productos %}
-            <option value="{{ p.id }}" {% if producto_id == p.id %}selected{% endif %}>{{ p.nombre }}</option>
-          {% endfor %}
-        </select>
+    </div>
+
+    <form method="get" class="filter-row">
+<div class="field field-date">
+  <span class="field-label">Desde</span>
+  <div class="field-control field-control--date">
+    <input
+      type="date"
+      name="desde"
+      class="field-input"
+      value="{{ desde|date:'Y-m-d' }}">
+  </div>
+</div>
+
+<div class="field field-date">
+  <span class="field-label">Hasta</span>
+  <div class="field-control field-control--date">
+    <input
+      type="date"
+      name="hasta"
+      class="field-input"
+      value="{{ hasta|date:'Y-m-d' }}">
+  </div>
+</div>
+
+
+      <div class="field" style="min-width:220px">
+        <span class="field-label">Producto</span>
+        <div class="field-control field-control--select">
+          <select name="producto_id" class="field-input">
+            <option value="">— Todos —</option>
+            {% for p in productos %}
+              <option value="{{ p.id }}" {% if producto_id == p.id %}selected{% endif %}>{{ p.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
-      <button class="tab active" type="submit">Aplicar filtros</button>
-      <a class="tab" href="{% url 'auditoria_inventario' %}">Limpiar</a>
+
+      <button class="btn-filter btn-filter-primary" type="submit">
+        Aplicar filtros
+      </button>
+
+      <a class="btn-filter" href="{% url 'auditoria_inventario' %}">
+        Limpiar
+      </a>
     </form>
   </div>
 
+  <!-- Tabs + contenido -->
   <div class="card">
-    <div class="tabs" id="tabs">
-      <div class="tab active" data-tab="movs">Movimientos</div>
-      <div class="tab" data-tab="ajustes">Ajustes</div>
-      <div class="tab" data-tab="recuentos">Recuentos</div>
-      <div class="tab" data-tab="reservas">Reservas</div>
+    <div class="tabs-wrap">
+      <div class="tabs" id="tabs">
+        <button type="button" class="tab active" data-tab="movs">
+          Movimientos
+          {% if movimientos.paginator %}<span class="badge-count">{{ movimientos.paginator.count }}</span>{% endif %}
+        </button>
+        <button type="button" class="tab" data-tab="ajustes">
+          Ajustes
+          {% if ajustes.paginator %}<span class="badge-count">{{ ajustes.paginator.count }}</span>{% endif %}
+        </button>
+        <button type="button" class="tab" data-tab="recuentos">
+          Recuentos
+          {% if lineas_recuento.paginator %}<span class="badge-count">{{ lineas_recuento.paginator.count }}</span>{% endif %}
+        </button>
+        <button type="button" class="tab" data-tab="reservas">
+          Reservas
+          {% if reservas %}<span class="badge-count">{{ reservas|length }}</span>{% endif %}
+        </button>
+      </div>
     </div>
 
     <!-- MOVIMIENTOS -->
-    <div class="tab-pane" id="tab-movs" style="margin-top:12px">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Tipo</th>
-            <th>Producto</th>
-            <th>Cant.</th>
-            <th>Unidad</th>
-            <th>Desde → Hasta</th>
-            <th>Lote/Serie</th>
-            <th>Ref</th>
-            <th>Notas</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for m in movimientos %}
-          <tr>
-            <td>{{ m.ocurrido_en|date:"Y-m-d H:i" }}</td>
-            <td>{{ m.tipo_movimiento.codigo }}</td>
-            <td>{{ m.producto }}</td>
-            <td style="text-align:right">{{ m.cantidad }}</td>
-            <td>{{ m.unidad|default:"—" }}</td>
-            <td class="sub">
-              {% if m.ubicacion_bodega_desde %}B:{{ m.ubicacion_bodega_desde.codigo }} {% endif %}
-              {% if m.ubicacion_sucursal_desde %}S:{{ m.ubicacion_sucursal_desde.codigo }} {% endif %}
-              →
-              {% if m.ubicacion_bodega_hasta %}B:{{ m.ubicacion_bodega_hasta.codigo }} {% endif %}
-              {% if m.ubicacion_sucursal_hasta %}S:{{ m.ubicacion_sucursal_hasta.codigo }} {% endif %}
-            </td>
-            <td class="sub">
-              {% if m.lote %}L:{{ m.lote.codigo }}{% endif %}
-              {% if m.serie %} {% if m.lote %}<br>{% endif %}S:{{ m.serie.codigo }}{% endif %}
-            </td>
-            <td class="sub">
-              {% if m.tabla_referencia %}{{ m.tabla_referencia }}#{{ m.referencia_id }}{% else %}—{% endif %}
-            </td>
-            <td class="sub">{{ m.notas|default:"" }}</td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="9" class="sub">Sin movimientos en el rango.</td></tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- AJUSTES -->
-    <div class="tab-pane" id="tab-ajustes" style="display:none; margin-top:12px">
-      <div class="grid-2">
-        <div>
-          <h4 style="margin:0 0 8px">Cabeceras de Ajuste</h4>
-          <table class="table">
-            <thead><tr><th>Fecha</th><th>Bodega</th><th>Motivo</th><th>Usuario</th><th>Estado</th></tr></thead>
-            <tbody>
-              {% for a in ajustes %}
-              <tr>
-                <td>{{ a.creado_en|date:"Y-m-d H:i" }}</td>
-                <td>{{ a.bodega|default:"—" }}</td>
-                <td>{{ a.motivo|default:"" }}</td>
-                <td>{{ a.creado_por|default:"—" }}</td>
-                <td>{{ a.estado }}</td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="5" class="sub">Sin ajustes en el rango.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        <div>
-          <h4 style="margin:0 0 8px">Líneas de Ajuste</h4>
+    <div class="tab-pane" id="tab-movs">
+      <div class="table-shell">
+        <div class="table-scroll">
           <table class="table">
             <thead>
               <tr>
-                <th>Fecha</th><th>Producto</th><th>Ubicación</th><th>Lote/Serie</th><th>Δ Cant.</th><th>Motivo</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Producto</th>
+                <th>Cant.</th>
+                <th>Unidad</th>
+                <th>Desde → Hasta</th>
+                <th>Lote/Serie</th>
+                <th>Ref</th>
+                <th>Notas</th>
               </tr>
             </thead>
             <tbody>
-              {% for l in lineas_ajuste %}
+            {% for m in movimientos %}
               <tr>
-                <td>{{ l.ajuste.creado_en|date:"Y-m-d H:i" }}</td>
-                <td>{{ l.producto }}</td>
+                <td>{{ m.ocurrido_en|date:"Y-m-d H:i" }}</td>
+                <td>{{ m.tipo_movimiento.codigo }}</td>
+                <td>{{ m.producto }}</td>
+                <td class="num">{{ m.cantidad|default:0|floatformat:0 }}</td>
+                <td>{{ m.unidad|default:"—" }}</td>
                 <td class="sub">
-                  {% if l.ubicacion_bodega %}B:{{ l.ubicacion_bodega.codigo }} {% endif %}
-                  {% if l.ubicacion_sucursal %}S:{{ l.ubicacion_sucursal.codigo }}{% endif %}
+                  {% if m.ubicacion_bodega_desde %}B:{{ m.ubicacion_bodega_desde.codigo }} {% endif %}
+                  {% if m.ubicacion_sucursal_desde %}S:{{ m.ubicacion_sucursal_desde.codigo }} {% endif %}
+                  →
+                  {% if m.ubicacion_bodega_hasta %}B:{{ m.ubicacion_bodega_hasta.codigo }} {% endif %}
+                  {% if m.ubicacion_sucursal_hasta %}S:{{ m.ubicacion_sucursal_hasta.codigo }} {% endif %}
                 </td>
                 <td class="sub">
-                  {% if l.lote %}L:{{ l.lote.codigo }}{% endif %}
-                  {% if l.serie %} {% if l.lote %}<br>{% endif %}S:{{ l.serie.codigo }}{% endif %}
+                  {% if m.lote %}L:{{ m.lote.codigo }}{% endif %}
+                  {% if m.serie %} {% if m.lote %}<br>{% endif %}S:{{ m.serie.codigo }}{% endif %}
                 </td>
-                <td style="text-align:right">{{ l.cantidad_delta }}</td>
-                <td class="sub">{{ l.motivo|default:"" }}</td>
+                <td class="sub">
+                  {% if m.tabla_referencia %}{{ m.tabla_referencia }}#{{ m.referencia_id }}{% else %}—{% endif %}
+                </td>
+                <td class="sub">{{ m.notas|default:"" }}</td>
               </tr>
-              {% empty %}
-              <tr><td colspan="6" class="sub">Sin líneas de ajuste en el rango.</td></tr>
-              {% endfor %}
+            {% empty %}
+              <tr><td colspan="9" class="sub">Sin movimientos en el rango.</td></tr>
+            {% endfor %}
             </tbody>
           </table>
+        </div>
+      </div>
+      <p class="scroll-hint">💡 Desplaza horizontalmente para ver todas las columnas.</p>
+
+      <!-- Paginación de Movimientos -->
+      <div class="pagination-container">
+        <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+          <div class="btn-group" role="group">
+            {% if movimientos.has_previous %}
+              <a class="btn btn-outline-secondary" href="?page={{ movimientos.previous_page_number }}&desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}&producto_id={{ producto_id }}#tab-movs">
+                ← Anterior
+              </a>
+            {% else %}
+              <button class="btn btn-outline-secondary" disabled>← Anterior</button>
+            {% endif %}
+            {% if movimientos.has_next %}
+              <a class="btn btn-outline-secondary" href="?page={{ movimientos.next_page_number }}&desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}&producto_id={{ producto_id }}#tab-movs">
+                Siguiente →
+              </a>
+            {% else %}
+              <button class="btn btn-outline-secondary" disabled>Siguiente →</button>
+            {% endif %}
+          </div>
+          <span class="sub">
+            Página {{ movimientos.number }} de {{ movimientos.paginator.num_pages }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AJUSTES -->
+    <div class="tab-pane" id="tab-ajustes" style="display:none;">
+      <div class="grid-2">
+        <div class="table-shell">
+          <h4>Cabeceras de Ajuste</h4>
+          <div class="table-scroll">
+            <table class="table">
+              <thead><tr><th>Fecha</th><th>Bodega</th><th>Motivo</th><th>Usuario</th><th>Estado</th></tr></thead>
+              <tbody>
+                {% for a in ajustes %}
+                <tr>
+                  <td>{{ a.creado_en|date:"Y-m-d H:i" }}</td>
+                  <td>{{ a.bodega|default:"—" }}</td>
+                  <td class="sub">{{ a.motivo|default:"" }}</td>
+                  <td class="sub">{{ a.creado_por|default:"—" }}</td>
+                  <td>{{ a.estado }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="sub">Sin ajustes en el rango.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="table-shell">
+          <h4>Líneas de Ajuste</h4>
+          <div class="table-scroll">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Producto</th><th>Ubicación</th><th>Lote/Serie</th><th>Δ Cant.</th><th>Motivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for l in lineas_ajuste %}
+                <tr>
+                  <td>{{ l.ajuste.creado_en|date:"Y-m-d H:i" }}</td>
+                  <td>{{ l.producto }}</td>
+                  <td class="sub">
+                    {% if l.ubicacion_bodega %}B:{{ l.ubicacion_bodega.codigo }} {% endif %}
+                    {% if l.ubicacion_sucursal %}S:{{ l.ubicacion_sucursal.codigo }}{% endif %}
+                  </td>
+                  <td class="sub">
+                    {% if l.lote %}L:{{ l.lote.codigo }}{% endif %}
+                    {% if l.serie %} {% if l.lote %}<br>{% endif %}S:{{ l.serie.codigo }}{% endif %}
+                  </td>
+                  <td class="num">{{ l.cantidad_delta|default:0|floatformat:0 }}</td>
+                  <td class="sub">{{ l.motivo|default:"" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="sub">Sin líneas de ajuste en el rango.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paginación de Ajustes -->
+      <div class="pagination-container">
+        <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+          <div class="btn-group" role="group">
+            {% if ajustes.has_previous %}
+              <a class="btn btn-outline-secondary" href="?page={{ ajustes.previous_page_number }}&desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}&producto_id={{ producto_id }}#tab-ajustes">
+                ← Anterior
+              </a>
+            {% else %}
+              <button class="btn btn-outline-secondary" disabled>← Anterior</button>
+            {% endif %}
+            {% if ajustes.has_next %}
+              <a class="btn btn-outline-secondary" href="?page={{ ajustes.next_page_number }}&desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}&producto_id={{ producto_id }}#tab-ajustes">
+                Siguiente →
+              </a>
+            {% else %}
+              <button class="btn btn-outline-secondary" disabled>Siguiente →</button>
+            {% endif %}
+          </div>
+          <span class="sub">
+            Página {{ ajustes.number }} de {{ ajustes.paginator.num_pages }}
+          </span>
         </div>
       </div>
     </div>
 
     <!-- RECUENTOS -->
-    <div class="tab-pane" id="tab-recuentos" style="display:none; margin-top:12px">
+    <div class="tab-pane" id="tab-recuentos" style="display:none;">
       <div class="grid-2">
-        <div>
-          <h4 style="margin:0 0 8px">Cabeceras de Recuento</h4>
-          <table class="table">
-            <thead><tr><th>Fecha</th><th>Bodega</th><th>Ciclo</th><th>Usuario</th><th>Estado</th></tr></thead>
-            <tbody>
-              {% for r in recuentos %}
-              <tr>
-                <td>{{ r.creado_en|date:"Y-m-d H:i" }}</td>
-                <td>{{ r.bodega|default:"—" }}</td>
-                <td>{{ r.codigo_ciclo }}</td>
-                <td>{{ r.creado_por|default:"—" }}</td>
-                <td>{{ r.estado }}</td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="5" class="sub">Sin recuentos en el rango.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div class="table-shell">
+          <h4>Cabeceras de Recuento</h4>
+          <div class="table-scroll">
+            <table class="table">
+              <thead><tr><th>Fecha</th><th>Bodega</th><th>Ciclo</th><th>Usuario</th><th>Estado</th></tr></thead>
+              <tbody>
+                {% for r in recuentos %}
+                <tr>
+                  <td>{{ r.creado_en|date:"Y-m-d H:i" }}</td>
+                  <td>{{ r.bodega|default:"—" }}</td>
+                  <td>{{ r.codigo_ciclo }}</td>
+                  <td class="sub">{{ r.creado_por|default:"—" }}</td>
+                  <td>{{ r.estado }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="sub">Sin recuentos en el rango.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div>
-          <h4 style="margin:0 0 8px">Líneas de Recuento</h4>
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Fecha</th><th>Producto</th><th>Ubicación</th>
-                <th>Sistema</th><th>Contada</th><th>Diferencia</th><th>Contado por</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for l in lineas_recuento %}
-              <tr>
-                <td>{{ l.recuento.creado_en|date:"Y-m-d H:i" }}</td>
-                <td>{{ l.producto }}</td>
-                <td class="sub">
-                  {% if l.ubicacion_bodega %}B:{{ l.ubicacion_bodega.codigo }} {% endif %}
-                  {% if l.ubicacion_sucursal %}S:{{ l.ubicacion_sucursal.codigo }}{% endif %}
-                </td>
-                <td style="text-align:right">{{ l.cantidad_sistema }}</td>
-                <td style="text-align:right">{{ l.cantidad_contada }}</td>
-                <td style="text-align:right">{{ l.diferencia }}</td>
-                <td class="sub">{{ l.contado_por|default:"—" }}</td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="7" class="sub">Sin líneas de recuento en el rango.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+
+        <div class="table-shell">
+          <h4>Líneas de Recuento</h4>
+          <div class="table-scroll">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Producto</th><th>Ubicación</th>
+                  <th>Sistema</th><th>Contada</th><th>Diferencia</th><th>Contado por</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for l in lineas_recuento %}
+                <tr>
+                  <td>{{ l.recuento.creado_en|date:"Y-m-d H:i" }}</td>
+                  <td>{{ l.producto }}</td>
+                  <td class="sub">
+                    {% if l.ubicacion_bodega %}B:{{ l.ubicacion_bodega.codigo }} {% endif %}
+                    {% if l.ubicacion_sucursal %}S:{{ l.ubicacion_sucursal.codigo }}{% endif %}
+                  </td>
+                  <td class="num">{{ l.cantidad_sistema|default:0|floatformat:0 }}</td>
+                  <td class="num">{{ l.cantidad_contada|default:0|floatformat:0 }}</td>
+                  <td class="num">{{ l.diferencia|default:0|floatformat:0 }}</td>
+                  <td class="sub">{{ l.contado_por|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="sub">Sin líneas de recuento en el rango.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paginación de Recuentos -->
+      <div class="pagination-container">
+        <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+          <div class="btn-group" role="group">
+            {% if lineas_recuento.has_previous %}
+              <a class="btn btn-outline-secondary" href="?page={{ lineas_recuento.previous_page_number }}&desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}&producto_id={{ producto_id }}#tab-recuentos">
+                ← Anterior
+              </a>
+            {% else %}
+              <button class="btn btn-outline-secondary" disabled>← Anterior</button>
+            {% endif %}
+            {% if lineas_recuento.has_next %}
+              <a class="btn btn-outline-secondary" href="?page={{ lineas_recuento.next_page_number }}&desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}&producto_id={{ producto_id }}#tab-recuentos">
+                Siguiente →
+              </a>
+            {% else %}
+              <button class="btn btn-outline-secondary" disabled>Siguiente →</button>
+            {% endif %}
+          </div>
+          <span class="sub">
+            Página {{ lineas_recuento.number }} de {{ lineas_recuento.paginator.num_pages }}
+          </span>
         </div>
       </div>
     </div>
 
     <!-- RESERVAS -->
-    <div class="tab-pane" id="tab-reservas" style="display:none; margin-top:12px">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Fecha</th><th>Producto</th><th>Ubicación</th><th>Lote/Serie</th>
-            <th>Cant. Reservada</th><th>Referencia</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in reservas %}
-          <tr>
-            <td>{{ r.creado_en|date:"Y-m-d H:i" }}</td>
-            <td>{{ r.producto }}</td>
-            <td class="sub">
-              {% if r.ubicacion_bodega %}B:{{ r.ubicacion_bodega.codigo }} {% endif %}
-              {% if r.ubicacion_sucursal %}S:{{ r.ubicacion_sucursal.codigo }}{% endif %}
-            </td>
-            <td class="sub">
-              {% if r.lote %}L:{{ r.lote.codigo }}{% endif %}
-              {% if r.serie %} {% if r.lote %}<br>{% endif %}S:{{ r.serie.codigo }}{% endif %}
-            </td>
-            <td style="text-align:right">{{ r.cantidad_reservada }}</td>
-            <td class="sub">
-              {% if r.tabla_referencia %}{{ r.tabla_referencia }}#{{ r.referencia_id }}{% else %}—{% endif %}
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="6" class="sub">Sin reservas en el rango.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="tab-pane" id="tab-reservas" style="display:none;">
+      <div class="table-shell">
+        <div class="table-scroll">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fecha</th><th>Producto</th><th>Ubicación</th><th>Lote/Serie</th>
+                <th>Cant. Reservada</th><th>Referencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in reservas %}
+              <tr>
+                <td>{{ r.creado_en|date:"Y-m-d H:i" }}</td>
+                <td>{{ r.producto }}</td>
+                <td class="sub">
+                  {% if r.ubicacion_bodega %}B:{{ r.ubicacion_bodega.codigo }} {% endif %}
+                  {% if r.ubicacion_sucursal %}S:{{ r.ubicacion_sucursal.codigo }}{% endif %}
+                </td>
+                <td class="sub">
+                  {% if r.lote %}L:{{ r.lote.codigo }}{% endif %}
+                  {% if r.serie %} {% if r.lote %}<br>{% endif %}S:{{ r.serie.codigo }}{% endif %}
+                </td>
+                <td class="num">{{ r.cantidad_reservada|default:0|floatformat:0 }}</td>
+                <td class="sub">
+                  {% if r.tabla_referencia %}{{ r.tabla_referencia }}#{{ r.referencia_id }}{% else %}—{% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="sub">Sin reservas en el rango.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="scroll-hint">💡 Desplaza horizontalmente para ver todas las columnas.</p>
     </div>
 
   </div>
@@ -254,15 +869,32 @@
       recuentos: document.getElementById('tab-recuentos'),
       reservas: document.getElementById('tab-reservas'),
     };
-    tabs.forEach(t=>{
-      t.addEventListener('click', ()=>{
-        tabs.forEach(x=>x.classList.remove('active'));
-        t.classList.add('active');
-        const key = t.dataset.tab;
-        Object.values(panes).forEach(p=>p.style.display='none');
-        panes[key].style.display = 'block';
+
+    function activateTab(key){
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === key));
+      Object.entries(panes).forEach(([k, pane])=>{
+        if(!pane) return;
+        pane.style.display = (k === key) ? 'block' : 'none';
       });
+      if(history.replaceState){
+        const base = window.location.pathname + window.location.search;
+        history.replaceState(null, "", base + "#tab-" + key);
+      }
+    }
+
+    tabs.forEach(t=>{
+      t.addEventListener('click', ()=> activateTab(t.dataset.tab));
     });
+
+    // activar desde hash si viene, ej: #tab-ajustes
+    const hash = window.location.hash.replace("#","");
+    if(hash && hash.startsWith("tab-")){
+      const key = hash.split("tab-")[1];
+      if(panes[key]) activateTab(key);
+      else activateTab("movs");
+    } else {
+      activateTab("movs");
+    }
   })();
 </script>
 {% endblock %}

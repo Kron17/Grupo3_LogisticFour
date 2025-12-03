@@ -1,0 +1,55 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h4 mb-3">Crear Recepción de Mercadería</h2>
+          <p class="text-muted small mb-4">
+            Registra la mercadería efectivamente recibida en la bodega.
+          </p>
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label">Número de recepción</label>
+              {{ form.numero_recepcion }}
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Bodega</label>
+                {{ form.bodega }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Estado</label>
+                {{ form.estado }}
+              </div>
+            </div>
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger mt-3">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{% url 'finanzas_reporte' %}" class="btn btn-outline-secondary">
+                Volver
+              </a>
+              <button type="submit" class="btn btn-dark">
+                Guardar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
